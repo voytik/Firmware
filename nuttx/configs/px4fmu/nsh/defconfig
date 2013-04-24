@@ -212,6 +212,14 @@ CONFIG_STM32_USART_SINGLEWIRE=y
 STM32_FLASH_PREFETCH=y
 
 #
+# We want to use the compiler-in-built bool type to
+# match the common (false) assumption that bool b = 3
+# auto-converts the value to true before storing it
+# when using plain C.
+#
+CONFIG_C99_BOOL8=y
+
+#
 # Enable the MTD driver for the onboard I2C EEPROM
 #
 # Note that we are using a private copy of the AT24XX driver that
