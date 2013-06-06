@@ -45,12 +45,17 @@
 
 #include "logbuffer.h"
 
-void logbuffer_init(struct logbuffer_s *lb, int size)
+int logbuffer_init(struct logbuffer_s *lb, int size)
 {
 	lb->size  = size;
 	lb->write_ptr = 0;
 	lb->read_ptr = 0;
 	lb->data = malloc(lb->size);
+
+	if (!lb->data)
+		return 1;
+
+	return 0;
 }
 
 int logbuffer_count(struct logbuffer_s *lb)

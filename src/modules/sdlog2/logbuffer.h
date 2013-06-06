@@ -53,7 +53,7 @@ struct logbuffer_s {
 	char *data;
 };
 
-void logbuffer_init(struct logbuffer_s *lb, int size);
+int logbuffer_init(struct logbuffer_s *lb, int size);
 
 int logbuffer_count(struct logbuffer_s *lb);
 

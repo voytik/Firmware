@@ -107,8 +107,9 @@ static int deamon_task;						/**< Handle of deamon task / thread */
 static bool logwriter_should_exit = false;	/**< Logwriter thread exit flag */
 static const int MAX_NO_LOGFOLDER = 999;	/**< Maximum number of log folders */
 static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
-static const int LOG_BUFFER_SIZE = 8192;
-static const int MAX_WRITE_CHUNK = 512;
+static const int LOG_BUFFER_SIZE = 4096;
+static const int MAX_WRITE_CHUNK = 500;
+static const int MIN_WRITE_CHUNK = 0;
 static const int MIN_BYTES_TO_WRITE = 512;
 
 static const char *mountpoint = "/fs/microsd";
@@ -219,7 +220,7 @@ sdlog2_usage(const char *reason)
  * Makefile does only apply to this management task.
  *
  * The actual stack size should be set in the call
- * to task_spawn().
+ * to task_spawn_cmd().
  */
 int sdlog2_main(int argc, char *argv[])
 {
@@ -235,7 +236,7 @@ int sdlog2_main(int argc, char *argv[])
 		}
 
 		thread_should_exit = false;
-		deamon_task = task_spawn("sdlog2",
+		deamon_task = task_spawn_cmd("sdlog2",
 					 SCHED_DEFAULT,
 					 SCHED_PRIORITY_DEFAULT - 30,
 					 2048,
@@ -403,7 +404,7 @@ static void *logwriter_thread(void *arg)
 		/* continue */
 		pthread_mutex_unlock(&logbuffer_mutex);
 
-		if (available > 0) {
+		if (available > MIN_WRITE_CHUNK) {
 			/* do heavy IO here */
 			if (available > MAX_WRITE_CHUNK) {
 				n = MAX_WRITE_CHUNK;
@@ -767,7 +768,8 @@ int sdlog2_thread_main(int argc, char *argv[])
 	thread_running = true;
 
 	/* initialize log buffer with specified size */
-	logbuffer_init(&lb, LOG_BUFFER_SIZE);
+	if (logbuffer_init(&lb, LOG_BUFFER_SIZE))
+		errx(1, "Not enough memory, buffer allocation failed.");
 
 	/* initialize thread synchronization */
 	pthread_mutex_init(&logbuffer_mutex, NULL);
