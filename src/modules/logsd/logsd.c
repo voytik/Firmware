@@ -55,9 +55,12 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/vehicle_gps_position.h>
+#include <uORB/topics/vehicle_attitude.h>
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
+
 
 static const int MAX_NO_LOGFOLDER = 999;	/**< Maximum number of log folders */
 static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
@@ -74,24 +77,41 @@ int logsd_main(int argc, char *argv[])
 {
 	printf("logsd started\n");
 
+	// refresh rate
+	int rate = 10;
 
 	/* subscribe to sensor_combined topic */
 		int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
 		/* limit the interval to 100Hz*/
-		orb_set_interval(sensor_sub_fd, 100);
+		orb_set_interval(sensor_sub_fd, rate);
+
+	/* subscribe to gps topic */
+		int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
+		orb_set_interval(gps_sub_fd, rate);
+
+	/* subscribe to gps topic */
+		int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
+		orb_set_interval(attitude_sub_fd, rate);
+
 
 		/* one could wait for multiple topics with this technique, just using one here */
 		struct pollfd fds[] = {
 			{ .fd = sensor_sub_fd,   .events = POLLIN },
-			/* there could be more file descriptors here, in the form like:
-			 * { .fd = other_sub_fd,   .events = POLLIN },
-			 */
+			{ .fd = gps_sub_fd,   .events = POLLIN },
+			{ .fd = attitude_sub_fd,   .events = POLLIN },
 		};
 
 		int error_counter = 0;
 		int n = 8;
-		char read_ptr[28];
 		int i = 0;
+		int log_values = 14;
+		int read_bytes = (log_values*9)+2;
+		char read_ptr[read_bytes];
+
+		//structs to hold data
+		struct sensor_combined_s sensors_raw;
+		struct vehicle_gps_position_s gps_raw;
+		struct vehicle_attitude_s attitude_raw;
 
 		/* create file to log into */
 		printf("[logsd] start logging\n");
@@ -99,7 +119,7 @@ int logsd_main(int argc, char *argv[])
 		int log_file = open_logfile();
 
 
-		while (i<5000) {
+		while (true){	//(i<500) {
 			/* wait for sensor update of 1 file descriptor for 1000 ms (1 second) */
 			int poll_ret = poll(fds, 1, 1000);
 
@@ -118,38 +138,56 @@ int logsd_main(int argc, char *argv[])
 			} else {
 
 				if (fds[0].revents & POLLIN) {
-					/* obtained data for the first file descriptor */
-					struct sensor_combined_s raw;
+					/* there could be more file descriptors here, in the form like:
+					 * if (fds[1..n].revents & POLLIN) {}
+					 */
+
 					/* copy sensors raw data into local buffer */
-					orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &raw);
-					/*
-					 *
-					 printf("[logsd] Accelerometer:\t%8.4f\t%8.4f\t%8.4f\n",
-						(double)raw.accelerometer_m_s2[0],
-						(double)raw.accelerometer_m_s2[1],
-						(double)raw.accelerometer_m_s2[2]);
-						*/
+					orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
+					/* copy gps raw data into local buffer */
+					orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
+					/* copy attitude raw data into local buffer */
+					orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
+
 
 					/* ---- logging starts here ---- */
 
-					/*
-					snprintf(read_ptr, 28, "%8.4f,%8.4f,%8.4f\n",
-							raw.accelerometer_m_s2[0],
-							raw.accelerometer_m_s2[1],
-							raw.accelerometer_m_s2[2]);
-					 */
+					snprintf(read_ptr, read_bytes , "%d,%d,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%lu\n",
+							gps_raw.lat,
+							gps_raw.lon,
+							sensors_raw.baro_alt_meter,
+							sensors_raw.differential_pressure_pa,
+							gps_raw.vel_d_m_s,
+							sensors_raw.accelerometer_m_s2[0],
+							sensors_raw.accelerometer_m_s2[1],
+							sensors_raw.accelerometer_m_s2[2],
+							sensors_raw.gyro_rad_s[0],
+							sensors_raw.gyro_rad_s[1],
+							sensors_raw.gyro_rad_s[2],
+							sensors_raw.magnetometer_ga[0],
+							sensors_raw.magnetometer_ga[1],
+							sensors_raw.magnetometer_ga[2],
+							sensors_raw.timestamp);
 
-					n = write(log_file, read_ptr, 28);
+					n = write(log_file, read_ptr, read_bytes);
 
 
 					//printf("%s", read_ptr);
 
 					i++;
 
+
+					// flush data to file every second
+					if (i%100==0)
+					{
+						fsync(log_file);
+						printf("%s", read_ptr);
+
+						//printf("[logsd] log file synced");
+					}
+
 				}
-				/* there could be more file descriptors here, in the form like:
-				 * if (fds[1..n].revents & POLLIN) {}
-				 */
+
 			}
 		}
 
