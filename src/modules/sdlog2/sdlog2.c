@@ -103,7 +103,7 @@
 	fdsc_count++;
 
 
-//#define SDLOG2_DEBUG
+#define SDLOG2_DEBUG
 
 static bool main_thread_should_exit = false;		/**< Deamon exit flag */
 static bool thread_running = false;			/**< Deamon status flag */

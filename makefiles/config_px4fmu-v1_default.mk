@@ -81,11 +81,14 @@ MODULES		+= modules/multirotor_att_control
 MODULES		+= modules/multirotor_pos_control
 MODULES		+= examples/flow_position_control
 MODULES		+= examples/flow_speed_control
+MODULES		+= modules/simulink_control
 
 #
 # Logging
 #
 MODULES		+= modules/sdlog2
+MODULES		+= modules/sdlog
+MODULES		+= modules/logsd
 
 #
 # Library modules
