@@ -5,7 +5,7 @@
  
 # disable USB and autostart
 #set USB no
-set MODE debug
+set MODE camflyer
  
 #
 # Start the ORB (first app to start)
@@ -22,16 +22,6 @@ then
 	param load /fs/microsd/params
 fi
 
-#
-# Load default params for this platform
-#
-#if param compare SYS_AUTOCONFIG 1
-#then
-	# Set all params here, then disable autoconfig
-#	param set SYS_AUTOCONFIG 0
-#	param save /fs/microsd/params
-#fi
- 
 #
 # Force some key parameters to sane values
 # MAV_TYPE     1 = fixed wing, 2 = quadrotor, 13 = hexarotor
@@ -83,10 +73,6 @@ px4io start
 px4io recovery
 
 #
-# Set actuator limit to 100 Hz update (50 Hz PWM)
-#px4io limit 100
- 
-#
 # Start the sensors (depends on orb, px4io)
 #
 sh /etc/init.d/rc.sensors
@@ -104,8 +90,8 @@ attitude_estimator_so3_comp start
 #
 # Load mixer and start controllers (depends on px4io)
 #
-#mixer load /dev/pwm_output /etc/mixers/FMU_Q.mix
-#control_demo start
+mixer load /dev/pwm_output /etc/mixers/FMU_Q.mix
+fixedwing_backside start
  
 #
 # Start logging

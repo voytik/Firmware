@@ -34,10 +34,11 @@
  
 /**
  * @file sdlog.c
- * Minimal application example for PX4 autopilot.
+ * Minimal application for PX4 logging into csv file.
  */
  
 #include <nuttx/config.h>
+#include <nuttx/sched.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/prctl.h>
@@ -50,6 +51,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <systemlib/err.h>
+#include <systemlib/systemlib.h>
 #include <unistd.h>
 #include <drivers/drv_hrt.h>
 
@@ -57,70 +59,173 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/manual_control_setpoint.h>
+#include <uORB/topics/airspeed.h>
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
+
+static bool thread_should_exit = false;		/**< daemon exit flag */
+static bool thread_running = false;		/**< daemon status flag */
+static int daemon_task;				/**< Handle of daemon task / thread */
+
+/**
+ * daemon management function.
+ */
+__EXPORT int logsd_main(int argc, char *argv[]);
+/**
+ * Mainloop of daemon.
+ */
+int logsd_thread_main(int argc, char *argv[]);
+
+/**
+ * Print the correct usage.
+ */
+static void usage(const char *reason);
+
+usage(const char *reason)
+{
+	if (reason)
+		warnx("%s\n", reason);
+	errx(1, "usage: daemon {start|stop|status} [-p <additional params>]\n\n");
+}
 
 static const int MAX_NO_LOGFOLDER = 999;	/**< Maximum number of log folders */
 static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
 static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
- 
-__EXPORT int logsd_main(int argc, char *argv[]);
 
 static bool file_exist(const char *filename);
 static int create_logfolder(void);
 static int open_logfile(void);
- 
+
+/**
+ * The daemon app only briefly exists to start
+ * the background job. The stack size assigned in the
+ * Makefile does only apply to this management task.
+ *
+ * The actual stack size should be set in the call
+ * to task_create().
+ */
 int logsd_main(int argc, char *argv[])
 {
+	if (argc < 1)
+			usage("missing command");
+
+		if (!strcmp(argv[1], "start")) {
+
+			if (thread_running) {
+				warnx("logsd daemon already running\n");
+				/* this is not an error */
+				exit(0);
+			}
+
+			thread_should_exit = false;
+			daemon_task = task_spawn_cmd("daemon",
+						 SCHED_DEFAULT,
+						 SCHED_PRIORITY_DEFAULT,
+						 8192,
+						 logsd_thread_main,
+						 (argv) ? (const char **)&argv[2] : (const char **)NULL);
+			exit(0);
+		}
+
+		if (!strcmp(argv[1], "stop")) {
+			thread_should_exit = true;
+			exit(0);
+		}
+
+		if (!strcmp(argv[1], "status")) {
+			if (thread_running) {
+				warnx("\trunning\n");
+			} else {
+				warnx("\tnot started\n");
+			}
+			exit(0);
+		}
+
+		usage("unrecognized command");
+		exit(1);
+
+}
+
+// main log function
+int logsd_thread_main(int argc, char *argv[])
+{
+	thread_running = true;
+
 	printf("logsd started\n");
 
-	// refresh rate
+	// refresh rate in ms
 	int rate = 10;
 
 	/* subscribe to sensor_combined topic */
 		int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
-		/* limit the interval to 100Hz*/
+		/* limit the interval*/
 		orb_set_interval(sensor_sub_fd, rate);
 
 	/* subscribe to gps topic */
 		int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
 		orb_set_interval(gps_sub_fd, rate);
 
-	/* subscribe to gps topic */
+	/* subscribe to vehicel attitude topic */
 		int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
 		orb_set_interval(attitude_sub_fd, rate);
 
+	/* subscribe to rc channels topic */
+		int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
+		orb_set_interval(rc_sub_fd, rate);
+
+	/* subscribe to airspeed channels topic */
+		int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
+		orb_set_interval(airspeed_sub_fd, rate);
 
 		/* one could wait for multiple topics with this technique, just using one here */
 		struct pollfd fds[] = {
 			{ .fd = sensor_sub_fd,   .events = POLLIN },
 			{ .fd = gps_sub_fd,   .events = POLLIN },
 			{ .fd = attitude_sub_fd,   .events = POLLIN },
+			{ .fd = rc_sub_fd,   .events = POLLIN },
+			{ .fd = airspeed_sub_fd,   .events = POLLIN },
 		};
 
 		int error_counter = 0;
-		int n = 8;
+		int n = 0;
 		int i = 0;
-		int log_values = 14;
-		int read_bytes = (log_values*9)+2;
-		char read_ptr[read_bytes];
+		int m = 0;
+		char buff_all[200];
 
-		//structs to hold data
+		//buffs to hold data
 		struct sensor_combined_s sensors_raw;
 		struct vehicle_gps_position_s gps_raw;
 		struct vehicle_attitude_s attitude_raw;
+		struct manual_control_setpoint_s rc_raw;
+		struct airspeed_s airspeed_raw;
+
+		//set all buffers to 0
+		memset(&sensors_raw, 0, sizeof(sensors_raw));
+		memset(&gps_raw, 0, sizeof(gps_raw));
+		memset(&attitude_raw, 0, sizeof(attitude_raw));
+		memset(&rc_raw, 0, sizeof(rc_raw));
+		memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 
 		/* create file to log into */
 		printf("[logsd] start logging\n");
 		create_logfolder();
 		int log_file = open_logfile();
 
+		//write header
+		m = sprintf(buff_all, "Roll,Pitch,Yaw,Elevator,Rudder,Throttle,Ailerons,Flaps,Q1,Q2,Q3,Q4,Latitude,Longitude,Altitude,Airspeed,GPSspeed,Acc_1,Acc_2,Acc_3,Gyr_1,Gyr_2,Gyr_3,Mag_1,Mag_2,Mag_3\n");
+		n = write(log_file, buff_all, m);
+		//printf("header size %d\n", n);
 
-		while (true){	//(i<500) {
-			/* wait for sensor update of 1 file descriptor for 1000 ms (1 second) */
+
+		while (!thread_should_exit){
+			/* wait for sensor update of 4 file descriptor for 1000 ms (1 second) */
 			int poll_ret = poll(fds, 1, 1000);
 
 			/* handle the poll result */
@@ -138,25 +243,38 @@ int logsd_main(int argc, char *argv[])
 			} else {
 
 				if (fds[0].revents & POLLIN) {
-					/* there could be more file descriptors here, in the form like:
-					 * if (fds[1..n].revents & POLLIN) {}
-					 */
-
 					/* copy sensors raw data into local buffer */
 					orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
 					/* copy gps raw data into local buffer */
 					orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
 					/* copy attitude raw data into local buffer */
 					orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
+					/* copy rc raw data into local buffer */
+					orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+					/* copy rc raw data into local buffer */
+					orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
 
 
 					/* ---- logging starts here ---- */
 
-					snprintf(read_ptr, read_bytes , "%d,%d,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%8.4f,%lu\n",
+						// write to already allocated buffer
+						n = sprintf(buff_all, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+							attitude_raw.roll,
+							attitude_raw.pitch,
+							attitude_raw.yaw,
+							rc_raw.pitch,
+							rc_raw.yaw,
+							rc_raw.throttle,
+							rc_raw.roll,
+							rc_raw.aux1,
+							attitude_raw.q[0],
+							attitude_raw.q[1],
+							attitude_raw.q[2],
+							attitude_raw.q[3],
 							gps_raw.lat,
 							gps_raw.lon,
 							sensors_raw.baro_alt_meter,
-							sensors_raw.differential_pressure_pa,
+							airspeed_raw.true_airspeed_m_s,
 							gps_raw.vel_d_m_s,
 							sensors_raw.accelerometer_m_s2[0],
 							sensors_raw.accelerometer_m_s2[1],
@@ -166,34 +284,46 @@ int logsd_main(int argc, char *argv[])
 							sensors_raw.gyro_rad_s[2],
 							sensors_raw.magnetometer_ga[0],
 							sensors_raw.magnetometer_ga[1],
-							sensors_raw.magnetometer_ga[2],
-							sensors_raw.timestamp);
+							sensors_raw.magnetometer_ga[2]);
+							//sensors_raw.timestamp);
 
-					n = write(log_file, read_ptr, read_bytes);
+						//printf("data written to buffer %d\n", n);
+						//printf("%s", buff_all);
 
-
-					//printf("%s", read_ptr);
-
+					m = write(log_file, buff_all, n);
+					//check if write succesful
+					if (m == -1)
+					{
+						printf("[logsd] write error: %s, exiting\n", strerror(errno));
+						thread_should_exit = true;
+						fsync(log_file);
+					}
 					i++;
-
 
 					// flush data to file every second
 					if (i%100==0)
 					{
 						fsync(log_file);
-						printf("%s", read_ptr);
+						//printf("%s", read_ptr);
 
-						//printf("[logsd] log file synced");
+
+						printf("%s", buff_all);
+						printf("written to file %d\n", m);
+
+						/*
+						printf("timestamp: %PRIu64\n",
+								sensors_raw.timestamp);
+						*/
 					}
-
 				}
-
 			}
 		}
 
 		fsync(log_file);
 		close(log_file);
 		printf("[logsd] stop logging\n");
+
+		thread_running = false;
 
 		return 0;
 	}
