@@ -315,7 +315,6 @@ private:
 	 * Do adc-related initialisation.
 	 */
 	void		adc_init();
-
 	/**
 	 * Poll the accelerometer for updated data.
 	 *
@@ -815,6 +814,7 @@ Sensors::adc_init()
 		warnx("FATAL: no ADC found");
 	}
 }
+
 
 void
 Sensors::accel_poll(struct sensor_combined_s &raw)
