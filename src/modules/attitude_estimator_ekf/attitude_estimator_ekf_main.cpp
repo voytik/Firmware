@@ -268,6 +268,8 @@ const unsigned int loop_interval_alarm = 6500;	// loop interval in microseconds
 	/* register the perf counter */
 	perf_counter_t ekf_loop_perf = perf_alloc(PC_ELAPSED, "attitude_estimator_ekf");
 
+	int i = 0;
+
 	/* Main loop*/
 	while (!thread_should_exit) {
 
@@ -433,17 +435,33 @@ const unsigned int loop_interval_alarm = 6500;	// loop interval in microseconds
 					/* send out */
 					att.timestamp = raw.timestamp;
 
-					// XXX Apply the same transformation to the rotation matrix
-					att.roll = euler[0] - ekf_params.roll_off;
-					att.pitch = euler[1] - ekf_params.pitch_off;
+					// Change the signs because of other orientation
+					float myRoll = euler[0] - ekf_params.roll_off;
+					if (myRoll>=0.0f)
+					{
+						att.roll = -(M_PI - myRoll);
+					}else{
+						att.roll = (myRoll + M_PI);
+					}
+					//att.roll = myRoll;
+
+					att.pitch = (euler[1] - ekf_params.pitch_off);
 					att.yaw = euler[2] - ekf_params.yaw_off;
 
 					att.rollspeed = x_aposteriori[0];
-					att.pitchspeed = x_aposteriori[1];
-					att.yawspeed = x_aposteriori[2];
+					att.pitchspeed = -x_aposteriori[1];
+					att.yawspeed = -x_aposteriori[2];
 					att.rollacc = x_aposteriori[3];
-					att.pitchacc = x_aposteriori[4];
-					att.yawacc = x_aposteriori[5];
+					att.pitchacc = -x_aposteriori[4];
+					att.yawacc = -x_aposteriori[5];
+
+
+					if (i > 100)
+					{
+						printf("[att_ekf] %4.4f, %4.4f, %4.4f \n", att.rollacc, att.pitchacc, att.yawacc);
+						i = 0;
+					}
+					i++;
 
 					//att.yawspeed =z_k[2] ;
 					/* copy offsets */

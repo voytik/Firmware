@@ -1,8 +1,8 @@
 /**
  * @file simulink_control.c
- * Application for low-level control from simulink (generated code).
+ * Application for low-level attitude control from simulink (generated code).
  *
- *  Author: Vojtech Kuchar
+ * Author: Vojtech Kuchar
  * vojtech.kuchar@seznam.cz
  */
  
@@ -37,7 +37,7 @@
 
 // simulink model includes
 #include <simulink_control/test_ert_rtw/globalSignals.h>
-#include <simulink_control/test_ert_rtw/test.h>                    /* Model's header file */
+#include <simulink_control/test_ert_rtw/test.h>            /* Model's header file */
 #include <simulink_control/test_ert_rtw/rtwtypes.h>
 
  

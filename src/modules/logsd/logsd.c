@@ -188,7 +188,7 @@ int logsd_thread_main(int argc, char *argv[])
 		int log_file = open_logfile();
 
 		//write header
-		m = sprintf(buff_all, "Roll,Pitch,Yaw,Elevator,Rudder,Throttle,Ailerons,Flaps,Q1,Q2,Q3,Q4,Latitude,Longitude,Altitude,Airspeed,GPSspeed,Acc_1,Acc_2,Acc_3,Gyr_1,Gyr_2,Gyr_3,Mag_1,Mag_2,Mag_3\n");
+		m = sprintf(buff_all, "Roll,Pitch,Yaw,Rollspeed,Pitchspeed,Yawspeed,Rollacc,Pitchacc,Yawacc,Elevator,Rudder,Throttle,Ailerons,Flaps,Latitude,Longitude,Altitude,Airspeed,GPSspeed,Acc_1,Acc_2,Acc_3,Gyr_1,Gyr_2,Gyr_3,Mag_1,Mag_2,Mag_3\n");
 		n = write(log_file, buff_all, m);
 		//printf("header size %d\n", n);
 
@@ -227,19 +227,21 @@ int logsd_thread_main(int argc, char *argv[])
 					/* ---- logging starts here ---- */
 
 						// write to already allocated buffer
-						n = sprintf(buff_all, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+						n = sprintf(buff_all, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
 							attitude_raw.roll,
 							attitude_raw.pitch,
 							attitude_raw.yaw,
+							attitude_raw.rollspeed,
+							attitude_raw.pitchspeed,
+							attitude_raw.yawspeed,
+							attitude_raw.rollacc,
+							attitude_raw.pitchacc,
+							attitude_raw.yawacc,
 							rc_raw.pitch,
 							rc_raw.yaw,
 							rc_raw.throttle,
 							rc_raw.roll,
 							rc_raw.aux1,
-							attitude_raw.q[0],
-							attitude_raw.q[1],
-							attitude_raw.q[2],
-							attitude_raw.q[3],
 							gps_raw.lat,
 							gps_raw.lon,
 							sensors_raw.baro_alt_meter,
