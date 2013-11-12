@@ -33,6 +33,7 @@
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_controls.h>
 
+
 #include <systemlib/systemlib.h>
 
 // simulink model includes
@@ -210,9 +211,36 @@ int simulink_control_thread_main(int argc, char *argv[])
 								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
 
 								// here would be the call to simulink function
+								//fill in arguments
+								/*
+								 * roll = attitude_raw.roll;
+								 * pitch = attitude_raw.pitch;
+								 * yaw = attitude_raw.pitch;
+								 * rollspeed = attitude_raw.rollspeed;
+								 * pitchspeed = attitude_raw.pitchspeed;
+								 * yawspeed = attitude_raw.yawspeed;
+								 * rollacc = attitude_raw.rollacc;
+								 * pitchacc = attitude_raw.pitchacc;
+								 * yawacc = attitude_raw.yawacc;
+								 * altitude = sensors_raw.baro_alt_meter;
+								 * airspeed = airspeed_raw.true_airspeed_m_s,
+								 * heading_w = ? new topic
+								 * altitude_w = ?
+								 * speed_w = ?
+								 */
+
+								//run Simulink code
 								inVar = attitude_raw.roll;
 								test_step();
 								printf("%4.4f, %4.4f\n", inVar, outVar);
+
+								// copy output
+								/* actuators.control[0] = aileron;
+								 * actuators.control[1] = elevator;
+								 * actuators.control[2] = rudder;
+								 * actuators.control[3] = throttle;
+								 * actuators.control[4] = flaps;
+								 */
 
 
 								/* sanity check and publish actuator outputs */

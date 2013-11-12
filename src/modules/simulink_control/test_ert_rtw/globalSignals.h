@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'test'.
  *
- * Model version                  : 1.7
+ * Model version                  : 1.10
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Tue Oct 22 22:50:12 2013
+ * C/C++ source code generated on : Sun Nov 10 17:47:34 2013
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic

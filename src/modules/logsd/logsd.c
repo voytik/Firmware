@@ -30,6 +30,7 @@
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/airspeed.h>
+#include <uORB/topics/actuator_outputs.h>
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
@@ -153,6 +154,10 @@ int logsd_thread_main(int argc, char *argv[])
 		int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
 		orb_set_interval(airspeed_sub_fd, rate);
 
+	/* subscribe to actuator outputs channels topic */
+		int actuators_sub_fd = orb_subscribe(ORB_ID(actuator_outputs_0));
+		orb_set_interval(actuators_sub_fd, rate);
+
 		/* one could wait for multiple topics with this technique, just using one here */
 		struct pollfd fds[] = {
 			{ .fd = sensor_sub_fd,   .events = POLLIN },
@@ -160,13 +165,14 @@ int logsd_thread_main(int argc, char *argv[])
 			{ .fd = attitude_sub_fd,   .events = POLLIN },
 			{ .fd = rc_sub_fd,   .events = POLLIN },
 			{ .fd = airspeed_sub_fd,   .events = POLLIN },
+			{ .fd = actuators_sub_fd,   .events = POLLIN },
 		};
 
 		int error_counter = 0;
 		int n = 0;
 		int i = 0;
 		int m = 0;
-		char buff_all[250];
+		char buff_all[300];
 
 		//buffs to hold data
 		struct sensor_combined_s sensors_raw;
@@ -174,6 +180,7 @@ int logsd_thread_main(int argc, char *argv[])
 		struct vehicle_attitude_s attitude_raw;
 		struct manual_control_setpoint_s rc_raw;
 		struct airspeed_s airspeed_raw;
+		struct actuator_outputs_s actuator_outputs_raw;
 
 		//set all buffers to 0
 		memset(&sensors_raw, 0, sizeof(sensors_raw));
@@ -181,6 +188,7 @@ int logsd_thread_main(int argc, char *argv[])
 		memset(&attitude_raw, 0, sizeof(attitude_raw));
 		memset(&rc_raw, 0, sizeof(rc_raw));
 		memset(&airspeed_raw, 0, sizeof(airspeed_raw));
+		memset(&actuator_outputs_raw, 0, sizeof(actuator_outputs_raw));
 
 		/* create file to log into */
 		printf("[logsd] start logging\n");
@@ -188,7 +196,7 @@ int logsd_thread_main(int argc, char *argv[])
 		int log_file = open_logfile();
 
 		//write header
-		m = sprintf(buff_all, "Roll,Pitch,Yaw,Rollspeed,Pitchspeed,Yawspeed,Rollacc,Pitchacc,Yawacc,Elevator,Rudder,Throttle,Ailerons,Flaps,Latitude,Longitude,Altitude,Airspeed,GPSspeed,Acc_1,Acc_2,Acc_3,Gyr_1,Gyr_2,Gyr_3,Mag_1,Mag_2,Mag_3\n");
+		m = sprintf(buff_all, "Roll,Pitch,Yaw,Rollspeed,Pitchspeed,Yawspeed,Rollacc,Pitchacc,Yawacc,RC_Elevator,RC_Rudder,RC_Throttle,RC_Ailerons,RC_Flaps,Elevator,Rudder,Throttle,Ailerons,Flaps,Latitude,Longitude,GPSaltitude,Altitude,Airspeed,GPSspeed,Acc_1,Acc_2,Acc_3,Gyr_1,Gyr_2,Gyr_3,Mag_1,Mag_2,Mag_3\n");
 		n = write(log_file, buff_all, m);
 		//printf("header size %d\n", n);
 
@@ -222,12 +230,14 @@ int logsd_thread_main(int argc, char *argv[])
 					orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+					/* copy rc raw data into local buffer */
+					orb_copy(ORB_ID(actuator_outputs_0), actuators_sub_fd, &actuator_outputs_raw);
 
 
 					/* ---- logging starts here ---- */
 
 						// write to already allocated buffer
-						n = sprintf(buff_all, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+						n = sprintf(buff_all, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
 							attitude_raw.roll,
 							attitude_raw.pitch,
 							attitude_raw.yaw,
@@ -242,8 +252,14 @@ int logsd_thread_main(int argc, char *argv[])
 							rc_raw.throttle,
 							rc_raw.roll,
 							rc_raw.aux1,
+							actuator_outputs_raw.output[1],		//elevator
+							actuator_outputs_raw.output[2],		//rudder
+							actuator_outputs_raw.output[3],		//throttle
+							actuator_outputs_raw.output[0],		//ailerons
+							actuator_outputs_raw.output[4],		//flaps
 							gps_raw.lat,
 							gps_raw.lon,
+							gps_raw.alt,
 							sensors_raw.baro_alt_meter,
 							airspeed_raw.true_airspeed_m_s,
 							gps_raw.vel_d_m_s,
@@ -256,6 +272,7 @@ int logsd_thread_main(int argc, char *argv[])
 							sensors_raw.magnetometer_ga[0],
 							sensors_raw.magnetometer_ga[1],
 							sensors_raw.magnetometer_ga[2]);
+
 							//sensors_raw.timestamp);
 
 						//printf("data written to buffer %d\n", n);

@@ -238,8 +238,10 @@ l_vehicle_attitude(const struct listener *l)
 					  att.yaw,
 					  att.rollspeed,
 					  att.pitchspeed,
-					  att.yawspeed);
-
+					  att.yawspeed,
+					  att.rollacc,
+					  att.pitchacc,
+					  att.yawacc);
 	attitude_counter++;
 }
 
