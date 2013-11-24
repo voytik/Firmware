@@ -90,6 +90,13 @@ MODULES		+= modules/multirotor_pos_control
 MODULES		+= modules/sdlog2
 
 #
+# Skydog
+#
+MODULES		+= modules/skydog_autopilot
+MODULES		+= modules/skydog_path_planning
+MODULES		+= modules/logsd
+
+#
 # Unit tests
 #
 #MODULES 	+= modules/unit_test

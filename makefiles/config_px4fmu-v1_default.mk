@@ -94,6 +94,12 @@ MODULES		+= modules/simulink_control
 #
 MODULES		+= modules/sdlog2
 MODULES		+= modules/sdlog
+
+#
+# Skydog
+#
+MODULES		+= modules/skydog_autopilot
+MODULES		+= modules/skydog_path_planning
 MODULES		+= modules/logsd
 
 #

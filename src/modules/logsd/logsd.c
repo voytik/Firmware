@@ -196,7 +196,7 @@ int logsd_thread_main(int argc, char *argv[])
 		int log_file = open_logfile();
 
 		//write header
-		m = sprintf(buff_all, "Roll,Pitch,Yaw,Rollspeed,Pitchspeed,Yawspeed,Rollacc,Pitchacc,Yawacc,RC_Elevator,RC_Rudder,RC_Throttle,RC_Ailerons,RC_Flaps,Elevator,Rudder,Throttle,Ailerons,Flaps,Latitude,Longitude,GPSaltitude,Altitude,Airspeed,GPSspeed,Acc_1,Acc_2,Acc_3,Gyr_1,Gyr_2,Gyr_3,Mag_1,Mag_2,Mag_3\n");
+		m = sprintf(buff_all, "%Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
 		n = write(log_file, buff_all, m);
 		//printf("header size %d\n", n);
 
