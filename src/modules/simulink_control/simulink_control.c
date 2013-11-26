@@ -138,7 +138,7 @@ int simulink_control_thread_main(int argc, char *argv[])
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
 			orb_set_interval(gps_sub_fd, rate);
 
-		/* subscribe to vehicel attitude topic */
+		/* subscribe to vehicle attitude topic */
 			int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
 			orb_set_interval(attitude_sub_fd, rate);
 

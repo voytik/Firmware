@@ -28,20 +28,15 @@
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_gps_position.h>
-#include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/airspeed.h>
-#include <uORB/topics/actuator_controls.h>
-
-
+#include <uORB/topics/skydog_autopilot_setpoint.h>
 #include <systemlib/systemlib.h>
 
 // simulink model includes
-/*
-#include <simulink_control/test_ert_rtw/globalSignals.h>
-#include <simulink_control/test_ert_rtw/test.h>            // Model's header file
-#include <simulink_control/test_ert_rtw/rtwtypes.h>
-*/
+#include <skydog_path_planning/Skydog_path_planning_ert_rtw/SkydogSignals.h>
+#include <skydog_path_planning/Skydog_path_planning_ert_rtw/skydog_path_planning.h>
+#include <skydog_path_planning/Skydog_path_planning_ert_rtw/rtwtypes.h>
 
  
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -112,7 +107,7 @@ int skydog_path_planning_main(int argc, char *argv[])
 			} else {
 				warnx("\tnot started\n");
 			}
-			exit(0);I
+			exit(0);
 		}
 
 		usage("unrecognized command");
@@ -128,7 +123,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	printf("skydog_path_planning started\n");
 
 	// refresh rate in ms
-	int rate = 100;
+	int rate = 50;
 	int error_counter = 0;
 
 		/* subscribe to sensor_combined topic */
@@ -140,51 +135,47 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
 			orb_set_interval(gps_sub_fd, rate);
 
-		/* subscribe to vehicel attitude topic */
-			int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
-			orb_set_interval(attitude_sub_fd, rate);
-
 		/* subscribe to airspeed channels topic */
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
 			orb_set_interval(airspeed_sub_fd, rate);
+
+		/* subscribe to rc channels topic */
+			int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
+			orb_set_interval(rc_sub_fd, rate);
 
 			/* one could wait for multiple topics with this technique, just using one here */
 			struct pollfd fds[] = {
 				{ .fd = sensor_sub_fd,   .events = POLLIN },
 				{ .fd = gps_sub_fd,   .events = POLLIN },
-				{ .fd = attitude_sub_fd,   .events = POLLIN },
+				{ .fd = rc_sub_fd,   .events = POLLIN },
 				{ .fd = airspeed_sub_fd,   .events = POLLIN },
 			};
 
 			//buffs to hold data
 			struct sensor_combined_s sensors_raw;
 			struct vehicle_gps_position_s gps_raw;
-			struct vehicle_attitude_s attitude_raw;
 			struct airspeed_s airspeed_raw;
+			struct manual_control_setpoint_s rc_raw;
+
 			// output struct
-			struct actuator_controls_s actuators;
+			struct skydog_autopilot_setpoint_s skydog;
 
 			//set all buffers to 0
 			memset(&sensors_raw, 0, sizeof(sensors_raw));
 			memset(&gps_raw, 0, sizeof(gps_raw));
-			memset(&attitude_raw, 0, sizeof(attitude_raw));
+			memset(&rc_raw, 0, sizeof(rc_raw));
 			memset(&airspeed_raw, 0, sizeof(airspeed_raw));
-			memset(&actuators, 0, sizeof(actuators));
+			memset(&skydog, 0, sizeof(skydog));
 
-		    /* publish actuator controls with zero values */
-		    for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
-		             actuators.control[i] = 0.0f;
-		     }
-
-		     //Advertise that this controller will publish actuator
-		     orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
+		     //Advertise that this controller will publish skydog_topic
+		     orb_advert_t skydog_pub = orb_advertise(ORB_ID(skydog_autopilot_setpoint), &skydog);
 
 		     // initialize simulink model
-		     //test_initialize();
+		     Skydog_path_planning_initialize();
 
 
 			while (!thread_should_exit){
-						/* wait for sensor update of 4 file descriptor for 1000 ms (1 second) */
+						/* wait for sensor update of first file descriptor for 1000 ms (1 second) */
 						int poll_ret = poll(fds, 1, 1000);
 
 						/* handle the poll result */
@@ -206,51 +197,33 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
 								/* copy gps raw data into local buffer */
 								orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
-								/* copy attitude raw data into local buffer */
-								orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
-								/* copy rc raw data into local buffer */
+								/* copy airspeed raw data into local buffer */
 								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+								/* copy rc raw data into local buffer */
+								orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 
-								// here would be the call to simulink function
+
 								//fill in arguments
-								/*
-								 * roll = attitude_raw.roll;
-								 * pitch = attitude_raw.pitch;
-								 * yaw = attitude_raw.pitch;
-								 * rollspeed = attitude_raw.rollspeed;
-								 * pitchspeed = attitude_raw.pitchspeed;
-								 * yawspeed = attitude_raw.yawspeed;
-								 * rollacc = attitude_raw.rollacc;
-								 * pitchacc = attitude_raw.pitchacc;
-								 * yawacc = attitude_raw.yawacc;
-								 * altitude = sensors_raw.baro_alt_meter;
-								 * airspeed = airspeed_raw.true_airspeed_m_s,
-								 * heading_w = ? new topic
-								 * altitude_w = ?
-								 * speed_w = ?
-								 */
+								 Altitude_r2 = sensors_raw.baro_alt_meter;
+								 Lattitude_r = gps_raw.lat;
+								 Longitude_r = gps_raw.lon;
+								 Groundspeed_r = gps_raw.vel_m_s;
+								 Waypoints_w = 0; // TODO waypoint transfer
+								 Non_fly_zone_w = 0; // TODO no fly zone implementation
+								 Mode_w = 0; // TODO mode
+
 
 								//run Simulink code
-								//inVar = attitude_raw.roll;
-								//test_step();
-								//printf("%4.4f, %4.4f\n", inVar, outVar);
+								 Skydog_path_planning_step();
 
 								// copy output
-								/* actuators.control[0] = aileron;
-								 * actuators.control[1] = elevator;
-								 * actuators.control[2] = rudder;
-								 * actuators.control[3] = throttle;
-								 * actuators.control[4] = flaps;
-								 */
+								skydog.Roll_w = Roll_w;
+								skydog.Altitude_w = Altitude_w;
+								skydog.Airspeed_w = Airspeed_w;
+								skydog.Valid = true;
 
-
-								/* sanity check and publish actuator outputs */
-								if (isfinite(actuators.control[0]) &&
-									isfinite(actuators.control[1]) &&
-									isfinite(actuators.control[2]) &&
-									isfinite(actuators.control[3])) {
-								orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-									}
+								/* publish values to skydog_autopilot_setpoint topic*/
+								orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
 
 
 								//printf("[skydog_path_planning] Loop processed \n");
@@ -261,15 +234,10 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			printf("[skydog_path_planning] exiting, stopping all motors.\n");
 				thread_running = false;
 
-				/* kill all outputs */
-				for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++)
-					actuators.control[i] = 0.0f;
+				/* set Valid flag to false and publish */
+				skydog.Valid = false;
+				orb_publish(ORB_ID_SKYDOG_AUTOPILOT_SETPOINT, skydog_pub, &skydog);
 
-				orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-
-
-				fflush(stdout);
 				exit(0);
-
 				return 0;
 }
