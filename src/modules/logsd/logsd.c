@@ -142,7 +142,7 @@ int logsd_thread_main(int argc, char *argv[])
 		int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
 		orb_set_interval(gps_sub_fd, rate);
 
-	/* subscribe to vehicel attitude topic */
+	/* subscribe to vehicle attitude topic */
 		int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
 		orb_set_interval(attitude_sub_fd, rate);
 
@@ -262,7 +262,7 @@ int logsd_thread_main(int argc, char *argv[])
 							gps_raw.alt,
 							sensors_raw.baro_alt_meter,
 							airspeed_raw.true_airspeed_m_s,
-							gps_raw.vel_d_m_s,
+							gps_raw.vel_m_s,
 							sensors_raw.accelerometer_m_s2[0],
 							sensors_raw.accelerometer_m_s2[1],
 							sensors_raw.accelerometer_m_s2[2],

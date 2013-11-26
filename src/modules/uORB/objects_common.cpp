@@ -193,3 +193,6 @@ ORB_DEFINE(navigation_capabilities, struct navigation_capabilities_s);
 
 #include "topics/esc_status.h"
 ORB_DEFINE(esc_status, struct esc_status_s);
+
+#include "topics/skydog_autopilot_setpoint.h"
+ORB_DEFINE(skydog_autopilot_setpoint, struct skydog_autopilot_setpoint_s);

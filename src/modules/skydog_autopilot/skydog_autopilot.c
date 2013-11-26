@@ -29,19 +29,19 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_controls.h>
-
+#include <uORB/topics/skydog_autopilot_setpoint.h>
 
 #include <systemlib/systemlib.h>
 
 // simulink model includes
-/*
-#include <skydog_autopilot/test_ert_rtw/globalSignals.h>
-#include <skydog_autopilot/test_ert_rtw/test.h>            // Model's header file
-#include <skydog_autopilot/test_ert_rtw/rtwtypes.h>
-*/
+#include <Skydog_autopilot/Skydog_autopilot_ert_rtw/SkydogSignals.h>
+#include <skydog_autopilot/Skydog_autopilot_ert_rtw/Skydog_autopilot.h>
+#include <skydog_autopilot/Skydog_autopilot_ert_rtw/rtwtypes.h>
+
 
  
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -140,28 +140,39 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
 			orb_set_interval(gps_sub_fd, rate);
 
-		/* subscribe to vehicel attitude topic */
+		/* subscribe to vehicle attitude topic */
 			int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
 			orb_set_interval(attitude_sub_fd, rate);
 
+		/* subscribe to vehicle mode topic */
+			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
+			orb_set_interval(control_mode_sub_fd, rate);
 
 		/* subscribe to airspeed channels topic */
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
 			orb_set_interval(airspeed_sub_fd, rate);
 
-			/* one could wait for multiple topics with this technique, just using one here */
+		/* subscribe to rc channels topic */
+			int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
+			orb_set_interval(rc_sub_fd, rate);
+
+		/* subscribe to skydog_autopilot_setpoint  topic */
+			int skydog_sub_fd = orb_subscribe(ORB_ID(skydog_autopilot_setpoint));
+			orb_set_interval(skydog_sub_fd, rate);
+
+			/* one could wait for multiple topics with this technique */
 			struct pollfd fds[] = {
-				{ .fd = sensor_sub_fd,   .events = POLLIN },
-				{ .fd = gps_sub_fd,   .events = POLLIN },
-				{ .fd = attitude_sub_fd,   .events = POLLIN },
-				{ .fd = airspeed_sub_fd,   .events = POLLIN },
+				{ .fd = sensor_sub_fd,   .events = POLLIN }
 			};
 
 			//buffs to hold data
 			struct sensor_combined_s sensors_raw;
 			struct vehicle_gps_position_s gps_raw;
 			struct vehicle_attitude_s attitude_raw;
+			struct vehicle_control_mode_s control_mode;
 			struct airspeed_s airspeed_raw;
+			struct manual_control_setpoint_s rc_raw;
+			struct skydog_autopilot_setpoint_s skydog;
 			// output struct
 			struct actuator_controls_s actuators;
 
@@ -169,19 +180,21 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			memset(&sensors_raw, 0, sizeof(sensors_raw));
 			memset(&gps_raw, 0, sizeof(gps_raw));
 			memset(&attitude_raw, 0, sizeof(attitude_raw));
+			memset(&control_mode, 0, sizeof(control_mode));
 			memset(&airspeed_raw, 0, sizeof(airspeed_raw));
+			memset(&rc_raw, 0, sizeof(rc_raw));
 			memset(&actuators, 0, sizeof(actuators));
+			memset(&skydog, 0, sizeof(skydog));
 
 		    /* publish actuator controls with zero values */
 		    for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
 		             actuators.control[i] = 0.0f;
 		     }
-
-		     //Advertise that this controller will publish actuator
+		     //Advertise that this controller will publish actuator and make first publication
 		     orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
 		     // initialize simulink model
-		     //test_initialize();
+		     Skydog_autopilot_initialize();
 
 
 			while (!thread_should_exit){
@@ -209,41 +222,72 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
 								/* copy attitude raw data into local buffer */
 								orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
+								/* copy vehicle mode data into local buffer */
+								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
 								/* copy rc raw data into local buffer */
 								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+								/* copy rc raw data into local buffer */
+								orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+								/* copy skydog data into local buffer */
+								orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
 
-								// here would be the call to simulink function
-								//fill in arguments
-								/*
-								 * roll = attitude_raw.roll;
-								 * pitch = attitude_raw.pitch;
-								 * yaw = attitude_raw.pitch;
-								 * rollspeed = attitude_raw.rollspeed;
-								 * pitchspeed = attitude_raw.pitchspeed;
-								 * yawspeed = attitude_raw.yawspeed;
-								 * rollacc = attitude_raw.rollacc;
-								 * pitchacc = attitude_raw.pitchacc;
-								 * yawacc = attitude_raw.yawacc;
-								 * altitude = sensors_raw.baro_alt_meter;
-								 * airspeed = airspeed_raw.true_airspeed_m_s,
-								 * heading_w = ? new topic
-								 * altitude_w = ?
-								 * speed_w = ?
-								 */
+								// is MODE MANUAL selected
+								if (control_mode.flag_control_manual_enabled) {
 
-								//run Simulink code
-								//inVar = attitude_raw.roll;
-								//test_step();
-								//printf("%4.4f, %4.4f\n", inVar, outVar);
+									// MODE MANUAL selected
+									//printf("[skydog_autopilot] MODE MANUAL selected\n");
 
-								// copy output
-								/* actuators.control[0] = aileron;
-								 * actuators.control[1] = elevator;
-								 * actuators.control[2] = rudder;
-								 * actuators.control[3] = throttle;
-								 * actuators.control[4] = flaps;
-								 */
+									// just copy RC input directly to output
+									actuators.control[0] = rc_raw.roll;
+									actuators.control[1] = rc_raw.pitch;
+									actuators.control[2] = rc_raw.yaw;
+									actuators.control[3] = rc_raw.throttle;
+									actuators.control[4] = rc_raw.aux1;
 
+								}else{
+
+									//fill in inputs for simulink code
+									Roll_w = skydog.Roll_w;
+									Altitude_w = skydog.Altitude_w;
+									Groundspeed_w = skydog.Groundspeed_w;
+									Altitude_r = sensors_raw.baro_alt_meter;
+									Roll_r = attitude_raw.roll;
+									Groundspeed_r = gps_raw.vel_m_s;
+									Pitch_r = attitude_raw.pitch;
+									Yaw_r = attitude_raw.yaw;
+									Roll_speed_r = attitude_raw.rollspeed;
+									Pitch_speed_r = attitude_raw.pitchspeed;
+									Yaw_speed_r = attitude_raw.yawspeed;
+									Roll_acc_r = attitude_raw.rollacc;
+									Pitch_acc_r = attitude_raw.pitchacc;
+									Yaw_acc_r = attitude_raw.yawacc;
+									RC_aileron_r = rc_raw.roll;
+									RC_elevator_r = rc_raw.pitch;
+									RC_rudder_r = rc_raw.yaw;
+									RC_throttle_r = rc_raw.throttle;
+									RC_flaps_r = rc_raw.aux1;
+
+									if (control_mode.flag_control_attitude_enabled) {
+										// is MODE STABILIZATION selected
+										//printf("[skydog_autopilot] MODE STABILIZATION selected\n");
+										Mode_w = 1;
+									}else{
+										// is MODE AUTOPILOT selected
+										//printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
+										Mode_w = 2;
+									}
+
+									//run Simulink code
+									Skydog_autopilot_step();
+
+									// copy output
+									actuators.control[0] = Aileron_w;
+									actuators.control[1] = Elevator_w;
+									actuators.control[2] = Rudder_w;
+									actuators.control[3] = Throttle_w;
+									actuators.control[4] = Flaps_w;
+
+								}
 
 								/* sanity check and publish actuator outputs */
 								if (isfinite(actuators.control[0]) &&
@@ -254,7 +298,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									}
 
 
-								//printf("[simulink_control] Loop processed \n");
 							}
 					}
 			}
