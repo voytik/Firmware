@@ -50,6 +50,7 @@
 #include <drivers/drv_hrt.h>
 
 #include <systemlib/perf_counter.h>
+#include <systemlib/pwm_limit/pwm_limit.h>
 
 #include <stm32_uart.h>
 
@@ -63,6 +64,8 @@ extern void up_cxxinitialize(void);
 struct sys_state_s 	system_state;
 
 static struct hrt_call serial_dma_call;
+
+pwm_limit_t pwm_limit;
 
 /*
  * a set of debug buffers to allow us to send debug information from ISRs
@@ -112,6 +115,13 @@ show_debug_messages(void)
 			msg_next_out = (msg_next_out+1) % NUM_MSG;
 		}
 	}
+}
+
+static void
+heartbeat_blink(void)
+{
+	static bool heartbeat = false;
+	LED_BLUE(heartbeat = !heartbeat);
 }
 
 int
@@ -171,6 +181,9 @@ user_start(int argc, char *argv[])
 	struct mallinfo minfo = mallinfo();
 	lowsyslog("MEM: free %u, largest %u\n", minfo.mxordblk, minfo.fordblks);
 
+	/* initialize PWM limit lib */
+	pwm_limit_init(&pwm_limit);
+
 #if 0
 	/* not enough memory, lock down */
 	if (minfo.mxordblk < 500) {
@@ -195,6 +208,7 @@ user_start(int argc, char *argv[])
 	 */
 
 	uint64_t last_debug_time = 0;
+        uint64_t last_heartbeat_time = 0;
 	for (;;) {
 
 		/* track the rate at which the loop is running */
@@ -209,6 +223,11 @@ user_start(int argc, char *argv[])
 		perf_begin(controls_perf);
 		controls_tick();
 		perf_end(controls_perf);
+
+                if ((hrt_absolute_time() - last_heartbeat_time) > 250*1000) {
+                    last_heartbeat_time = hrt_absolute_time();
+                    heartbeat_blink();
+                }
 
 #if 0
 		/* check for debug activity */
