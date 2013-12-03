@@ -241,13 +241,10 @@ l_vehicle_attitude(const struct listener *l)
 					  att.yaw,
 					  att.rollspeed,
 					  att.pitchspeed,
-<<<<<<< HEAD
 					  att.yawspeed,
 					  att.rollacc,
 					  att.pitchacc,
 					  att.yawacc);
-=======
-					  att.yawspeed);
 
 		/* limit VFR message rate to 10Hz */
 		hrt_abstime t = hrt_absolute_time();
@@ -260,7 +257,6 @@ l_vehicle_attitude(const struct listener *l)
 		}
 	}
 
->>>>>>> 0d30fe31a7fac8ab819fe45485e7714fc209940d
 	attitude_counter++;
 }
 

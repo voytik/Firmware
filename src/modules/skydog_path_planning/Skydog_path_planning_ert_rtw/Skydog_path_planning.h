@@ -3,17 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
-<<<<<<< HEAD
  * Model version                  : 1.148
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
  * C/C++ source code generated on : Mon Dec 02 22:04:28 2013
-=======
- * Model version                  : 1.130
- * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
- * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Tue Nov 26 21:43:50 2013
->>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -45,13 +38,8 @@
 
 /* Parameters (auto storage) */
 struct Parameters_Skydog_path_planning_ {
-<<<<<<< HEAD
   real32_T Gain3_Gain;                 /* Computed Parameter: Gain3_Gain
                                         * Referenced by: '<S1>/Gain3'
-=======
-  real32_T Gain_Gain;                  /* Computed Parameter: Gain_Gain
-                                        * Referenced by: '<S1>/Gain'
->>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
                                         */
   real32_T Gain1_Gain;                 /* Computed Parameter: Gain1_Gain
                                         * Referenced by: '<S1>/Gain1'

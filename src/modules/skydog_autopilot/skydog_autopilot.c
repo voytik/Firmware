@@ -152,30 +152,18 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
 			orb_set_interval(airspeed_sub_fd, rate);
 
-<<<<<<< HEAD
 		/* subscribe to rc channels topic */
 			int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
 			orb_set_interval(rc_sub_fd, rate);
 
-=======
->>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
 		/* subscribe to skydog_autopilot_setpoint  topic */
 			int skydog_sub_fd = orb_subscribe(ORB_ID(skydog_autopilot_setpoint));
 			orb_set_interval(skydog_sub_fd, rate);
 
-<<<<<<< HEAD
+
 			/* one could wait for multiple topics with this technique */
 			struct pollfd fds[] = {
 				{ .fd = sensor_sub_fd,   .events = POLLIN }
-=======
-			/* one could wait for multiple topics with this technique, just using one here */
-			struct pollfd fds[] = {
-				{ .fd = sensor_sub_fd,   .events = POLLIN },
-				{ .fd = gps_sub_fd,   .events = POLLIN },
-				{ .fd = attitude_sub_fd,   .events = POLLIN },
-				{ .fd = airspeed_sub_fd,   .events = POLLIN },
-				{ .fd = skydog_sub_fd,   .events = POLLIN },
->>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
 			};
 
 			//buffs to hold data
@@ -184,10 +172,8 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			struct vehicle_attitude_s attitude_raw;
 			struct vehicle_control_mode_s control_mode;
 			struct airspeed_s airspeed_raw;
-<<<<<<< HEAD
 			struct manual_control_setpoint_s rc_raw;
-=======
->>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
+
 			struct skydog_autopilot_setpoint_s skydog;
 			// output struct
 			struct actuator_controls_s actuators;
@@ -242,7 +228,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
 								/* copy rc raw data into local buffer */
 								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
-<<<<<<< HEAD
 								/* copy rc raw data into local buffer */
 								orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 								/* copy skydog data into local buffer */
@@ -303,40 +288,9 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[2] = Rudder_w;
 									actuators.control[3] = Throttle_w;
 									actuators.control[4] = Flaps_w;
-=======
+
 								/* copy skydog data into local buffer */
 								orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
-
-								//fill in arguments
-								/*
-								 * roll = attitude_raw.roll;
-								 * pitch = attitude_raw.pitch;
-								 * yaw = attitude_raw.pitch;
-								 * rollspeed = attitude_raw.rollspeed;
-								 * pitchspeed = attitude_raw.pitchspeed;
-								 * yawspeed = attitude_raw.yawspeed;
-								 * rollacc = attitude_raw.rollacc;
-								 * pitchacc = attitude_raw.pitchacc;
-								 * yawacc = attitude_raw.yawacc;
-								 * altitude = sensors_raw.baro_alt_meter;
-								 * airspeed = airspeed_raw.true_airspeed_m_s,
-								 * heading_w = ? new topic
-								 * altitude_w = ?
-								 * speed_w = ?
-								 */
-
-								//run Simulink code
-								 Skydog_autopilot_step();
-								//printf("%4.4f, %4.4f\n", inVar, outVar);
-
-								// copy output
-								/* actuators.control[0] = aileron;
-								 * actuators.control[1] = elevator;
-								 * actuators.control[2] = rudder;
-								 * actuators.control[3] = throttle;
-								 * actuators.control[4] = flaps;
-								 */
->>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
 
 								}
 
