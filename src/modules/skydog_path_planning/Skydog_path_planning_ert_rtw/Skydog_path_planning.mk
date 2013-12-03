@@ -89,7 +89,11 @@ ALT_MATLAB_ROOT         = C:\PROGRA~1\MATLAB\R2011b
 MATLAB_BIN              = C:\Program Files\MATLAB\R2011b\bin
 ALT_MATLAB_BIN          = C:\PROGRA~1\MATLAB\R2011b\bin
 MASTER_ANCHOR_DIR       = 
+<<<<<<< HEAD
 START_DIR               = E:\Skydrive\MECHAT~1\!Ing\Diplomka\MODELC~2
+=======
+START_DIR               = E:\Dropbox\Skydog\_Modely\SKYDOG~1
+>>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
 S_FUNCTIONS             = 
 S_FUNCTIONS_LIB         = 
 NUMST                   = 1

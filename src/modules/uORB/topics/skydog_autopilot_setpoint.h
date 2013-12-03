@@ -21,8 +21,13 @@ struct skydog_autopilot_setpoint_s
 {
 	float Roll_w;		// wanted roll [rad]
 	float Altitude_w;	// wanted altitude [m]
+<<<<<<< HEAD
 	float Groundspeed_w;	// wanted airspeed [m/s]
 	bool Valid;			// other values valid?
+=======
+	float Airspeed_w;	// wanted airspeed [m/s]
+	bool Valid;
+>>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
 };
 
 /* register this as object request broker structure */

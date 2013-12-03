@@ -204,6 +204,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 
 								//fill in arguments
+<<<<<<< HEAD
 								 Altitude2_r = sensors_raw.baro_alt_meter;
 								 Lattitude_r = gps_raw.lat;
 								 Longitude_r = gps_raw.lon;
@@ -220,6 +221,24 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								skydog.Roll_w = Roll_w;
 								skydog.Altitude_w = Altitude_w;
 								skydog.Groundspeed_w = Groundspeed_w;
+=======
+								 Altitude_r2 = sensors_raw.baro_alt_meter;
+								 Lattitude_r = gps_raw.lat;
+								 Longitude_r = gps_raw.lon;
+								 Groundspeed_r = gps_raw.vel_m_s;
+								 Waypoints_w = 0; // TODO waypoint transfer
+								 Non_fly_zone_w = 0; // TODO no fly zone implementation
+								 Mode_w = 0; // TODO mode
+
+
+								//run Simulink code
+								 Skydog_path_planning_step();
+
+								// copy output
+								skydog.Roll_w = Roll_w;
+								skydog.Altitude_w = Altitude_w;
+								skydog.Airspeed_w = Airspeed_w;
+>>>>>>> 8587d3062e901e9cd7c49fdf92e2582568eabde1
 								skydog.Valid = true;
 
 								/* publish values to skydog_autopilot_setpoint topic*/
