@@ -131,7 +131,7 @@ int logsd_thread_main(int argc, char *argv[])
 	printf("logsd started\n");
 
 	// refresh rate in ms
-	int rate = 10;
+	int rate = 20;
 
 	/* subscribe to sensor_combined topic */
 		int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -172,7 +172,7 @@ int logsd_thread_main(int argc, char *argv[])
 		int n = 0;
 		int i = 0;
 		int m = 0;
-		char buff_all[300];
+		char buff_all[350];
 
 		//buffs to hold data
 		struct sensor_combined_s sensors_raw;
@@ -277,8 +277,13 @@ int logsd_thread_main(int argc, char *argv[])
 
 						//printf("data written to buffer %d\n", n);
 						//printf("%s", buff_all);
-
-					m = write(log_file, buff_all, n);
+					// check if buffer not overloaded
+					if (n>350)
+					{
+						printf("[logsd] buffer overloaded, tried to write %d bytes\n", n);
+					}else{
+						m = write(log_file, buff_all, n);
+					}
 					//check if write succesful
 					if (m == -1)
 					{
@@ -289,7 +294,7 @@ int logsd_thread_main(int argc, char *argv[])
 					i++;
 
 					// flush data to file every second
-					if (i%100==0)
+					if (i%500==0)
 					{
 						fsync(log_file);
 						//printf("%s", read_ptr);

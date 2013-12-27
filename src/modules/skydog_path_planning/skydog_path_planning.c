@@ -29,6 +29,7 @@
 #include <uORB/topics/sensor_combined.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/manual_control_setpoint.h>
+#include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/skydog_autopilot_setpoint.h>
 #include <systemlib/systemlib.h>
@@ -143,12 +144,13 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
 			orb_set_interval(rc_sub_fd, rate);
 
+		/* subscribe to vehicle mode topic */
+			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
+			orb_set_interval(control_mode_sub_fd, rate);
+
 			/* one could wait for multiple topics with this technique, just using one here */
 			struct pollfd fds[] = {
 				{ .fd = sensor_sub_fd,   .events = POLLIN },
-				{ .fd = gps_sub_fd,   .events = POLLIN },
-				{ .fd = rc_sub_fd,   .events = POLLIN },
-				{ .fd = airspeed_sub_fd,   .events = POLLIN },
 			};
 
 			//buffs to hold data
@@ -156,6 +158,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			struct vehicle_gps_position_s gps_raw;
 			struct airspeed_s airspeed_raw;
 			struct manual_control_setpoint_s rc_raw;
+			struct vehicle_control_mode_s control_mode;
 
 			// output struct
 			struct skydog_autopilot_setpoint_s skydog;
@@ -166,6 +169,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			memset(&rc_raw, 0, sizeof(rc_raw));
 			memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 			memset(&skydog, 0, sizeof(skydog));
+			memset(&control_mode, 0, sizeof(control_mode));
 
 		     //Advertise that this controller will publish skydog_topic
 		     orb_advert_t skydog_pub = orb_advertise(ORB_ID(skydog_autopilot_setpoint), &skydog);
@@ -193,41 +197,49 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 						} else {
 
 							if (fds[0].revents & POLLIN) {
-								/* copy sensors raw data into local buffer */
-								orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
-								/* copy gps raw data into local buffer */
-								orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
-								/* copy airspeed raw data into local buffer */
-								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
-								/* copy rc raw data into local buffer */
-								orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+
+								/* copy vehicle mode data into local buffer */
+								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
+
+								// check if not manual mode selected, if so don't run simulink code
+								if (!control_mode.flag_control_manual_enabled){
+
+									/* copy sensors raw data into local buffer */
+									orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
+									/* copy gps raw data into local buffer */
+									orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
+									/* copy airspeed raw data into local buffer */
+									orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+									/* copy rc raw data into local buffer */
+									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 
 
-								//fill in arguments
-								 Altitude2_r = sensors_raw.baro_alt_meter;
-								 Lattitude_r = gps_raw.lat;
-								 Longitude_r = gps_raw.lon;
-								 Groundspeed2_r = gps_raw.vel_m_s;
-								 Waypoints_w = 0; // TODO waypoint transfer
-								 Non_fly_zone_w = 0; // TODO no fly zone implementation
-								 Mode2_w = 0; // TODO mode
+									//fill in arguments
+									Altitude2_r = sensors_raw.baro_alt_meter;
+									Lattitude_r = gps_raw.lat;
+									Longitude_r = gps_raw.lon;
+									Groundspeed2_r = gps_raw.vel_m_s;
+									Waypoints_w = 0; // TODO waypoint transfer
+									Non_fly_zone_w = 0; // TODO no fly zone implementation
+									Mode2_w = 2; // TODO mode
 
 
-								//run Simulink code
-								 Skydog_path_planning_step();
+									//run Simulink code
+									Skydog_path_planning_step();
 
-								// copy output to skydog topic
-								skydog.Roll_w = Roll_w;
-								skydog.Altitude_w = Altitude_w;
-								skydog.Groundspeed_w = Groundspeed_w;
-								skydog.Valid = true;
+									// copy output to skydog topic
+									skydog.Roll_w = Roll_w;
+									skydog.Altitude_w = Altitude_w;
+									skydog.Groundspeed_w = Groundspeed_w;
+									skydog.Valid = true;
 
-								/* publish values to skydog_autopilot_setpoint topic*/
-								orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
+									/* publish values to skydog_autopilot_setpoint topic*/
+									orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
 
 
-								//printf("[skydog_path_planning] Loop processed \n");
-							}
+									//printf("[skydog_path_planning] Loop processed \n");
+								}
+						}
 					}
 			}
 
