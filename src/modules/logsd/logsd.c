@@ -172,7 +172,7 @@ int logsd_thread_main(int argc, char *argv[])
 		int n = 0;
 		int i = 0;
 		int m = 0;
-		int buff_size = 350;
+		size_t buff_size = 350;
 		char buff_all[buff_size];
 
 		//buffs to hold data
@@ -197,8 +197,14 @@ int logsd_thread_main(int argc, char *argv[])
 		int log_file = open_logfile();
 
 		//write header
-		m = sprintf(buff_all, "%Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
-		n = write(log_file, buff_all, m);
+		n = snprintf(buff_all, buff_size,"%Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
+		if (n>buff_size)
+		{
+			m = write(log_file, buff_all, buff_size);
+		}else
+		{
+			m = write(log_file, buff_all, n);
+		}
 		//printf("header size %d\n", n);
 
 
@@ -279,7 +285,7 @@ int logsd_thread_main(int argc, char *argv[])
 						//printf("data written to buffer %d\n", n);
 						//printf("%s", buff_all);
 					// check if buffer not overloaded
-					if (n>350)
+					if (n>buff_size)
 					{
 						printf("[logsd] buffer overloaded, tried to write %d bytes, excessing data cropped\n", n);
 						m = write(log_file, buff_all, buff_size);
