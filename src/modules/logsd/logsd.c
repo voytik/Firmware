@@ -172,7 +172,8 @@ int logsd_thread_main(int argc, char *argv[])
 		int n = 0;
 		int i = 0;
 		int m = 0;
-		char buff_all[350];
+		int buff_size = 350;
+		char buff_all[buff_size];
 
 		//buffs to hold data
 		struct sensor_combined_s sensors_raw;
@@ -237,7 +238,7 @@ int logsd_thread_main(int argc, char *argv[])
 					/* ---- logging starts here ---- */
 
 						// write to already allocated buffer
-						n = sprintf(buff_all, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+						n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
 							attitude_raw.roll,
 							attitude_raw.pitch,
 							attitude_raw.yaw,
@@ -280,7 +281,8 @@ int logsd_thread_main(int argc, char *argv[])
 					// check if buffer not overloaded
 					if (n>350)
 					{
-						printf("[logsd] buffer overloaded, tried to write %d bytes\n", n);
+						printf("[logsd] buffer overloaded, tried to write %d bytes, excessing data cropped\n", n);
+						m = write(log_file, buff_all, buff_size);
 					}else{
 						m = write(log_file, buff_all, n);
 					}
