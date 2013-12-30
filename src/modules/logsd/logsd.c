@@ -171,7 +171,7 @@ int logsd_thread_main(int argc, char *argv[])
 		int error_counter = 0;
 		int n = 0;
 		int i = 0;
-		int m = 0;
+		ssize_t m = 0;
 		size_t buff_size = 350;
 		char buff_all[buff_size];
 
