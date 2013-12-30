@@ -1,6 +1,6 @@
 /**
  * @file logsd.c
- * Aapplication for PX4 logging into csv file.
+ * Application for PX4 logging into csv file.
  *
  * Author: Vojtech Kuchar
  * vojtech.kuchar@seznam.cz
@@ -68,10 +68,34 @@ static const int MAX_NO_LOGFOLDER = 999;	/**< Maximum number of log folders */
 static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
 static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
+// logging constants
+static size_t buff_size = 350; // [bytes]
+static unsigned long int logging_frequency = 50; // [Hz]
+static unsigned long int flush_in_seconds = 5;
+static bool debug = false;
+static int debug_file;
+static FILE *file;
+
 
 static bool file_exist(const char *filename);
 static int create_logfolder(void);
 static int open_logfile(void);
+static int open_debugfile(void);
+static int write_debugfile(char *message);
+static void logsd_usage(const char *reason);
+
+static void
+logsd_usage(const char *reason)
+{
+        if (reason)
+                fprintf(stderr, "%s\n", reason);
+
+        errx(1, "usage: logsd {start|stop|status} [-f <log rate>] [-b <buffer size>] [-s <flush every x second>] [debug]\n"
+             "\t-r\tLog rate in Hz, 50Hz default\n"
+             "\t-b\tLog buffer size in bytes, default is 350\n"
+        	 "\t-s\tFlush to SD card every defined second, default is 5\n"
+             "\tdebug\tEnable debugging (not default)\n");
+}
 
 /**
  * The daemon app only briefly exists to start
@@ -95,12 +119,12 @@ int logsd_main(int argc, char *argv[])
 			}
 
 			thread_should_exit = false;
-			daemon_task = task_spawn_cmd("daemon",
+			daemon_task = task_spawn_cmd("logsd",
 						 SCHED_DEFAULT,
-						 SCHED_PRIORITY_DEFAULT,
+						 SCHED_PRIORITY_DEFAULT-30,
 						 8192,
 						 logsd_thread_main,
-						 (argv) ? (const char **)&argv[2] : (const char **)NULL);
+						 (const char **)argv);
 			exit(0);
 		}
 
@@ -130,8 +154,52 @@ int logsd_thread_main(int argc, char *argv[])
 
 	printf("logsd started\n");
 
+	/* work around some stupidity in task_create's argv handling */
+	argc -= 2;
+	argv += 2;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "f:b:s:debug")) != EOF) {
+			switch (ch) {
+			case 'f': {
+							logging_frequency = strtoul(optarg, NULL, 10);
+							if (logging_frequency < 1)
+							{ logging_frequency = 1;
+							  warnx("Minimal logging frequency is 1Hz, setting this");
+							}
+					}
+					break;
+
+			case 'b': {
+						buff_size = strtoul(optarg, NULL, 10);
+							if (buff_size < 350) {
+								buff_size = 350;
+								warnx("Minimal buffer size is 350 bytes, setting this");
+							}
+					}
+					break;
+
+			case 's': {
+						flush_in_seconds = strtoul(optarg, NULL, 10);
+							if (flush_in_seconds < 1) {
+								flush_in_seconds = 1;
+								warnx("Minimal flushing is every second, setting this");
+							}
+						}
+						break;
+
+			case 'debug':
+					debug = true;
+					break;
+
+			default:
+					logsd_usage("unrecognized flag");
+					errx(1, "exiting.");
+			}
+	}
+
 	// refresh rate in ms
-	int rate = 20;
+	int rate = 1000/logging_frequency;
 
 	/* subscribe to sensor_combined topic */
 		int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -171,8 +239,9 @@ int logsd_thread_main(int argc, char *argv[])
 		int error_counter = 0;
 		int n = 0;
 		int i = 0;
-		int m = 0;
-		size_t buff_size = 350;
+		ssize_t m = 0;
+
+		// buff for log string
 		char buff_all[buff_size];
 
 		//buffs to hold data
@@ -195,33 +264,52 @@ int logsd_thread_main(int argc, char *argv[])
 		printf("[logsd] start logging\n");
 		create_logfolder();
 		int log_file = open_logfile();
+		if (debug)
+		{
+			//open debug file
+
+			char file_path[64];
+			sprintf(file_path, "%s/logsd_debug.txt", folder_path);
+			file = fopen(file_path,"a+"); /* apend file (add text to a file or create a file if it does not exist.*/
+			//debug_file = open_debugfile();
+		}
 
 		//write header
-		n = snprintf(buff_all, buff_size,"%Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
+		n = snprintf(buff_all, buff_size,"% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
+		//check if buffer large enough
 		if (n>buff_size)
 		{
+			// if not, write only buffer bytes
 			m = write(log_file, buff_all, buff_size);
+			if (debug)
+			{	fprintf(file, "[logsd] Writing header, which is larger then buffer: %d \n",n);
+				printf("[logsd] Writing header, which is larger then buffer: %d bytes\n",n);
+			//write_debugfile(debug_buff);
+			}
 		}else
 		{
+			// if yes write actual size of string bytes
 			m = write(log_file, buff_all, n);
 		}
-		//printf("header size %d\n", n);
 
-
-		while (!thread_should_exit){
+		do {
 			/* wait for sensor update of 4 file descriptor for 1000 ms (1 second) */
 			int poll_ret = poll(fds, 1, 1000);
 
 			/* handle the poll result */
 			if (poll_ret == 0) {
 				/* this means none of our providers is giving us data */
-				printf("[logsd] Got no data within a second\n");
+				if (debug)
+				{fprintf(file, "%s","[logsd] Got no data within a second\n");
+				 printf("[logsd] Got no data within a second\n");
+				}
 			} else if (poll_ret < 0) {
 				/* this is seriously bad - should be an emergency */
 				if (error_counter < 10 || error_counter % 50 == 0) {
 					/* use a counter to prevent flooding (and slowing us down) */
-					printf("[logsd] ERROR return value from poll(): %d\n"
-						, poll_ret);
+					if (debug)
+					{fprintf(file, "[logsd] ERROR return value from poll(): %d\n", poll_ret);
+					 printf("[logsd] ERROR return value from poll(): %d\n", poll_ret);}
 				}
 				error_counter++;
 			} else {
@@ -281,13 +369,15 @@ int logsd_thread_main(int argc, char *argv[])
 							sensors_raw.magnetometer_ga[2]);
 
 							//sensors_raw.timestamp);
+;
 
-						//printf("data written to buffer %d\n", n);
-						//printf("%s", buff_all);
 					// check if buffer not overloaded
 					if (n>buff_size)
 					{
-						printf("[logsd] buffer overloaded, tried to write %d bytes, excessing data cropped\n", n);
+						if(debug)
+						{fprintf(file, "[logsd] buffer overloaded, tried to write %d bytes, excessing data cropped\n", n);
+						 printf("[logsd] buffer overloaded, tried to write %d bytes, excessing data cropped\n", n);
+						}
 						m = write(log_file, buff_all, buff_size);
 					}else{
 						m = write(log_file, buff_all, n);
@@ -295,21 +385,26 @@ int logsd_thread_main(int argc, char *argv[])
 					//check if write succesful
 					if (m == -1)
 					{
-						printf("[logsd] write error: %s, exiting\n", strerror(errno));
+						if (debug)
+						{fprintf(file, "[logsd] write error: %s, exiting\n", strerror(errno));
+						 printf("[logsd] write error: %s, exiting\n", strerror(errno));}
 						thread_should_exit = true;
 						fsync(log_file);
 					}
 					i++;
 
-					// flush data to file every second
-					if (i%500==0)
+					// flush data to file every x second
+					if (i%(flush_in_seconds*logging_frequency)==0)
 					{
 						fsync(log_file);
-						//printf("%s", read_ptr);
 
+						if (debug)
+						{printf("%s", buff_all);
+						 printf("written to file: %d bytes\n", m);
 
-						printf("%s", buff_all);
-						printf("written to file %d\n", m);
+						 fprintf(file, "%s", buff_all);
+						 fprintf(file, "written to file: %d bytes\n", m);
+						}
 
 						/*
 						printf("timestamp: %PRIu64\n",
@@ -318,10 +413,14 @@ int logsd_thread_main(int argc, char *argv[])
 					}
 				}
 			}
-		}
+		} while (!thread_should_exit);
 
 		fsync(log_file);
 		close(log_file);
+		if (debug)
+		{
+			fclose(file);
+		}
 		printf("[logsd] stop logging\n");
 
 		thread_running = false;
@@ -377,7 +476,7 @@ int open_logfile()
 
 	/* look for the next file that does not exist */
 	while (file_number <= MAX_NO_LOGFILE) {
-		/* set up file path: e.g. /fs/microsd/sess001/log001.bin */
+		/* set up file path: e.g. /fs/microsd/sess001/log001.csv */
 		sprintf(path_buf, "%s/log%03u.txt", folder_path, file_number);
 
 		if (file_exist(path_buf)) {
@@ -404,6 +503,63 @@ int open_logfile()
 	}
 
 	return 0;
+}
+int open_debugfile()
+{
+	/* make folder on sdcard */
+	uint16_t file_number = 1; // start with file log001
+
+	/* string to hold the path to the log */
+	char path_buf[64] = "";
+
+	int fd = 0;
+
+	/* look for the next file that does not exist */
+	while (file_number <= MAX_NO_LOGFILE) {
+		/* set up file path: e.g. /fs/microsd/sess001/debug.txt */
+		sprintf(path_buf, "%s/debug%03u.txt", folder_path, file_number);
+
+		if (file_exist(path_buf)) {
+			file_number++;
+			continue;
+		}
+
+		fd = open(path_buf, O_CREAT | O_WRONLY | O_DSYNC);
+
+		if (fd == 0) {
+			warn("opening %s failed", path_buf);
+		}
+
+		warnx("logging to: %s.", path_buf);
+		//mavlink_log_info(mavlink_fd, "[sdlog2] log: %s", path_buf);
+
+		return fd;
+	}
+
+	if (file_number > MAX_NO_LOGFILE) {
+		/* we should not end up here, either we have more than MAX_NO_LOGFILE on the SD card, or another problem */
+		warnx("all %d possible files exist already.", MAX_NO_LOGFILE);
+		return -1;
+	}
+
+	return 0;
+}
+
+int write_debugfile(char *message)
+{
+	// check if debug file opened
+	if(!debug_file == -1)
+	{
+		//get size of message
+		size_t len = strlen(message);
+		//write to file
+		ssize_t m = write(debug_file, message, len);
+		// sync to SD card
+		fsync(debug_file);
+		// print to console
+		printf(message);
+	}
+
 }
 
 bool file_exist(const char *filename)
