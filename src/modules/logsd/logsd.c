@@ -277,7 +277,11 @@ int logsd_thread_main(int argc, char *argv[])
 		}
 
 		//write header
-		n = snprintf(buff_all, buff_size,"%% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
+		n = snprintf(buff_all, buff_size,"%% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
+				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
+				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
+				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],"
+				"Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n%% Logging frequency %d Hz\n",logging_frequency);
 		//check if buffer large enough
 		if (n>buff_size)
 		{
@@ -293,8 +297,9 @@ int logsd_thread_main(int argc, char *argv[])
 			m = write(log_file, buff_all, n);
 		}
 
+
 		do {
-			/* wait for sensor update of 4 file descriptor for 1000 ms (1 second) */
+			/* wait for sensor update of file descriptor for 1000 ms (1 second) */
 			int poll_ret = poll(fds, 1, 1000);
 
 			/* handle the poll result */
@@ -334,43 +339,45 @@ int logsd_thread_main(int argc, char *argv[])
 
 					/* ---- logging starts here ---- */
 
-						// write to already allocated buffer
-						n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
-							attitude_raw.roll,
-							attitude_raw.pitch,
-							attitude_raw.yaw,
-							attitude_raw.rollspeed,
-							attitude_raw.pitchspeed,
-							attitude_raw.yawspeed,
-							attitude_raw.rollacc,
-							attitude_raw.pitchacc,
-							attitude_raw.yawacc,
-							rc_raw.pitch,
-							rc_raw.yaw,
-							rc_raw.throttle,
-							rc_raw.roll,
-							rc_raw.aux1,
-							actuator_outputs_raw.output[1],		//elevator
-							actuator_outputs_raw.output[2],		//rudder
-							actuator_outputs_raw.output[3],		//throttle
-							actuator_outputs_raw.output[0],		//ailerons
-							actuator_outputs_raw.output[4],		//flaps
-							gps_raw.lat,
-							gps_raw.lon,
-							gps_raw.alt,
-							sensors_raw.baro_alt_meter,
-							airspeed_raw.true_airspeed_m_s,
-							sensors_raw.differential_pressure_pa,
-							gps_raw.vel_m_s,
-							sensors_raw.accelerometer_m_s2[0],
-							sensors_raw.accelerometer_m_s2[1],
-							sensors_raw.accelerometer_m_s2[2],
-							sensors_raw.gyro_rad_s[0],
-							sensors_raw.gyro_rad_s[1],
-							sensors_raw.gyro_rad_s[2],
-							sensors_raw.magnetometer_ga[0],
-							sensors_raw.magnetometer_ga[1],
-							sensors_raw.magnetometer_ga[2]);
+					// write to already allocated buffer
+					n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
+							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,"
+							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+						attitude_raw.roll,
+						attitude_raw.pitch,
+						attitude_raw.yaw,
+						attitude_raw.rollspeed,
+						attitude_raw.pitchspeed,
+						attitude_raw.yawspeed,
+						attitude_raw.rollacc,
+						attitude_raw.pitchacc,
+						attitude_raw.yawacc,
+						rc_raw.pitch,
+						rc_raw.yaw,
+						rc_raw.throttle,
+						rc_raw.roll,
+						rc_raw.aux1,
+						actuator_outputs_raw.output[1],		//elevator
+						actuator_outputs_raw.output[2],		//rudder
+						actuator_outputs_raw.output[3],		//throttle
+						actuator_outputs_raw.output[0],		//ailerons
+						actuator_outputs_raw.output[4],		//flaps
+						gps_raw.lat,
+						gps_raw.lon,
+						gps_raw.alt,
+						sensors_raw.baro_alt_meter,
+						airspeed_raw.true_airspeed_m_s,
+						sensors_raw.differential_pressure_pa,
+						gps_raw.vel_m_s,
+						sensors_raw.accelerometer_m_s2[0],
+						sensors_raw.accelerometer_m_s2[1],
+						sensors_raw.accelerometer_m_s2[2],
+						sensors_raw.gyro_rad_s[0],
+						sensors_raw.gyro_rad_s[1],
+						sensors_raw.gyro_rad_s[2],
+						sensors_raw.magnetometer_ga[0],
+						sensors_raw.magnetometer_ga[1],
+						sensors_raw.magnetometer_ga[2]);
 
 							//sensors_raw.timestamp);
 ;
