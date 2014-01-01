@@ -31,6 +31,7 @@
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_outputs.h>
+#include <uORB/topics/skydog_attitude.h>
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
@@ -70,7 +71,7 @@ static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
 // logging constants
 static size_t buff_size = 350; // [bytes]
-static unsigned long int logging_frequency = 50; // [Hz]
+static unsigned long int logging_frequency = 100; // [Hz]
 static unsigned long int flush_in_seconds = 5;
 static bool debug = true;
 static int debug_file;
@@ -91,7 +92,7 @@ logsd_usage(const char *reason)
                 fprintf(stderr, "%s\n", reason);
 
         errx(1, "usage: logsd {start|stop|status} [-f <log rate>] [-b <buffer size>] [-s <flush every x second>] [debug]\n"
-             "\t-r\tLog rate in Hz, 50Hz default\n"
+             "\t-r\tLog rate in Hz, 100Hz default\n"
              "\t-b\tLog buffer size in bytes, default is 350\n"
         	 "\t-s\tFlush to SD card every defined second, default is 5\n"
              "\tdebug\tEnable debugging (not default)\n");
@@ -226,14 +227,13 @@ int logsd_thread_main(int argc, char *argv[])
 		int actuators_sub_fd = orb_subscribe(ORB_ID(actuator_outputs_0));
 		orb_set_interval(actuators_sub_fd, rate);
 
+	/* subscribe to skydog_attitude channels topic */
+		int skydog_attitude_sub_fd = orb_subscribe(ORB_ID(skydog_attitude));
+		orb_set_interval(skydog_attitude_sub_fd, rate);
+
 		/* one could wait for multiple topics with this technique, just using one here */
 		struct pollfd fds[] = {
 			{ .fd = sensor_sub_fd,   .events = POLLIN },
-			{ .fd = gps_sub_fd,   .events = POLLIN },
-			{ .fd = attitude_sub_fd,   .events = POLLIN },
-			{ .fd = rc_sub_fd,   .events = POLLIN },
-			{ .fd = airspeed_sub_fd,   .events = POLLIN },
-			{ .fd = actuators_sub_fd,   .events = POLLIN },
 		};
 
 		int error_counter = 0;
@@ -251,6 +251,7 @@ int logsd_thread_main(int argc, char *argv[])
 		struct manual_control_setpoint_s rc_raw;
 		struct airspeed_s airspeed_raw;
 		struct actuator_outputs_s actuator_outputs_raw;
+		struct skydog_attitude_s skydog_attitude_raw;
 
 		//set all buffers to 0
 		memset(&sensors_raw, 0, sizeof(sensors_raw));
@@ -259,6 +260,7 @@ int logsd_thread_main(int argc, char *argv[])
 		memset(&rc_raw, 0, sizeof(rc_raw));
 		memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 		memset(&actuator_outputs_raw, 0, sizeof(actuator_outputs_raw));
+		memset(&skydog_attitude_raw, 0, sizeof(skydog_attitude_raw));
 
 		/* create file to log into */
 		printf("[logsd] start logging\n");
@@ -275,7 +277,7 @@ int logsd_thread_main(int argc, char *argv[])
 		}
 
 		//write header
-		n = snprintf(buff_all, buff_size,"% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
+		n = snprintf(buff_all, buff_size,"%% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n");
 		//check if buffer large enough
 		if (n>buff_size)
 		{
@@ -284,7 +286,6 @@ int logsd_thread_main(int argc, char *argv[])
 			if (debug)
 			{	fprintf(file, "[logsd] Writing header, which is larger then buffer: %d \n",n);
 				printf("[logsd] Writing header, which is larger then buffer: %d bytes\n",n);
-			//write_debugfile(debug_buff);
 			}
 		}else
 		{
@@ -327,12 +328,14 @@ int logsd_thread_main(int argc, char *argv[])
 					orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(actuator_outputs_0), actuators_sub_fd, &actuator_outputs_raw);
+					/* copy skydog attitude data into local buffer */
+					orb_copy(ORB_ID(skydog_attitude), skydog_attitude_sub_fd, &skydog_attitude_raw);
 
 
 					/* ---- logging starts here ---- */
 
 						// write to already allocated buffer
-						n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+						n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
 							attitude_raw.roll,
 							attitude_raw.pitch,
 							attitude_raw.yaw,
@@ -357,6 +360,7 @@ int logsd_thread_main(int argc, char *argv[])
 							gps_raw.alt,
 							sensors_raw.baro_alt_meter,
 							airspeed_raw.true_airspeed_m_s,
+							sensors_raw.differential_pressure_pa,
 							gps_raw.vel_m_s,
 							sensors_raw.accelerometer_m_s2[0],
 							sensors_raw.accelerometer_m_s2[1],
@@ -503,63 +507,6 @@ int open_logfile()
 	}
 
 	return 0;
-}
-int open_debugfile()
-{
-	/* make folder on sdcard */
-	uint16_t file_number = 1; // start with file log001
-
-	/* string to hold the path to the log */
-	char path_buf[64] = "";
-
-	int fd = 0;
-
-	/* look for the next file that does not exist */
-	while (file_number <= MAX_NO_LOGFILE) {
-		/* set up file path: e.g. /fs/microsd/sess001/debug.txt */
-		sprintf(path_buf, "%s/debug%03u.txt", folder_path, file_number);
-
-		if (file_exist(path_buf)) {
-			file_number++;
-			continue;
-		}
-
-		fd = open(path_buf, O_CREAT | O_WRONLY | O_DSYNC);
-
-		if (fd == 0) {
-			warn("opening %s failed", path_buf);
-		}
-
-		warnx("logging to: %s.", path_buf);
-		//mavlink_log_info(mavlink_fd, "[sdlog2] log: %s", path_buf);
-
-		return fd;
-	}
-
-	if (file_number > MAX_NO_LOGFILE) {
-		/* we should not end up here, either we have more than MAX_NO_LOGFILE on the SD card, or another problem */
-		warnx("all %d possible files exist already.", MAX_NO_LOGFILE);
-		return -1;
-	}
-
-	return 0;
-}
-
-int write_debugfile(char *message)
-{
-	// check if debug file opened
-	if(!debug_file == -1)
-	{
-		//get size of message
-		size_t len = strlen(message);
-		//write to file
-		ssize_t m = write(debug_file, message, len);
-		// sync to SD card
-		fsync(debug_file);
-		// print to console
-		printf(message);
-	}
-
 }
 
 bool file_exist(const char *filename)

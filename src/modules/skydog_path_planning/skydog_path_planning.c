@@ -87,9 +87,9 @@ int skydog_path_planning_main(int argc, char *argv[])
 			}
 
 			thread_should_exit = false;
-			daemon_task = task_spawn_cmd("daemon",
+			daemon_task = task_spawn_cmd("skydog_path_planning",
 						 SCHED_DEFAULT,
-						 SCHED_PRIORITY_MAX - 20,
+						 SCHED_PRIORITY_DEFAULT,
 						 2048,
 						 skydog_path_planning_thread_main,
 						 (argv) ? (const char **)&argv[2] : (const char **)NULL);
