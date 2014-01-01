@@ -72,7 +72,7 @@ static char folder_path[64];
 static size_t buff_size = 350; // [bytes]
 static unsigned long int logging_frequency = 50; // [Hz]
 static unsigned long int flush_in_seconds = 5;
-static bool debug = false;
+static bool debug = true;
 static int debug_file;
 static FILE *file;
 
@@ -122,7 +122,7 @@ int logsd_main(int argc, char *argv[])
 			daemon_task = task_spawn_cmd("logsd",
 						 SCHED_DEFAULT,
 						 SCHED_PRIORITY_DEFAULT-30,
-						 8192,
+						 4096,
 						 logsd_thread_main,
 						 (const char **)argv);
 			exit(0);
@@ -402,8 +402,8 @@ int logsd_thread_main(int argc, char *argv[])
 						{printf("%s", buff_all);
 						 printf("written to file: %d bytes\n", m);
 
-						 fprintf(file, "%s", buff_all);
-						 fprintf(file, "written to file: %d bytes\n", m);
+						 //fprintf(file, "%s", buff_all);
+						 //fprintf(file, "written to file: %d bytes\n", m);
 						}
 
 						/*
