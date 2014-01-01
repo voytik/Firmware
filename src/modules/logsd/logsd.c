@@ -95,9 +95,9 @@ int logsd_main(int argc, char *argv[])
 			}
 
 			thread_should_exit = false;
-			daemon_task = task_spawn_cmd("daemon",
+			daemon_task = task_spawn_cmd("logsd",
 						 SCHED_DEFAULT,
-						 SCHED_PRIORITY_DEFAULT,
+						 SCHED_PRIORITY_DEFAULT-30,
 						 8192,
 						 logsd_thread_main,
 						 (argv) ? (const char **)&argv[2] : (const char **)NULL);
