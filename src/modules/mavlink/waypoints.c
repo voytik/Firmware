@@ -514,7 +514,7 @@ int mavlink_waypoint_eventloop(uint64_t now, const struct vehicle_global_positio
 			wpm->current_active_wp_id = -1;
 		}
 	}
-
+	// here would be the publishing to skydog_waypoint topic
 	check_waypoints_reached(now, global_position, local_position, nav_cap->turn_distance);
 
 	return OK;
