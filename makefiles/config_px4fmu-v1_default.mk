@@ -74,19 +74,19 @@ MODULES		+= modules/gpio_led
 MODULES		+= modules/attitude_estimator_ekf
 MODULES		+= modules/att_pos_estimator_ekf
 MODULES		+= modules/position_estimator_inav
-#MODULES		+= examples/flow_position_estimator
+MODULES		+= examples/flow_position_estimator
 MODULES		+= modules/attitude_estimator_so3
 
 #
 # Vehicle Control
 #
-#MODULES		+= modules/segway # XXX Needs GCC 4.7 fix
+MODULES		+= modules/segway # XXX Needs GCC 4.7 fix
 MODULES		+= modules/fw_pos_control_l1
 MODULES		+= modules/fw_att_control
-#MODULES		+= modules/multirotor_att_control
-#MODULES		+= modules/multirotor_pos_control
-#MODULES		+= examples/flow_position_control
-#MODULES		+= examples/flow_speed_control
+MODULES		+= modules/multirotor_att_control
+MODULES		+= modules/multirotor_pos_control
+MODULES		+= examples/flow_position_control
+MODULES		+= examples/flow_speed_control
 MODULES		+= modules/simulink_control
 
 #
