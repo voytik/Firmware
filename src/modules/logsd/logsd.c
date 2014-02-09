@@ -122,7 +122,7 @@ int logsd_main(int argc, char *argv[])
 			thread_should_exit = false;
 			daemon_task = task_spawn_cmd("logsd",
 						 SCHED_DEFAULT,
-						 SCHED_PRIORITY_DEFAULT-30,
+						 SCHED_PRIORITY_DEFAULT-10,
 						 4096,
 						 logsd_thread_main,
 						 (const char **)argv);
@@ -277,7 +277,7 @@ int logsd_thread_main(int argc, char *argv[])
 		}
 
 		//write header
-		n = snprintf(buff_all, buff_size,"%% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
+		n = snprintf(buff_all, buff_size,"%% Time[ms],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
 				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
 				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
 				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],"
@@ -296,6 +296,9 @@ int logsd_thread_main(int argc, char *argv[])
 			// if yes write actual size of string bytes
 			m = write(log_file, buff_all, n);
 		}
+
+		uint64_t timestamp_start = hrt_absolute_time();
+		uint64_t timestamp = 0;
 
 
 		do {
@@ -336,13 +339,17 @@ int logsd_thread_main(int argc, char *argv[])
 					/* copy skydog attitude data into local buffer */
 					orb_copy(ORB_ID(skydog_attitude), skydog_attitude_sub_fd, &skydog_attitude_raw);
 
+					/* get timestamp in ms*/
+					//timestamp = (hrt_absolute_time() - timestamp_start)/10000;
+					timestamp = timestamp + rate;
 
 					/* ---- logging starts here ---- */
 
 					// write to already allocated buffer
-					n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
+					n = snprintf(buff_all, buff_size,"%Lu,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,"
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+						timestamp,
 						attitude_raw.roll,
 						attitude_raw.pitch,
 						attitude_raw.yaw,
@@ -379,8 +386,6 @@ int logsd_thread_main(int argc, char *argv[])
 						sensors_raw.magnetometer_ga[1],
 						sensors_raw.magnetometer_ga[2]);
 
-							//sensors_raw.timestamp);
-;
 
 					// check if buffer not overloaded
 					if (n>buff_size)
@@ -400,7 +405,7 @@ int logsd_thread_main(int argc, char *argv[])
 						{fprintf(file, "[logsd] write error: %s, exiting\n", strerror(errno));
 						 printf("[logsd] write error: %s, exiting\n", strerror(errno));}
 						thread_should_exit = true;
-						fsync(log_file);
+						//fsync(log_file);
 					}
 					i++;
 
@@ -417,10 +422,6 @@ int logsd_thread_main(int argc, char *argv[])
 						 //fprintf(file, "written to file: %d bytes\n", m);
 						}
 
-						/*
-						printf("timestamp: %PRIu64\n",
-								sensors_raw.timestamp);
-						*/
 					}
 				}
 			}

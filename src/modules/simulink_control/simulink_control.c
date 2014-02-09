@@ -7,6 +7,10 @@
  */
  
 #include <nuttx/config.h>
+
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 #include <stdio.h>
 #include <errno.h>
 #include <nuttx/sched.h>
@@ -32,7 +36,6 @@
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_controls.h>
-
 
 #include <systemlib/systemlib.h>
 
@@ -126,7 +129,7 @@ int simulink_control_thread_main(int argc, char *argv[])
 	printf("simulink_control started\n");
 
 	// refresh rate in ms
-	int rate = 100;
+	int rate = 10;
 	int error_counter = 0;
 
 		/* subscribe to sensor_combined topic */
@@ -181,6 +184,9 @@ int simulink_control_thread_main(int argc, char *argv[])
 		     // initialize simulink model
 		     myTest_initialize();
 
+		     uint64_t timestamp_start = hrt_absolute_time();;
+		     uint64_t timestamp;
+
 
 			while (!thread_should_exit){
 						/* wait for sensor update of 4 file descriptor for 1000 ms (1 second) */
@@ -230,9 +236,17 @@ int simulink_control_thread_main(int argc, char *argv[])
 								 */
 
 								//run Simulink code
+
+								/*
 								inVar = attitude_raw.roll;
 								myTest_step();
 								printf("%4.4f, %4.4f\n", inVar, outVar);
+								*/
+
+
+								timestamp = (hrt_absolute_time() - timestamp_start)/10000;
+								//printf("test time: %" PRIu64 "\n", timestamp);
+								printf("test time: %Lu\n", timestamp);
 
 								// copy output
 								/* actuators.control[0] = aileron;
