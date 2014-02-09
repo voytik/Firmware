@@ -36,6 +36,7 @@
 #include <uORB/topics/skydog_autopilot_setpoint.h>
 
 #include <systemlib/systemlib.h>
+#include <mavlink/mavlink_log.h>
 
 // simulink model includes
 #include <Skydog_autopilot/Skydog_autopilot_ert_rtw/SkydogSignals.h>
@@ -47,6 +48,10 @@
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;		/**< daemon status flag */
 static int daemon_task;				/**< Handle of daemon task / thread */
+
+static int mavlink_fd = -1;
+static unsigned int logging_frequency = 100; // [Hz]
+static bool debug = true;
 
 /**
  * daemon management function.
@@ -66,7 +71,9 @@ usage(const char *reason)
 {
 	if (reason)
 		warnx("%s\n", reason);
-	errx(1, "usage: daemon {start|stop|status} [-p <additional params>]\n\n");
+	errx(1, "usage: skydog_autopilot {start|stop|status} [-f <step frequency>] [debug]\n"
+			"\t-r\tStep frequency in Hz, 100Hz default\n"
+			"\tdebug\tEnable debugging (not default)\n");
 }
 
 /**
@@ -96,7 +103,7 @@ int skydog_autopilot_main(int argc, char *argv[])
 						 SCHED_PRIORITY_MAX - 20,
 						 2048,
 						 skydog_autopilot_thread_main,
-						 (argv) ? (const char **)&argv[2] : (const char **)NULL);
+						 (const char **)argv);
 			exit(0);
 		}
 
@@ -124,12 +131,44 @@ int skydog_autopilot_main(int argc, char *argv[])
 int skydog_autopilot_thread_main(int argc, char *argv[])
 {
 	thread_running = true;
-
 	printf("skydog_autopilot started\n");
 
+	/* work around some stupidity in task_create's argv handling */
+		argc -= 2;
+		argv += 2;
+		int ch;
+
+		while ((ch = getopt(argc, argv, "f:debug")) != EOF) {
+			switch (ch) {
+			case 'f': {		logging_frequency = strtoul(optarg, NULL, 10);
+							if (logging_frequency < 1)
+							{ logging_frequency = 1;
+							  warnx("Minimal running frequency is 1Hz, setting this");
+							}
+					}break;
+
+			case 'debug':
+					debug = true;
+					break;
+
+			default:
+					usage("unrecognized flag");
+					errx(1, "exiting.");
+				}
+			}
+
+
+	/* initialize mavlink */
+	mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+	if (mavlink_fd < 0) {
+			warnx("failed to open MAVLink log stream, start mavlink app first.");
+	}
+
 	// refresh rate in ms
-	int rate = 100;
+	int rate = 1000/logging_frequency;
 	int error_counter = 0;
+	uint8_t autopilot_mode = 0;
+	uint8_t current_autopilot_mode = 0;
 
 		/* subscribe to sensor_combined topic */
 			int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -198,6 +237,9 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     // initialize simulink model
 		     Skydog_autopilot_initialize();
 
+		     // notify user through QGC that the autopilot is initialized
+		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
+
 
 			while (!thread_should_exit){
 						/* wait for sensor update of 4 file descriptor for 1000 ms (1 second) */
@@ -218,23 +260,13 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 						} else {
 
 							if (fds[0].revents & POLLIN) {
-								/* copy sensors raw data into local buffer */
-								orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
-								/* copy gps raw data into local buffer */
-								orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
-								/* copy attitude raw data into local buffer */
-								orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
 								/* copy vehicle mode data into local buffer */
 								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
-								/* copy rc raw data into local buffer */
-								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
-								/* copy rc raw data into local buffer */
-								orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
-								/* copy skydog data into local buffer */
-								orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
 
 								// is MODE MANUAL selected
 								if (control_mode.flag_control_manual_enabled) {
+
+									autopilot_mode = 0;
 
 									// MODE MANUAL selected
 									//printf("[skydog_autopilot] MODE MANUAL selected\n");
@@ -247,6 +279,19 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[4] = rc_raw.aux1;
 
 								}else{
+
+									/* copy sensors raw data into local buffer */
+									orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
+									/* copy gps raw data into local buffer */
+									orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
+									/* copy attitude raw data into local buffer */
+									orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
+									/* copy rc raw data into local buffer */
+									orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+									/* copy rc raw data into local buffer */
+									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+									/* copy skydog data into local buffer */
+									orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
 
 									//fill in inputs for simulink code
 									Roll_w = skydog.Roll_w;
@@ -273,10 +318,12 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 										// is MODE STABILIZATION selected
 										//printf("[skydog_autopilot] MODE STABILIZATION selected\n");
 										Mode_w = 1;
+										autopilot_mode = 1;
 									}else{
 										// is MODE AUTOPILOT selected
 										//printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
 										Mode_w = 2;
+										autopilot_mode = 2;
 									}
 
 									//run Simulink code
@@ -289,9 +336,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[3] = Throttle_w;
 									actuators.control[4] = Flaps_w;
 
-								/* copy skydog data into local buffer */
-								orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
-
 								}
 
 								/* sanity check and publish actuator outputs */
@@ -299,9 +343,24 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									isfinite(actuators.control[1]) &&
 									isfinite(actuators.control[2]) &&
 									isfinite(actuators.control[3])) {
-								orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+									orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
 									}
 
+								// check which mode selected and send this once to ground station
+								if (autopilot_mode != current_autopilot_mode){
+
+									if (autopilot_mode == 0){
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] sleeping, manual mode");
+									}
+									if (autopilot_mode == 1){
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, stabilization mode");
+									}
+									if (autopilot_mode == 2){
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, autopilot mode");
+									}
+									// update flag with current mode
+									current_autopilot_mode = autopilot_mode;
+								}
 
 							}
 					}

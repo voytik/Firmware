@@ -37,9 +37,9 @@
 #include <systemlib/systemlib.h>
 
 // simulink model includes
-#include <simulink_control/test_ert_rtw/globalSignals.h>
-#include <simulink_control/test_ert_rtw/test.h>            /* Model's header file */
-#include <simulink_control/test_ert_rtw/rtwtypes.h>
+#include <simulink_control/myTest_ert_rtw/globalSignals.h>
+#include <simulink_control/myTest_ert_rtw/myTest.h>            /* Model's header file */
+#include <simulink_control/myTest_ert_rtw/rtwtypes.h>
 
  
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -179,7 +179,7 @@ int simulink_control_thread_main(int argc, char *argv[])
 		     orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
 		     // initialize simulink model
-		     test_initialize();
+		     myTest_initialize();
 
 
 			while (!thread_should_exit){
@@ -231,7 +231,7 @@ int simulink_control_thread_main(int argc, char *argv[])
 
 								//run Simulink code
 								inVar = attitude_raw.roll;
-								test_step();
+								myTest_step();
 								printf("%4.4f, %4.4f\n", inVar, outVar);
 
 								// copy output

@@ -24,6 +24,7 @@
 #include <systemlib/systemlib.h>
 #include <unistd.h>
 #include <drivers/drv_hrt.h>
+#include <inttypes.h>
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
@@ -32,7 +33,10 @@
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/skydog_autopilot_setpoint.h>
+#include <uORB/topics/skydog_waypoints.h>
 #include <systemlib/systemlib.h>
+
+#include <mavlink/mavlink_log.h>
 
 // simulink model includes
 #include <skydog_path_planning/Skydog_path_planning_ert_rtw/SkydogSignals.h>
@@ -43,6 +47,10 @@
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;		/**< daemon status flag */
 static int daemon_task;				/**< Handle of daemon task / thread */
+
+static int mavlink_fd = -1;
+static unsigned int logging_frequency = 20; // [Hz]
+static bool debug = true;
 
 /**
  * daemon management function.
@@ -62,7 +70,9 @@ usage(const char *reason)
 {
 	if (reason)
 		warnx("%s\n", reason);
-	errx(1, "usage: daemon {start|stop|status} [-p <additional params>]\n\n");
+	errx(1, "usage: skydog_path_planning {start|stop|status} [-f <step frequency>] [debug]\n"
+			"\t-r\tStep frequency in Hz, 20Hz default\n"
+			"\tdebug\tEnable debugging (not default)\n");
 }
 
 /**
@@ -92,7 +102,7 @@ int skydog_path_planning_main(int argc, char *argv[])
 						 SCHED_PRIORITY_DEFAULT,
 						 2048,
 						 skydog_path_planning_thread_main,
-						 (argv) ? (const char **)&argv[2] : (const char **)NULL);
+						 (const char **)argv);
 			exit(0);
 		}
 
@@ -120,12 +130,44 @@ int skydog_path_planning_main(int argc, char *argv[])
 int skydog_path_planning_thread_main(int argc, char *argv[])
 {
 	thread_running = true;
-
 	printf("skydog_path_planning started\n");
 
+	/* work around some stupidity in task_create's argv handling */
+	argc -= 2;
+	argv += 2;
+	int ch;
+
+	while ((ch = getopt(argc, argv, "f:debug")) != EOF) {
+		switch (ch) {
+		case 'f': {		logging_frequency = strtoul(optarg, NULL, 10);
+						if (logging_frequency < 1)
+						{ logging_frequency = 1;
+						  warnx("Minimal running frequency is 1Hz, setting this");
+						}
+				}break;
+
+		case 'debug':
+				debug = true;
+				break;
+
+		default:
+				usage("unrecognized flag");
+				errx(1, "exiting.");
+			}
+		}
+
+
+	mavlink_fd = open(MAVLINK_LOG_DEVICE, 0);
+	if (mavlink_fd < 0) {
+	        warnx("failed to open MAVLink log stream, start mavlink app first.");
+	}
+
+
 	// refresh rate in ms
-	int rate = 50;
+	int rate = 1000/logging_frequency;
 	int error_counter = 0;
+
+	bool manual_enabled = true;
 
 		/* subscribe to sensor_combined topic */
 			int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -148,6 +190,10 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
 			orb_set_interval(control_mode_sub_fd, rate);
 
+		/* subscribe to waypoints topic */
+			int skydog_sub_fd = orb_subscribe(ORB_ID(skydog_waypoints));
+			orb_set_interval(skydog_sub_fd, rate);
+
 			/* one could wait for multiple topics with this technique, just using one here */
 			struct pollfd fds[] = {
 				{ .fd = sensor_sub_fd,   .events = POLLIN },
@@ -159,6 +205,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			struct airspeed_s airspeed_raw;
 			struct manual_control_setpoint_s rc_raw;
 			struct vehicle_control_mode_s control_mode;
+			struct skydog_waypoints_s waypoints;
 
 			// output struct
 			struct skydog_autopilot_setpoint_s skydog;
@@ -170,12 +217,15 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 			memset(&skydog, 0, sizeof(skydog));
 			memset(&control_mode, 0, sizeof(control_mode));
+			memset(&waypoints, 0, sizeof(waypoints));
 
-		     //Advertise that this controller will publish skydog_topic
+		     // advertise that this controller will publish skydog_topic
 		     orb_advert_t skydog_pub = orb_advertise(ORB_ID(skydog_autopilot_setpoint), &skydog);
 
 		     // initialize simulink model
 		     Skydog_path_planning_initialize();
+
+		     mavlink_log_info(mavlink_fd, "[skydog_path_planning] initialized");
 
 
 			while (!thread_should_exit){
@@ -204,6 +254,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								// check if not manual mode selected, if so don't run simulink code
 								if (!control_mode.flag_control_manual_enabled){
 
+
 									/* copy sensors raw data into local buffer */
 									orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
 									/* copy gps raw data into local buffer */
@@ -212,6 +263,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
 									/* copy rc raw data into local buffer */
 									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+									/* copy waypoints data into local buffer */
+									orb_copy(ORB_ID(skydog_waypoints), skydog_sub_fd, &waypoints);
 
 
 									//fill in arguments
@@ -236,10 +289,21 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									/* publish values to skydog_autopilot_setpoint topic*/
 									orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
 
-
-									//printf("[skydog_path_planning] Loop processed \n");
 								}
-						}
+
+								// check which mode selected and send this once to ground station
+								if (control_mode.flag_control_manual_enabled!=manual_enabled){
+
+									if (control_mode.flag_control_manual_enabled){
+										mavlink_log_info(mavlink_fd, "[skydog_path_planning] sleeping, manual mode");
+
+									}else{
+										mavlink_log_info(mavlink_fd, "[skydog_path_planning] running, auto mode");
+									}
+									// update flag with current mode
+									manual_enabled = control_mode.flag_control_manual_enabled;
+								}
+							}
 					}
 			}
 

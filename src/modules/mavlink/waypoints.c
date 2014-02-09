@@ -514,7 +514,9 @@ int mavlink_waypoint_eventloop(uint64_t now, const struct vehicle_global_positio
 			wpm->current_active_wp_id = -1;
 		}
 	}
-	// here would be the publishing to skydog_waypoint topic
+	// publish waypoints to skydog_waypoint topic
+	skydog_waypoints();
+
 	check_waypoints_reached(now, global_position, local_position, nav_cap->turn_distance);
 
 	return OK;
@@ -1039,4 +1041,28 @@ void mavlink_wpm_message_handler(const mavlink_message_t *msg, const struct vehi
 	}
 
 	// check_waypoints_reached(now, global_pos, local_pos);
+}
+
+void skydog_waypoints()
+{
+	// output struct
+	struct skydog_waypoints_s skydogWP;
+
+	//Advertise that this controller will publish skydog topic
+	orb_advert_t skydog_pub = orb_advertise(ORB_ID(skydog_waypoints), &skydogWP);
+
+	// fill the struct with waypoint data
+	uint16_t i;
+	for (i = 0; i < wpm->size; i++)
+	{
+		skydogWP.waypoints[i].longitude = wpm->waypoints[i].y;
+		skydogWP.waypoints[i].latitude = wpm->waypoints[i].x;
+		skydogWP.waypoints[i].altitude = wpm->waypoints[i].z;
+		skydogWP.waypoints[i].speed = 10;
+	}
+	skydogWP.wpm_count = wpm->size;
+
+	/* publish values to skydog_waypoints topic*/
+	orb_publish(ORB_ID(skydog_waypoints), skydog_pub, &skydogWP);
+
 }

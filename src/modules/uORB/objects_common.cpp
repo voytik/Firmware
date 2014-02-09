@@ -199,3 +199,6 @@ ORB_DEFINE(skydog_autopilot_setpoint, struct skydog_autopilot_setpoint_s);
 
 #include "topics/skydog_attitude.h"
 ORB_DEFINE(skydog_attitude, struct skydog_attitude_s);
+
+#include "topics/skydog_waypoints.h"
+ORB_DEFINE(skydog_waypoints, struct skydog_waypoints_s);
