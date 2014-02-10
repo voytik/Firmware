@@ -277,7 +277,7 @@ int logsd_thread_main(int argc, char *argv[])
 		}
 
 		//write header
-		n = snprintf(buff_all, buff_size,"%% Time[ms],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
+		n = snprintf(buff_all, buff_size,"%% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
 				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
 				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
 				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],"
@@ -297,8 +297,8 @@ int logsd_thread_main(int argc, char *argv[])
 			m = write(log_file, buff_all, n);
 		}
 
-		uint64_t timestamp_start = hrt_absolute_time();
-		uint64_t timestamp = 0;
+		//uint64_t timestamp_start = hrt_absolute_time();
+		//uint64_t timestamp = 0;
 
 
 		do {
@@ -341,15 +341,15 @@ int logsd_thread_main(int argc, char *argv[])
 
 					/* get timestamp in ms*/
 					//timestamp = (hrt_absolute_time() - timestamp_start)/10000;
-					timestamp = timestamp + rate;
+					//timestamp = timestamp + rate;
 
 					/* ---- logging starts here ---- */
 
 					// write to already allocated buffer
-					n = snprintf(buff_all, buff_size,"%Lu,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
+					n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,"
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
-						timestamp,
+						//timestamp,
 						attitude_raw.roll,
 						attitude_raw.pitch,
 						attitude_raw.yaw,
@@ -405,7 +405,7 @@ int logsd_thread_main(int argc, char *argv[])
 						{fprintf(file, "[logsd] write error: %s, exiting\n", strerror(errno));
 						 printf("[logsd] write error: %s, exiting\n", strerror(errno));}
 						thread_should_exit = true;
-						//fsync(log_file);
+						fsync(log_file);
 					}
 					i++;
 
