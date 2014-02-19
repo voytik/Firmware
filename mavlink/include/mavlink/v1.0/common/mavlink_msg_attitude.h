@@ -197,7 +197,7 @@ static inline uint16_t mavlink_msg_attitude_encode_chan(uint8_t system_id, uint8
  */
 #ifdef MAVLINK_USE_CONVENIENCE_FUNCTIONS
 
-static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint32_t time_boot_ms, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed, float rollacc, float pitchacc, float yawacc)
+static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint32_t time_boot_ms, float roll, float pitch, float yaw, float rollspeed, float pitchspeed, float yawspeed)
 {
 #if MAVLINK_NEED_BYTE_SWAP || !MAVLINK_ALIGNED_FIELDS
 	char buf[MAVLINK_MSG_ID_ATTITUDE_LEN];
@@ -208,9 +208,7 @@ static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint32_t ti
 	_mav_put_float(buf, 16, rollspeed);
 	_mav_put_float(buf, 20, pitchspeed);
 	_mav_put_float(buf, 24, yawspeed);
-	_mav_put_float(buf, 28, rollacc);
-	_mav_put_float(buf, 32, pitchacc);
-	_mav_put_float(buf, 36, yawacc);
+
 
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ATTITUDE, buf, MAVLINK_MSG_ID_ATTITUDE_LEN, MAVLINK_MSG_ID_ATTITUDE_CRC);
@@ -226,9 +224,6 @@ static inline void mavlink_msg_attitude_send(mavlink_channel_t chan, uint32_t ti
 	packet.rollspeed = rollspeed;
 	packet.pitchspeed = pitchspeed;
 	packet.yawspeed = yawspeed;
-	packet.rollacc = rollacc;
-	packet.pitchacc = pitchacc;
-	packet.yawacc = yawacc;
 
 #if MAVLINK_CRC_EXTRA
     _mav_finalize_message_chan_send(chan, MAVLINK_MSG_ID_ATTITUDE, (const char *)&packet, MAVLINK_MSG_ID_ATTITUDE_LEN, MAVLINK_MSG_ID_ATTITUDE_CRC);

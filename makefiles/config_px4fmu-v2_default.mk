@@ -84,7 +84,7 @@ MODULES		+= examples/flow_position_estimator
 #
 # Vehicle Control
 #
-MODULES		+= modules/segway # XXX Needs GCC 4.7 fix
+#MODULES		+= modules/segway # XXX Needs GCC 4.7 fix
 MODULES		+= modules/fw_pos_control_l1
 MODULES		+= modules/fw_att_control
 MODULES		+= modules/multirotor_att_control
@@ -94,6 +94,7 @@ MODULES		+= modules/multirotor_pos_control
 # Logging
 #
 MODULES		+= modules/sdlog2
+MODULES		+= modules/sdlog
 
 #
 # Skydog
@@ -102,6 +103,7 @@ MODULES		+= modules/skydog_autopilot
 MODULES		+= modules/skydog_path_planning
 MODULES		+= modules/skydog_attitude
 MODULES		+= modules/logsd
+MODULES		+= modules/simulink_control
 
 #
 # Unit tests

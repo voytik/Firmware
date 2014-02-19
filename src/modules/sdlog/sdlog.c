@@ -436,7 +436,7 @@ int sdlog_thread_main(int argc, char *argv[])
 		struct vehicle_attitude_setpoint_s att_sp;
 		struct actuator_outputs_s act_outputs;
 		struct actuator_controls_s act_controls;
-		struct actuator_controls_effective_s act_controls_effective;
+		//struct actuator_controls_effective_s act_controls_effective;
 		struct vehicle_command_s cmd;
 		struct vehicle_local_position_s local_pos;
 		struct vehicle_global_position_s global_pos;
@@ -456,7 +456,7 @@ int sdlog_thread_main(int argc, char *argv[])
 		int spa_sub;
 		int act_0_sub;
 		int controls_0_sub;
-		int controls_effective_0_sub;
+		//int controls_effective_0_sub;
 		int local_pos_sub;
 		int global_pos_sub;
 		int gps_pos_sub;
@@ -518,11 +518,12 @@ int sdlog_thread_main(int argc, char *argv[])
 	fdsc_count++;
 
 	/* --- ACTUATOR CONTROL EFFECTIVE VALUE --- */
-	/* subscribe to ORB for actuator control */
+	/* subscribe to ORB for actuator control
 	subs.controls_effective_0_sub = orb_subscribe(ORB_ID_VEHICLE_ATTITUDE_CONTROLS_EFFECTIVE);
 	fds[fdsc_count].fd = subs.controls_effective_0_sub;
 	fds[fdsc_count].events = POLLIN;
 	fdsc_count++;
+	*/
 
 	/* --- LOCAL POSITION --- */
 	/* subscribe to ORB for local position */
@@ -655,7 +656,7 @@ int sdlog_thread_main(int argc, char *argv[])
 				/* always copy sensors raw data into local buffer, since poll flags won't clear else */
 				orb_copy(ORB_ID(sensor_combined), subs.sensor_sub, &buf.raw);
 				orb_copy(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, subs.controls_0_sub, &buf.act_controls);
-				orb_copy(ORB_ID_VEHICLE_ATTITUDE_CONTROLS_EFFECTIVE, subs.controls_effective_0_sub, &buf.act_controls_effective);
+				//orb_copy(ORB_ID_VEHICLE_ATTITUDE_CONTROLS_EFFECTIVE, subs.controls_effective_0_sub, &buf.act_controls_effective);
 				orb_copy(ORB_ID(actuator_outputs_0), subs.act_0_sub, &buf.act_outputs);
 				orb_copy(ORB_ID(vehicle_attitude_setpoint), subs.spa_sub, &buf.att_sp);
 				orb_copy(ORB_ID(vehicle_gps_position), subs.gps_pos_sub, &buf.gps_pos);
@@ -700,7 +701,7 @@ int sdlog_thread_main(int argc, char *argv[])
 					.attitude = {buf.att.pitch, buf.att.roll, buf.att.yaw},
 					.rotMatrix = {buf.att.R[0][0], buf.att.R[0][1], buf.att.R[0][2], buf.att.R[1][0], buf.att.R[1][1], buf.att.R[1][2], buf.att.R[2][0], buf.att.R[2][1], buf.att.R[2][2]},
 					.vicon = {buf.vicon_pos.x, buf.vicon_pos.y, buf.vicon_pos.z, buf.vicon_pos.roll, buf.vicon_pos.pitch, buf.vicon_pos.yaw},
-					.control_effective = {buf.act_controls_effective.control_effective[0], buf.act_controls_effective.control_effective[1], buf.act_controls_effective.control_effective[2], buf.act_controls_effective.control_effective[3]},
+					//.control_effective = {buf.act_controls_effective.control_effective[0], buf.act_controls_effective.control_effective[1], buf.act_controls_effective.control_effective[2], buf.act_controls_effective.control_effective[3]},
 					.flow = {buf.flow.flow_raw_x, buf.flow.flow_raw_y, buf.flow.flow_comp_x_m, buf.flow.flow_comp_y_m, buf.flow.ground_distance_m, buf.flow.quality},
 					.diff_pressure = buf.diff_pres.differential_pressure_pa,
 					.ind_airspeed = buf.airspeed.indicated_airspeed_m_s,
