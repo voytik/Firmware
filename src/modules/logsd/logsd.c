@@ -39,7 +39,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;		/**< daemon status flag */
 static int daemon_task;				/**< Handle of daemon task / thread */
@@ -70,13 +69,18 @@ static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
 static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
 // logging constants
-static size_t buff_size = 350; // [bytes]
-static unsigned long int logging_frequency = 100; // [Hz]
-static unsigned long int flush_in_seconds = 5;
+static size_t buff_size = 550; // [bytes]
+static int logging_frequency = 100; // [Hz]
+static int flush_in_seconds = 5;
+/* delay = 1 / logging_frequency (frequency defined by -f option) */
+/*
+static useconds_t sleep_delay = 0;
+static useconds_t sleep_delay_wanted = 0;
+static int delay = 500;
+*/
 static bool debug = true;
 static int debug_file;
 static FILE *file;
-
 
 static bool file_exist(const char *filename);
 static int create_logfolder(void);
@@ -93,8 +97,8 @@ logsd_usage(const char *reason)
 
         errx(1, "usage: logsd {start|stop|status} [-f <log rate>] [-b <buffer size>] [-s <flush every x second>] [debug]\n"
              "\t-r\tLog rate in Hz, 100Hz default\n"
-             "\t-b\tLog buffer size in bytes, default is 350\n"
-        	 "\t-s\tFlush to SD card every defined second, default is 5\n"
+             "\t-b\tLog buffer size in bytes, default is 500\n"
+        	 "\t-s\tFlush to SD card every defined second, default is 10\n"
              "\tdebug\tEnable debugging (not default)\n");
 }
 
@@ -172,10 +176,11 @@ int logsd_thread_main(int argc, char *argv[])
 					break;
 
 			case 'b': {
+						//delay	= strtoul(optarg, NULL, 10);
 						buff_size = strtoul(optarg, NULL, 10);
-							if (buff_size < 350) {
-								buff_size = 350;
-								warnx("Minimal buffer size is 350 bytes, setting this");
+							if (buff_size < 500) {
+								buff_size = 500;
+								warnx("Minimal buffer size is 500 bytes, setting this");
 							}
 					}
 					break;
@@ -200,7 +205,8 @@ int logsd_thread_main(int argc, char *argv[])
 	}
 
 	// refresh rate in ms
-	int rate = 1000/logging_frequency;
+	unsigned rate = 1000/logging_frequency;
+	//sleep_delay = (1000000 / logging_frequency)-delay;
 
 	/* subscribe to sensor_combined topic */
 		int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -233,15 +239,29 @@ int logsd_thread_main(int argc, char *argv[])
 
 		/* one could wait for multiple topics with this technique, just using one here */
 		struct pollfd fds[] = {
-			{ .fd = sensor_sub_fd,   .events = POLLIN },
+			{ .fd = sensor_sub_fd,   .events = POLLIN},
+			{ .fd = gps_sub_fd,   .events = POLLIN},
+			{  .fd = attitude_sub_fd,   .events = POLLIN},
+			{  .fd = rc_sub_fd,   .events = POLLIN},
+			{  .fd = airspeed_sub_fd,   .events = POLLIN},
+			{  .fd = actuators_sub_fd,   .events = POLLIN},
+			{  .fd = skydog_attitude_sub_fd,   .events = POLLIN}
 		};
 
 		int error_counter = 0;
-		int n = 0;
+		size_t n = 0;
 		int i = 0;
 		ssize_t m = 0;
 
 		// buff for log string
+		/*
+		char *buff_all = (char *) malloc (buff_size);
+		 if (buff_all == NULL)
+		 {
+			 printf("[logsd] buffer is null\n");
+
+		 }
+		 */
 		char buff_all[buff_size];
 
 		//buffs to hold data
@@ -261,6 +281,7 @@ int logsd_thread_main(int argc, char *argv[])
 		memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 		memset(&actuator_outputs_raw, 0, sizeof(actuator_outputs_raw));
 		memset(&skydog_attitude_raw, 0, sizeof(skydog_attitude_raw));
+		memset(&buff_all, 0, sizeof(buff_all));
 
 		/* create file to log into */
 		printf("[logsd] start logging\n");
@@ -277,13 +298,13 @@ int logsd_thread_main(int argc, char *argv[])
 		}
 
 		//write header
-		n = snprintf(buff_all, buff_size,"%% Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
+		n = snprintf(buff_all, buff_size,"%% Time[ms],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
 				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
 				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
 				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],"
-				"Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n%% Logging frequency %d Hz\n",logging_frequency);
+				"Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n %% Logging frequency %d Hz\n",logging_frequency);
 		//check if buffer large enough
-		if (n>buff_size)
+		if (n>=buff_size)
 		{
 			// if not, write only buffer bytes
 			m = write(log_file, buff_all, buff_size);
@@ -295,15 +316,16 @@ int logsd_thread_main(int argc, char *argv[])
 		{
 			// if yes write actual size of string bytes
 			m = write(log_file, buff_all, n);
+			printf("%s", buff_all);
+			printf("[logsd] Writing header: %zu bytes\n",n);
 		}
 
-		//uint64_t timestamp_start = hrt_absolute_time();
-		//uint64_t timestamp = 0;
-
+		uint64_t timestamp_start = hrt_absolute_time();
+		uint64_t timestamp = 0;
 
 		do {
 			/* wait for sensor update of file descriptor for 1000 ms (1 second) */
-			int poll_ret = poll(fds, 1, 1000);
+			int poll_ret = poll(fds, 7, 1000);
 
 			/* handle the poll result */
 			if (poll_ret == 0) {
@@ -326,30 +348,52 @@ int logsd_thread_main(int argc, char *argv[])
 				if (fds[0].revents & POLLIN) {
 					/* copy sensors raw data into local buffer */
 					orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
+				}
+
+				if (fds[1].revents & POLLIN) {
 					/* copy gps raw data into local buffer */
 					orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
+				}
+
+				if (fds[2].revents & POLLIN) {
 					/* copy attitude raw data into local buffer */
 					orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
+				}
+
+				if (fds[3].revents & POLLIN) {
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+				}
+
+				if (fds[4].revents & POLLIN) {
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+				}
+
+				if (fds[5].revents & POLLIN) {
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(actuator_outputs_0), actuators_sub_fd, &actuator_outputs_raw);
-					/* copy skydog attitude data into local buffer */
+				}
+
+				if (fds[6].revents & POLLIN) {
+				/* copy skydog attitude data into local buffer */
 					orb_copy(ORB_ID(skydog_attitude), skydog_attitude_sub_fd, &skydog_attitude_raw);
+				}
 
 					/* get timestamp in ms*/
-					//timestamp = (hrt_absolute_time() - timestamp_start)/10000;
+					timestamp = (hrt_absolute_time() - timestamp_start)/1000;
 					//timestamp = timestamp + rate;
 
 					/* ---- logging starts here ---- */
 
+
 					// write to already allocated buffer
-					n = snprintf(buff_all, buff_size,"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
-							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%d,%d,%d,%4.4f,%4.4f,"
+					n = snprintf(buff_all, buff_size,"%llu,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
+						//n = fprintf(file, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
+						//	"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%ld,%ld,%ld,%4.4f,%4.4f,"
+							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
-						//timestamp,
+						timestamp,
 						attitude_raw.roll,
 						attitude_raw.pitch,
 						attitude_raw.yaw,
@@ -369,9 +413,9 @@ int logsd_thread_main(int argc, char *argv[])
 						actuator_outputs_raw.output[3],		//throttle
 						actuator_outputs_raw.output[0],		//ailerons
 						actuator_outputs_raw.output[4],		//flaps
-						gps_raw.lat,
+				/*		gps_raw.lat,
 						gps_raw.lon,
-						gps_raw.alt,
+						gps_raw.alt,	*/
 						sensors_raw.baro_alt_meter,
 						airspeed_raw.true_airspeed_m_s,
 						sensors_raw.differential_pressure_pa,
@@ -387,8 +431,9 @@ int logsd_thread_main(int argc, char *argv[])
 						sensors_raw.magnetometer_ga[2]);
 
 
+
 					// check if buffer not overloaded
-					if (n>buff_size)
+					if (n>=buff_size)
 					{
 						if(debug)
 						{fprintf(file, "[logsd] buffer overloaded, tried to write %d bytes, excessing data cropped\n", n);
@@ -397,6 +442,7 @@ int logsd_thread_main(int argc, char *argv[])
 						m = write(log_file, buff_all, buff_size);
 					}else{
 						m = write(log_file, buff_all, n);
+						//m = fwrite(buff_all, 1, n, file);
 					}
 					//check if write succesful
 					if (m == -1)
@@ -413,18 +459,36 @@ int logsd_thread_main(int argc, char *argv[])
 					if (i%(flush_in_seconds*logging_frequency)==0)
 					{
 						fsync(log_file);
+						i = 0;
 
 						if (debug)
 						{printf("%s", buff_all);
-						 printf("written to file: %d bytes\n", m);
+						 printf("written to file: %zu bytes\n", n);
 
+						 /*
+						 printf("[logsd] sleep delay wanted: %llu \n",sleep_delay_wanted);
+						 printf("[logsd] sleep delay: %llu \n",sleep_delay);
+						  	 */
 						 //fprintf(file, "%s", buff_all);
 						 //fprintf(file, "written to file: %d bytes\n", m);
 						}
 
 					}
+
 				}
-			}
+			/*
+				timestamp = (hrt_absolute_time() - timestamp_start);
+				sleep_delay = sleep_delay_wanted-timestamp;
+			 	if (sleep_delay < 1000 || sleep_delay > 10000)
+			 	{
+			 		sleep_delay = 1000;
+			 		printf("[logsd] sleep delay: %llu \n",sleep_delay);
+			 		printf("[logsd] time diference delay: %llu \n",timestamp);
+			 	}
+			 	*/
+				//usleep(sleep_delay);
+
+
 		} while (!thread_should_exit);
 
 		fsync(log_file);
