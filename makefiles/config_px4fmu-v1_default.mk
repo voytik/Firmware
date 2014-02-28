@@ -101,6 +101,7 @@ MODULES		+= modules/skydog_path_planning
 MODULES		+= modules/skydog_attitude
 MODULES		+= modules/logsd
 MODULES		+= modules/simulink_control
+MODULES		+= modules/simulink_app
 
 #
 # Unit tests
