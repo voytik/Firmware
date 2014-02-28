@@ -411,8 +411,8 @@ then
 
 	if [ $HIL == no ]
 	then
-		echo "[init] Start logging"
-		sh /etc/init.d/rc.logging
+		#echo "[init] Start logging"
+		#sh /etc/init.d/rc.logging
 		
 		echo "[init] Start GPS"
 		gps start
@@ -443,7 +443,7 @@ then
 		sh /etc/init.d/rc.interface
 		
 		# Start standard fixedwing apps
-		sh /etc/init.d/rc.fw_apps
+		#sh /etc/init.d/rc.fw_apps
 	fi
 
 	#

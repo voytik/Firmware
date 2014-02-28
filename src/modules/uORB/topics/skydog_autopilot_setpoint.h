@@ -21,7 +21,7 @@ struct skydog_autopilot_setpoint_s
 {
 	float Roll_w;		// wanted roll [rad]
 	float Altitude_w;	// wanted altitude [m]
-	float Groundspeed_w;	// wanted airspeed [m/s]
+	float Groundspeed_w;	// wanted speed [m/s]
 	bool Valid;			// other values valid?
 };
 

@@ -31,12 +31,12 @@
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_outputs.h>
-#include <uORB/topics/skydog_attitude.h>
+#include <uORB/topics/skydog_autopilot_setpoint.h>
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
 
-#define __STDC_FORMAT_MACROS
+//#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 static bool thread_should_exit = false;		/**< daemon exit flag */
@@ -72,7 +72,6 @@ static char folder_path[64];
 static size_t buff_size = 550; // [bytes]
 static int logging_frequency = 100; // [Hz]
 static int flush_in_seconds = 5;
-/* delay = 1 / logging_frequency (frequency defined by -f option) */
 /*
 static useconds_t sleep_delay = 0;
 static useconds_t sleep_delay_wanted = 0;
@@ -96,10 +95,10 @@ logsd_usage(const char *reason)
                 fprintf(stderr, "%s\n", reason);
 
         errx(1, "usage: logsd {start|stop|status} [-f <log rate>] [-b <buffer size>] [-s <flush every x second>] [debug]\n"
-             "\t-r\tLog rate in Hz, 100Hz default\n"
-             "\t-b\tLog buffer size in bytes, default is 500\n"
-        	 "\t-s\tFlush to SD card every defined second, default is 10\n"
-             "\tdebug\tEnable debugging (not default)\n");
+             "\t-r\tLog rate in Hz, %d Hz default\n"
+             "\t-b\tLog buffer size in bytes, default is %u\n"
+        	 "\t-s\tFlush to SD card every defined second, default is %d\n"
+             "\tdebug\tEnable debugging (not default)\n", logging_frequency, buff_size, flush_in_seconds);
 }
 
 /**
@@ -152,7 +151,7 @@ int logsd_main(int argc, char *argv[])
 
 }
 
-// main log function
+// main logging function
 int logsd_thread_main(int argc, char *argv[])
 {
 	thread_running = true;
@@ -177,10 +176,11 @@ int logsd_thread_main(int argc, char *argv[])
 
 			case 'b': {
 						//delay	= strtoul(optarg, NULL, 10);
-						buff_size = strtoul(optarg, NULL, 10);
-							if (buff_size < 500) {
-								buff_size = 500;
-								warnx("Minimal buffer size is 500 bytes, setting this");
+						size_t buff_size_s = strtoul(optarg, NULL, 10);
+							if (buff_size_s > buff_size) {
+								buff_size = buff_size_s;
+							}else{
+								warnx("Minimal buffer size is %d bytes, setting this", buff_size);
 							}
 					}
 					break;
@@ -215,37 +215,37 @@ int logsd_thread_main(int argc, char *argv[])
 
 	/* subscribe to gps topic */
 		int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
-		orb_set_interval(gps_sub_fd, rate);
+		//orb_set_interval(gps_sub_fd, rate);
 
 	/* subscribe to vehicle attitude topic */
 		int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
-		orb_set_interval(attitude_sub_fd, rate);
+		//orb_set_interval(attitude_sub_fd, rate);
 
 	/* subscribe to rc channels topic */
 		int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
-		orb_set_interval(rc_sub_fd, rate);
+		//orb_set_interval(rc_sub_fd, rate);
 
 	/* subscribe to airspeed channels topic */
 		int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
-		orb_set_interval(airspeed_sub_fd, rate);
+		//orb_set_interval(airspeed_sub_fd, rate);
 
 	/* subscribe to actuator outputs channels topic */
 		int actuators_sub_fd = orb_subscribe(ORB_ID(actuator_outputs_0));
-		orb_set_interval(actuators_sub_fd, rate);
+		//orb_set_interval(actuators_sub_fd, rate);
 
 	/* subscribe to skydog_attitude channels topic */
-		int skydog_attitude_sub_fd = orb_subscribe(ORB_ID(skydog_attitude));
-		orb_set_interval(skydog_attitude_sub_fd, rate);
+		int skydog_autopilot_setpoint_sub_fd = orb_subscribe(ORB_ID(skydog_autopilot_setpoint));
+		//orb_set_interval(skydog_attitude_sub_fd, rate);
 
 		/* one could wait for multiple topics with this technique, just using one here */
 		struct pollfd fds[] = {
 			{ .fd = sensor_sub_fd,   .events = POLLIN},
-			{ .fd = gps_sub_fd,   .events = POLLIN},
+		/*	{ .fd = gps_sub_fd,   .events = POLLIN},
 			{  .fd = attitude_sub_fd,   .events = POLLIN},
 			{  .fd = rc_sub_fd,   .events = POLLIN},
 			{  .fd = airspeed_sub_fd,   .events = POLLIN},
 			{  .fd = actuators_sub_fd,   .events = POLLIN},
-			{  .fd = skydog_attitude_sub_fd,   .events = POLLIN}
+			{  .fd = skydog_attitude_sub_fd,   .events = POLLIN} */
 		};
 
 		int error_counter = 0;
@@ -254,14 +254,6 @@ int logsd_thread_main(int argc, char *argv[])
 		ssize_t m = 0;
 
 		// buff for log string
-		/*
-		char *buff_all = (char *) malloc (buff_size);
-		 if (buff_all == NULL)
-		 {
-			 printf("[logsd] buffer is null\n");
-
-		 }
-		 */
 		char buff_all[buff_size];
 
 		//buffs to hold data
@@ -271,7 +263,7 @@ int logsd_thread_main(int argc, char *argv[])
 		struct manual_control_setpoint_s rc_raw;
 		struct airspeed_s airspeed_raw;
 		struct actuator_outputs_s actuator_outputs_raw;
-		struct skydog_attitude_s skydog_attitude_raw;
+		struct skydog_autopilot_setpoint_s skydog_autopilot_setpoint_raw;
 
 		//set all buffers to 0
 		memset(&sensors_raw, 0, sizeof(sensors_raw));
@@ -280,7 +272,7 @@ int logsd_thread_main(int argc, char *argv[])
 		memset(&rc_raw, 0, sizeof(rc_raw));
 		memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 		memset(&actuator_outputs_raw, 0, sizeof(actuator_outputs_raw));
-		memset(&skydog_attitude_raw, 0, sizeof(skydog_attitude_raw));
+		memset(&skydog_autopilot_setpoint_raw, 0, sizeof(skydog_autopilot_setpoint_raw));
 		memset(&buff_all, 0, sizeof(buff_all));
 
 		/* create file to log into */
@@ -301,8 +293,9 @@ int logsd_thread_main(int argc, char *argv[])
 		n = snprintf(buff_all, buff_size,"%% Time[ms],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
 				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
 				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
-				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Acc_1[rad/s],Acc_2[rad/s],Acc_3[rad/s],Gyr_1[rad/s],Gyr_2[rad/s],"
-				"Gyr_3[rad/s],Mag_1[ga],Mag_2[ga],Mag_3[ga]\n %% Logging frequency %d Hz\n",logging_frequency);
+				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Autopilot_roll[rad],Autopilot_speed[m/s],Autopilot_altitude[m],Autopilot_valid[t/f]\n"
+				"%% Logging frequency %d Hz\n",logging_frequency);
+
 		//check if buffer large enough
 		if (n>=buff_size)
 		{
@@ -325,7 +318,7 @@ int logsd_thread_main(int argc, char *argv[])
 
 		do {
 			/* wait for sensor update of file descriptor for 1000 ms (1 second) */
-			int poll_ret = poll(fds, 7, 1000);
+			int poll_ret = poll(fds, 1, 1000);
 
 			/* handle the poll result */
 			if (poll_ret == 0) {
@@ -348,52 +341,42 @@ int logsd_thread_main(int argc, char *argv[])
 				if (fds[0].revents & POLLIN) {
 					/* copy sensors raw data into local buffer */
 					orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
-				}
 
-				if (fds[1].revents & POLLIN) {
 					/* copy gps raw data into local buffer */
 					orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
-				}
 
-				if (fds[2].revents & POLLIN) {
 					/* copy attitude raw data into local buffer */
 					orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
-				}
 
-				if (fds[3].revents & POLLIN) {
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
-				}
 
-				if (fds[4].revents & POLLIN) {
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
-				}
 
-				if (fds[5].revents & POLLIN) {
 					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(actuator_outputs_0), actuators_sub_fd, &actuator_outputs_raw);
-				}
 
-				if (fds[6].revents & POLLIN) {
-				/* copy skydog attitude data into local buffer */
-					orb_copy(ORB_ID(skydog_attitude), skydog_attitude_sub_fd, &skydog_attitude_raw);
-				}
+				    /* copy skydog attitude data into local buffer */
+					orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_autopilot_setpoint_sub_fd, &skydog_autopilot_setpoint_raw);
+
 
 					/* get timestamp in ms*/
 					timestamp = (hrt_absolute_time() - timestamp_start)/1000;
-					//timestamp = timestamp + rate;
+
 
 					/* ---- logging starts here ---- */
 
-
 					// write to already allocated buffer
-					n = snprintf(buff_all, buff_size,"%llu,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
-						//n = fprintf(file, "%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
-						//	"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%ld,%ld,%ld,%4.4f,%4.4f,"
-							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"
-							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n",
+					n = snprintf(buff_all, buff_size,"%PRIu64,%4.4f,"	// timestamp,rc_flag,
+							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  //euler angles + derivations
+							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  // rc channels
+							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  // output to servos
+							"%d,%d,%d,"			// gps data
+							"%4.4f,%4.4f,%4.4f,%4.4f,"  //altitude, airspeed
+							"%4.4f,%4.4f,%4.4f,%d\n", 	// skydog autopilot values
 						timestamp,
+						rc_raw.aux3,
 						attitude_raw.roll,
 						attitude_raw.pitch,
 						attitude_raw.yaw,
@@ -413,23 +396,17 @@ int logsd_thread_main(int argc, char *argv[])
 						actuator_outputs_raw.output[3],		//throttle
 						actuator_outputs_raw.output[0],		//ailerons
 						actuator_outputs_raw.output[4],		//flaps
-				/*		gps_raw.lat,
+						gps_raw.lat,
 						gps_raw.lon,
-						gps_raw.alt,	*/
+						gps_raw.alt,
 						sensors_raw.baro_alt_meter,
 						airspeed_raw.true_airspeed_m_s,
 						sensors_raw.differential_pressure_pa,
 						gps_raw.vel_m_s,
-						sensors_raw.accelerometer_m_s2[0],
-						sensors_raw.accelerometer_m_s2[1],
-						sensors_raw.accelerometer_m_s2[2],
-						sensors_raw.gyro_rad_s[0],
-						sensors_raw.gyro_rad_s[1],
-						sensors_raw.gyro_rad_s[2],
-						sensors_raw.magnetometer_ga[0],
-						sensors_raw.magnetometer_ga[1],
-						sensors_raw.magnetometer_ga[2]);
-
+						skydog_autopilot_setpoint_raw.Roll_w,
+						skydog_autopilot_setpoint_raw.Groundspeed_w,
+						skydog_autopilot_setpoint_raw.Altitude_w,
+						skydog_autopilot_setpoint_raw.Valid);
 
 
 					// check if buffer not overloaded
@@ -465,10 +442,6 @@ int logsd_thread_main(int argc, char *argv[])
 						{printf("%s", buff_all);
 						 printf("written to file: %zu bytes\n", n);
 
-						 /*
-						 printf("[logsd] sleep delay wanted: %llu \n",sleep_delay_wanted);
-						 printf("[logsd] sleep delay: %llu \n",sleep_delay);
-						  	 */
 						 //fprintf(file, "%s", buff_all);
 						 //fprintf(file, "written to file: %d bytes\n", m);
 						}
@@ -476,18 +449,7 @@ int logsd_thread_main(int argc, char *argv[])
 					}
 
 				}
-			/*
-				timestamp = (hrt_absolute_time() - timestamp_start);
-				sleep_delay = sleep_delay_wanted-timestamp;
-			 	if (sleep_delay < 1000 || sleep_delay > 10000)
-			 	{
-			 		sleep_delay = 1000;
-			 		printf("[logsd] sleep delay: %llu \n",sleep_delay);
-			 		printf("[logsd] time diference delay: %llu \n",timestamp);
-			 	}
-			 	*/
-				//usleep(sleep_delay);
-
+			}
 
 		} while (!thread_should_exit);
 

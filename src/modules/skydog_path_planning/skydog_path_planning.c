@@ -49,7 +49,7 @@ static bool thread_running = false;		/**< daemon status flag */
 static int daemon_task;				/**< Handle of daemon task / thread */
 
 static int mavlink_fd = -1;
-static unsigned int logging_frequency = 20; // [Hz]
+static unsigned int running_frequency = 20; // [Hz]
 static bool debug = true;
 
 /**
@@ -139,9 +139,9 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv, "f:debug")) != EOF) {
 		switch (ch) {
-		case 'f': {		logging_frequency = strtoul(optarg, NULL, 10);
-						if (logging_frequency < 1)
-						{ logging_frequency = 1;
+		case 'f': {		running_frequency = strtoul(optarg, NULL, 10);
+						if (running_frequency < 1)
+						{ running_frequency = 1;
 						  warnx("Minimal running frequency is 1Hz, setting this");
 						}
 				}break;
@@ -162,9 +162,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	        warnx("failed to open MAVLink log stream, start mavlink app first.");
 	}
 
-
 	// refresh rate in ms
-	int rate = 1000/logging_frequency;
+	int rate = 1000/running_frequency;
 	int error_counter = 0;
 
 	bool manual_enabled = true;
@@ -176,23 +175,23 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
-			orb_set_interval(gps_sub_fd, rate);
+			//orb_set_interval(gps_sub_fd, rate);
 
 		/* subscribe to airspeed channels topic */
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
-			orb_set_interval(airspeed_sub_fd, rate);
+			//orb_set_interval(airspeed_sub_fd, rate);
 
 		/* subscribe to rc channels topic */
 			int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
-			orb_set_interval(rc_sub_fd, rate);
+			//orb_set_interval(rc_sub_fd, rate);
 
 		/* subscribe to vehicle mode topic */
 			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
-			orb_set_interval(control_mode_sub_fd, rate);
+			//orb_set_interval(control_mode_sub_fd, rate);
 
 		/* subscribe to waypoints topic */
 			int skydog_sub_fd = orb_subscribe(ORB_ID(skydog_waypoints));
-			orb_set_interval(skydog_sub_fd, rate);
+			//orb_set_interval(skydog_sub_fd, rate);
 
 			/* one could wait for multiple topics with this technique, just using one here */
 			struct pollfd fds[] = {
@@ -226,7 +225,6 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 		     Skydog_path_planning_initialize();
 
 		     mavlink_log_info(mavlink_fd, "[skydog_path_planning] initialized");
-
 
 			while (!thread_should_exit){
 						/* wait for sensor update of first file descriptor for 1000 ms (1 second) */
@@ -276,9 +274,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									Non_fly_zone_w = 0; // TODO no fly zone implementation
 									Mode2_w = 2; // TODO mode
 
-
 									//run Simulink code
-									Skydog_path_planning_step();
+									//Skydog_path_planning_step();
 
 									// copy output to skydog topic
 									skydog.Roll_w = Roll_w;
