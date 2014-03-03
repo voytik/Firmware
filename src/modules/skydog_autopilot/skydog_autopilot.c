@@ -322,10 +322,18 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 										Mode_w = 1;
 										autopilot_mode = 1;
 									}else{
-										// is MODE AUTOPILOT selected
-										printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
-										Mode_w = 2;
-										autopilot_mode = 2;
+
+										if (skydog.Valid)
+										{
+											// is MODE AUTOPILOT selected
+											printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
+											Mode_w = 2;
+											autopilot_mode = 2;
+										}else{
+											// stay in stabilization until skydog_path_planning starts giving data
+											Mode_w = 1;
+											autopilot_mode = 1;
+										}
 									}
 
 									//run Simulink code

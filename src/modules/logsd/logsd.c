@@ -69,9 +69,9 @@ static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
 static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
 // logging constants
-static size_t buff_size = 550; // [bytes]
+static size_t buff_size = 500; // [bytes]
 static int logging_frequency = 100; // [Hz]
-static int flush_in_seconds = 5;
+static int flush_in_seconds = 10;
 /*
 static useconds_t sleep_delay = 0;
 static useconds_t sleep_delay_wanted = 0;
@@ -252,6 +252,7 @@ int logsd_thread_main(int argc, char *argv[])
 		size_t n = 0;
 		int i = 0;
 		ssize_t m = 0;
+		bool rc_flag = false;
 
 		// buff for log string
 		char buff_all[buff_size];
@@ -290,7 +291,7 @@ int logsd_thread_main(int argc, char *argv[])
 		}
 
 		//write header
-		n = snprintf(buff_all, buff_size,"%% Time[ms],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
+		n = snprintf(buff_all, buff_size,"%% Time[ms],Flag[t/f],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
 				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
 				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
 				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Autopilot_roll[rad],Autopilot_speed[m/s],Autopilot_altitude[m],Autopilot_valid[t/f]\n"
@@ -361,14 +362,21 @@ int logsd_thread_main(int argc, char *argv[])
 					orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_autopilot_setpoint_sub_fd, &skydog_autopilot_setpoint_raw);
 
 
-					/* get timestamp in ms*/
+					/* get timestamp in ms */
 					timestamp = (hrt_absolute_time() - timestamp_start)/1000;
 
+					/* create rc flag */
+					if (rc_raw.aux3 > 0.0f)
+					{
+						rc_flag = true;
+					}else{
+						rc_flag = false;
+					}
 
 					/* ---- logging starts here ---- */
 
 					// write to already allocated buffer
-					n = snprintf(buff_all, buff_size,"%PRIu64,%4.4f,"	// timestamp,rc_flag,
+					n = snprintf(buff_all, buff_size,"%llu,%d,"	// timestamp,rc_flag,
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  //euler angles + derivations
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  // rc channels
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  // output to servos
@@ -376,7 +384,7 @@ int logsd_thread_main(int argc, char *argv[])
 							"%4.4f,%4.4f,%4.4f,%4.4f,"  //altitude, airspeed
 							"%4.4f,%4.4f,%4.4f,%d\n", 	// skydog autopilot values
 						timestamp,
-						rc_raw.aux3,
+						rc_flag,
 						attitude_raw.roll,
 						attitude_raw.pitch,
 						attitude_raw.yaw,
