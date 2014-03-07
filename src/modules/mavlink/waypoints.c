@@ -57,6 +57,10 @@
 bool debug = false;
 bool verbose = false;
 
+// skydog waypoints implementation
+orb_advert_t skydog_pub;
+struct skydog_waypoints_s skydogWP;
+
 
 #define MAVLINK_WPM_NO_PRINTF
 
@@ -83,6 +87,8 @@ void mavlink_wpm_init(mavlink_wpm_storage *state)
 	state->timestamp_lastoutside_orbit = 0;///< timestamp when the MAV was last outside the orbit or had the wrong yaw value
 	state->timestamp_firstinside_orbit = 0;///< timestamp when the MAV was the first time after a waypoint change inside the orbit and had the correct yaw value
 
+	//Advertise that this controller will publish skydog topic
+	skydog_pub = orb_advertise(ORB_ID(skydog_waypoints), &skydogWP);
 }
 
 /*
@@ -514,8 +520,6 @@ int mavlink_waypoint_eventloop(uint64_t now, const struct vehicle_global_positio
 			wpm->current_active_wp_id = -1;
 		}
 	}
-	// publish waypoints to skydog_waypoint topic
-	skydog_waypoints();
 
 	check_waypoints_reached(now, global_position, local_position, nav_cap->turn_distance);
 
@@ -963,6 +967,10 @@ void mavlink_wpm_message_handler(const mavlink_message_t *msg, const struct vehi
 
 						wpm->current_state = MAVLINK_WPM_STATE_IDLE;
 
+						// publish waypoints to skydog_waypoint topic
+						skydog_waypoints();
+
+
 					} else {
 						mavlink_wpm_send_waypoint_request(wpm->current_partner_sysid, wpm->current_partner_compid, wpm->current_wp_id);
 					}
@@ -1045,11 +1053,6 @@ void mavlink_wpm_message_handler(const mavlink_message_t *msg, const struct vehi
 
 void skydog_waypoints()
 {
-	// output struct
-	struct skydog_waypoints_s skydogWP;
-
-	//Advertise that this controller will publish skydog topic
-	orb_advert_t skydog_pub = orb_advertise(ORB_ID(skydog_waypoints), &skydogWP);
 
 	// fill the struct with waypoint data
 	uint16_t i;
@@ -1062,7 +1065,9 @@ void skydog_waypoints()
 	}
 	skydogWP.wpm_count = wpm->size;
 
-	/* publish values to skydog_waypoints topic*/
+	// publish values to skydog_waypoints topic
 	orb_publish(ORB_ID(skydog_waypoints), skydog_pub, &skydogWP);
 
+	// send message to QGC
+	mavlink_missionlib_send_gcs_string("SKYDOG GOT WAYPOINTS");
 }

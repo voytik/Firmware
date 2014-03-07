@@ -52,6 +52,7 @@ static int mavlink_fd = -1;
 static unsigned int running_frequency = 20; // [Hz]
 static bool debug = true;
 
+
 /**
  * daemon management function.
  */
@@ -263,6 +264,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 									/* copy waypoints data into local buffer */
 									orb_copy(ORB_ID(skydog_waypoints), skydog_sub_fd, &waypoints);
+
+									//mavlink_log_info(mavlink_fd, "[skydog_path_planning] waypoints count %u", waypoints.wpm_count);
 
 
 									//fill in arguments
