@@ -6,7 +6,7 @@
  * Model version                  : 1.189
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Sat Mar 08 14:37:05 2014
+ * C/C++ source code generated on : Sat Mar 08 17:38:46 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -65,13 +65,13 @@ void Skydog_autopilot_step(void)
   real32_T rtb_Sum2;
   real32_T rtb_Sum1_i;
   real32_T rtb_Saturation4;
+  real32_T rtb_Saturation5;
   real32_T rtb_Saturation1_p;
   real32_T rtb_Saturation1_e;
   real32_T rtb_Saturation1_n;
-  real32_T rtb_Saturation5;
   real32_T rtb_Saturation6;
+  real32_T rtb_Saturation1_l;
   real32_T rtb_Switch3;
-  real32_T rtb_Gain1;
   real32_T rtb_Sum1;
 
   /* Sum: '<S2>/Sum5' incorporates:
@@ -139,19 +139,19 @@ void Skydog_autopilot_step(void)
   rtb_Sum5_m = rtb_Saturation1_e - Pitch_speed_r;
 
   /* Gain: '<S8>/Gain' */
-  rtb_Saturation5 = Skydog_autopilot_P.Gain_Gain_p * rtb_Sum5_m;
+  rtb_Switch3 = Skydog_autopilot_P.Gain_Gain_p * rtb_Sum5_m;
 
   /* Saturate: '<S8>/Saturation1' */
-  rtb_Saturation5 = rtb_Saturation5 >= Skydog_autopilot_P.Saturation1_UpperSat_i
-    ? Skydog_autopilot_P.Saturation1_UpperSat_i : rtb_Saturation5 <=
+  rtb_Saturation1_l = rtb_Switch3 >= Skydog_autopilot_P.Saturation1_UpperSat_i ?
+    Skydog_autopilot_P.Saturation1_UpperSat_i : rtb_Switch3 <=
     Skydog_autopilot_P.Saturation1_LowerSat_g ?
-    Skydog_autopilot_P.Saturation1_LowerSat_g : rtb_Saturation5;
+    Skydog_autopilot_P.Saturation1_LowerSat_g : rtb_Switch3;
 
   /* Saturate: '<S3>/Saturation2' */
-  Elevator_w = rtb_Saturation5 >= Skydog_autopilot_P.Saturation2_UpperSat ?
-    Skydog_autopilot_P.Saturation2_UpperSat : rtb_Saturation5 <=
+  Elevator_w = rtb_Saturation1_l >= Skydog_autopilot_P.Saturation2_UpperSat ?
+    Skydog_autopilot_P.Saturation2_UpperSat : rtb_Saturation1_l <=
     Skydog_autopilot_P.Saturation2_LowerSat ?
-    Skydog_autopilot_P.Saturation2_LowerSat : rtb_Saturation5;
+    Skydog_autopilot_P.Saturation2_LowerSat : rtb_Saturation1_l;
 
   /* Switch: '<S7>/Switch' incorporates:
    *  Inport: '<Root>/Mode_w'
@@ -292,20 +292,20 @@ void Skydog_autopilot_step(void)
     Skydog_autopilot_P.Saturation3_LowerSat : rtb_Switch3;
 
   /* Gain: '<S1>/Gain' */
-  debug1 = Skydog_autopilot_P.Gain_Gain_p1 * 0.0F;
+  debug1 = Skydog_autopilot_P.Gain_Gain_p1 * rtb_Saturation1_e;
 
   /* Gain: '<S1>/Gain1' */
-  debug2 = Skydog_autopilot_P.Gain1_Gain * 0.0F;
+  debug2 = Skydog_autopilot_P.Gain1_Gain * rtb_Saturation1_l;
 
   /* Gain: '<S4>/Gain1' */
-  rtb_Gain1 = Skydog_autopilot_P.Gain1_Gain_n * rtb_Sum5;
+  rtb_Switch3 = Skydog_autopilot_P.Gain1_Gain_n * rtb_Sum5;
 
   /* Gain: '<S5>/Gain1' */
-  rtb_Switch3 = Skydog_autopilot_P.Gain1_Gain_j * rtb_Sum1;
+  rtb_Saturation1_l = Skydog_autopilot_P.Gain1_Gain_j * rtb_Sum1;
 
   /* Update for DiscreteIntegrator: '<S4>/Discrete-Time Integrator' */
   Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_gainval * rtb_Gain1 +
+    Skydog_autopilot_P.DiscreteTimeIntegrator_gainval * rtb_Switch3 +
     Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE;
   if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE >=
       Skydog_autopilot_P.DiscreteTimeIntegrator_UpperSat) {
@@ -386,7 +386,7 @@ void Skydog_autopilot_step(void)
 
   /* Update for DiscreteIntegrator: '<S5>/Discrete-Time Integrator' */
   Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_gainva_h * rtb_Switch3 +
+    Skydog_autopilot_P.DiscreteTimeIntegrator_gainva_h * rtb_Saturation1_l +
     Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d;
   if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d >=
       Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_b) {
