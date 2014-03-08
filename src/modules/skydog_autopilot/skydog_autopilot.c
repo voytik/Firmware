@@ -322,13 +322,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									RC_rudder_r = 0;
 									RC_throttle_r = 0.5;
 
-									if (control_mode.flag_control_attitude_enabled && control_mode.flag_control_auto_enabled == false) {
-										// is MODE STABILIZATION selected
-										printf("[skydog_autopilot] MODE STABILIZATION selected\n");
-										Mode_w = 1;
-										autopilot_mode = 1;
-									}else{
-
+									if (control_mode.flag_control_attitude_enabled && control_mode.flag_control_auto_enabled) {
 										if (skydog.Valid)
 										{
 											// is MODE AUTOPILOT selected
@@ -340,23 +334,29 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 											Mode_w = 1;
 											autopilot_mode = 1;
 										}
+									}else{
+										// is MODE STABILIZATION selected
+										printf("[skydog_autopilot] MODE STABILIZATION selected\n");
+										Mode_w = 1;
+										autopilot_mode = 1;
+
 									}
 
 									//run Simulink code
 									Skydog_autopilot_step();
 
 									// copy output in radians and normalize to [-1,1]
-									actuators.control[0] = Aileron_w * 2.65f;
-									actuators.control[1] = Elevator_w * 3.7f;
+									actuators.control[0] = 0.2f*(Aileron_w * 2.65f);
+									actuators.control[1] = -0.4f*(Elevator_w * 3.7f);
 									actuators.control[2] = Rudder_w * 4.09f;
 									actuators.control[3] = Throttle_w;
 									actuators.control[4] = 0;//Flaps_w;
 
-									if (j>50){
+									if (j>200){
 										printf("[skydog_autopilot] ailerons:%4.4f, elevator:%4.4f, rudder:%4.4f, throttle:%4.4f\n",actuators.control[0], actuators.control[1], actuators.control[2], Throttle_w);
 										printf("[skydog_autopilot] db1:%4.4f, db2:%4.4f\n", debug1, debug2);
 
-										//mavlink_log_info(mavlink_fd, "[skydog_autopilot] db1:%4.4f, db2:%4.4f", debug1, debug2);
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] db1:%4.4f, db2:%4.4f", debug1, debug2);
 										j = 0;
 									}
 									j++;
@@ -381,12 +381,15 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 
 									if (autopilot_mode == 0){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] sleeping, manual mode");
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man:%d,att:%d,auto:%d",control_mode.flag_control_manual_enabled,control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
 									}
 									if (autopilot_mode == 1){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, stabilization mode");
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man:%d,att:%d,auto:%d",control_mode.flag_control_manual_enabled,control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
 									}
 									if (autopilot_mode == 2){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, autopilot mode");
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man:%d,att:%d,auto:%d",control_mode.flag_control_manual_enabled,control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
 									}
 									// update flag with current mode
 									current_autopilot_mode = autopilot_mode;

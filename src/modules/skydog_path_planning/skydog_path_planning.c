@@ -289,8 +289,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 									// skydog autopilot testing
 									skydog.Roll_w = 0;
-									skydog.Altitude_w = 400;
-									skydog.Groundspeed_w = 10;
+									skydog.Altitude_w = 1000;
+									skydog.Groundspeed_w = 15;
 									skydog.Valid = true;
 
 									/* publish values to skydog_autopilot_setpoint topic*/

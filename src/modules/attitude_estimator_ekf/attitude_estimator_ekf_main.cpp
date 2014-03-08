@@ -435,15 +435,17 @@ const unsigned int loop_interval_alarm = 6500;	// loop interval in microseconds
 					/* send out */
 					att.timestamp = raw.timestamp;
 
-					// Change the signs because of other orientation
-					float myRoll = euler[0] - ekf_params.roll_off;
-					if (myRoll>=0.0f)
-					{
-						att.roll = -(M_PI - myRoll);
-					}else{
-						att.roll = (myRoll + M_PI);
+					// If not in HIL change the signs because of other mounting orientation of the board
+					orb_copy(ORB_ID(vehicle_control_mode), sub_control_mode, &control_mode);
+					if (!control_mode.flag_system_hil_enabled) {
+						float myRoll = euler[0] - ekf_params.roll_off;
+						if (myRoll>=0.0f)
+						{
+							att.roll = -(M_PI - myRoll);
+						}else{
+							att.roll = (myRoll + M_PI);
+						}
 					}
-					//att.roll = myRoll;
 
 					att.pitch = (euler[1] - ekf_params.pitch_off);
 					att.yaw = euler[2] - ekf_params.yaw_off;

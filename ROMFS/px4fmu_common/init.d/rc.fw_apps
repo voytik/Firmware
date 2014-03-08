@@ -7,7 +7,7 @@
 # Start the attitude and position estimator
 #
 #att_pos_estimator_ekf start
-attitude_estimator_ekf start
+#attitude_estimator_ekf start
 
 #
 # Start attitude controller
