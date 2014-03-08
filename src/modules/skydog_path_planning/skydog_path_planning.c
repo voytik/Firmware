@@ -280,10 +280,17 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									//run Simulink code
 									//Skydog_path_planning_step();
 
-									// copy output to skydog topic
+		/*							// copy output to skydog topic
 									skydog.Roll_w = Roll_w;
 									skydog.Altitude_w = Altitude_w;
 									skydog.Groundspeed_w = Groundspeed_w;
+									skydog.Valid = true;
+		*/
+
+									// skydog autopilot testing
+									skydog.Roll_w = 0;
+									skydog.Altitude_w = 400;
+									skydog.Groundspeed_w = 10;
 									skydog.Valid = true;
 
 									/* publish values to skydog_autopilot_setpoint topic*/

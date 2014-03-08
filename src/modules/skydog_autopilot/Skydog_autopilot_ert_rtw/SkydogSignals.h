@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_autopilot'.
  *
- * Model version                  : 1.148
+ * Model version                  : 1.189
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Dec 02 22:04:15 2013
+ * C/C++ source code generated on : Sat Mar 08 14:37:05 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -26,7 +26,6 @@ extern real32_T Aileron_w;
 extern real32_T Altitude_r;
 extern real32_T Altitude_w;
 extern real32_T Elevator_w;
-extern real32_T Flaps_w;
 extern real32_T Groundspeed_r;
 extern real32_T Groundspeed_w;
 extern int16_T Mode_w;
@@ -47,6 +46,8 @@ extern real32_T Throttle_w;
 extern real32_T Yaw_acc_r;
 extern real32_T Yaw_r;
 extern real32_T Yaw_speed_r;
+extern real32_T debug1;
+extern real32_T debug2;
 
 #endif                                 /* RTW_HEADER_SkydogSignals_h_ */
 

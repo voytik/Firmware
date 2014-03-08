@@ -17,7 +17,7 @@ Model {
       Name		      "Out1"
     }
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.16"
+    ComputedModelVersion    "1.18"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -49,9 +49,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Voytik"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Mon Feb 03 17:38:34 2014"
-  RTWModifiedTimeStamp	  313347244
-  ModelVersionFormat	  "1.%<AutoIncrement:16>"
+  LastModifiedDate	  "Sat Mar 08 11:04:36 2014"
+  RTWModifiedTimeStamp	  316176735
+  ModelVersionFormat	  "1.%<AutoIncrement:18>"
   ConfigurationManager	  "None"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -89,6 +89,7 @@ Model {
     $ObjectID		    2
     $ClassName		    "Simulink.SimulationData.ModelLoggingInfo"
     model_		    "test"
+    signals_		    []
     overrideMode_	    [0.0]
     Array {
       Type		      "Cell"
@@ -630,8 +631,8 @@ Model {
       }
       Name		      "Configuration"
       ExtraOptions	      "-aGenerateTraceInfo=0 -aIgnoreTestpoints=0 "
-      CurrentDlgPage	      "Solver"
-      ConfigPrmDlgPosition     [ 496, 40, 1425, 909 ] 
+      CurrentDlgPage	      "Code Generation"
+      ConfigPrmDlgPosition     [ 488, 10, 1433, 917 ] 
     }
     PropName		    "ConfigurationSets"
   }
@@ -672,43 +673,26 @@ Model {
   }
   BlockParameterDefaults {
     Block {
-      BlockType		      Constant
-      Value		      "1"
-      VectorParams1D	      on
-      SamplingMode	      "Sample based"
-      OutMin		      "[]"
-      OutMax		      "[]"
-      OutDataTypeStr	      "Inherit: Inherit from 'Constant value'"
-      LockScale		      off
-      SampleTime	      "inf"
-      FramePeriod	      "inf"
-      PreserveConstantTs      off
-    }
-    Block {
-      BlockType		      DiscreteTransferFcn
-      Numerator		      "[1]"
-      Denominator	      "[1 0.5]"
-      InputProcessing	      "Elements as channels (sample based)"
-      InitialStates	      "0"
+      BlockType		      DiscreteIntegrator
+      IntegratorMethod	      "Integration: Forward Euler"
+      gainval		      "1.0"
+      ExternalReset	      "none"
+      InitialConditionSource  "internal"
+      InitialCondition	      "0"
+      InitialConditionMode    "State and output"
       SampleTime	      "1"
-      a0EqualsOne	      off
-      NumCoefMin	      "[]"
-      NumCoefMax	      "[]"
-      DenCoefMin	      "[]"
-      DenCoefMax	      "[]"
       OutMin		      "[]"
       OutMax		      "[]"
-      StateDataTypeStr	      "Inherit: Same as input"
-      NumCoefDataTypeStr      "Inherit: Inherit via internal rule"
-      DenCoefDataTypeStr      "Inherit: Inherit via internal rule"
-      NumProductDataTypeStr   "Inherit: Inherit via internal rule"
-      DenProductDataTypeStr   "Inherit: Inherit via internal rule"
-      NumAccumDataTypeStr     "Inherit: Inherit via internal rule"
-      DenAccumDataTypeStr     "Inherit: Inherit via internal rule"
       OutDataTypeStr	      "Inherit: Inherit via internal rule"
       LockScale		      off
       RndMeth		      "Floor"
       SaturateOnIntegerOverflow	off
+      LimitOutput	      off
+      UpperSaturationLimit    "inf"
+      LowerSaturationLimit    "-inf"
+      ShowSaturationPort      off
+      ShowStatePort	      off
+      IgnoreLimit	      off
       StateMustResolveToSignalObject off
       RTWStateStorageClass    "Auto"
     }
@@ -785,26 +769,10 @@ Model {
       Variant		      off
       GeneratePreprocessorConditionals off
     }
-    Block {
-      BlockType		      Sum
-      IconShape		      "rectangular"
-      Inputs		      "++"
-      CollapseMode	      "All dimensions"
-      CollapseDim	      "1"
-      InputSameDT	      on
-      AccumDataTypeStr	      "Inherit: Inherit via internal rule"
-      OutMin		      "[]"
-      OutMax		      "[]"
-      OutDataTypeStr	      "Inherit: Same as first input"
-      LockScale		      off
-      RndMeth		      "Floor"
-      SaturateOnIntegerOverflow	on
-      SampleTime	      "-1"
-    }
   }
   System {
     Name		    "test"
-    Location		    [702, 223, 1238, 512]
+    Location		    [918, 360, 1454, 649]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
@@ -818,7 +786,7 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "20"
+    SIDHighWatermark	    "21"
     Block {
       BlockType		      Inport
       Name		      "In1"
@@ -826,7 +794,7 @@ Model {
       Position		      [45, 73, 75, 87]
       ZOrder		      -1
       IconDisplay	      "Port number"
-      OutDataTypeStr	      "double"
+      OutDataTypeStr	      "single"
       Port {
 	PortNumber		1
 	Name			"inVar"
@@ -931,7 +899,7 @@ Model {
       }
       System {
 	Name			"myTest"
-	Location		[935, 306, 1611, 924]
+	Location		[1127, 308, 1807, 979]
 	Open			on
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
@@ -952,19 +920,21 @@ Model {
 	  IconDisplay		  "Port number"
 	}
 	Block {
-	  BlockType		  Constant
-	  Name			  "Constant"
-	  SID			  "5"
-	  Position		  [115, 120, 145, 150]
-	  ZOrder		  -4
-	  Value			  "0"
-	}
-	Block {
-	  BlockType		  DiscreteTransferFcn
-	  Name			  "Discrete\nTransfer Fcn"
-	  SID			  "20"
-	  Position		  [250, 32, 310, 68]
-	  ZOrder		  -2
+	  BlockType		  DiscreteIntegrator
+	  Name			  "Discrete-Time\nIntegrator"
+	  SID			  "21"
+	  Ports			  [1, 1]
+	  Position		  [230, 34, 265, 66]
+	  ZOrder		  -10
+	  IntegratorMethod	  "Integration: Forward Euler"
+	  ExternalReset		  "none"
+	  InitialConditionSource  "internal"
+	  SampleTime		  "0.01"
+	  LimitOutput		  on
+	  UpperSaturationLimit	  "1"
+	  LowerSaturationLimit	  "-1"
+	  ICPrevOutput		  "DiscIntNeverNeededParam"
+	  ICPrevScaledInput	  "DiscIntNeverNeededParam"
 	}
 	Block {
 	  BlockType		  Gain
@@ -977,39 +947,11 @@ Model {
 	  SaturateOnIntegerOverflow off
 	}
 	Block {
-	  BlockType		  Sum
-	  Name			  "Sum"
-	  SID			  "6"
-	  Ports			  [2, 1]
-	  Position		  [195, 40, 215, 60]
-	  ZOrder		  -18
-	  ShowName		  off
-	  IconShape		  "round"
-	  Inputs		  "|++"
-	  InputSameDT		  off
-	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
-	  SaturateOnIntegerOverflow off
-	}
-	Block {
 	  BlockType		  Outport
 	  Name			  "Out1"
 	  SID			  "9"
 	  Position		  [385, 43, 415, 57]
 	  IconDisplay		  "Port number"
-	}
-	Line {
-	  SrcBlock		  "Gain"
-	  SrcPort		  1
-	  Points		  [25, 0; 0, 5]
-	  DstBlock		  "Sum"
-	  DstPort		  1
-	}
-	Line {
-	  SrcBlock		  "Constant"
-	  SrcPort		  1
-	  Points		  [55, 0]
-	  DstBlock		  "Sum"
-	  DstPort		  2
 	}
 	Line {
 	  SrcBlock		  "In1"
@@ -1018,13 +960,14 @@ Model {
 	  DstPort		  1
 	}
 	Line {
-	  SrcBlock		  "Sum"
+	  SrcBlock		  "Gain"
 	  SrcPort		  1
-	  DstBlock		  "Discrete\nTransfer Fcn"
+	  Points		  [40, 0; 0, 5]
+	  DstBlock		  "Discrete-Time\nIntegrator"
 	  DstPort		  1
 	}
 	Line {
-	  SrcBlock		  "Discrete\nTransfer Fcn"
+	  SrcBlock		  "Discrete-Time\nIntegrator"
 	  SrcPort		  1
 	  DstBlock		  "Out1"
 	  DstPort		  1
@@ -1038,7 +981,7 @@ Model {
       Position		      [435, 73, 465, 87]
       ZOrder		      -23
       IconDisplay	      "Port number"
-      OutDataTypeStr	      "double"
+      OutDataTypeStr	      "single"
     }
     Line {
       Name		      "inVar"

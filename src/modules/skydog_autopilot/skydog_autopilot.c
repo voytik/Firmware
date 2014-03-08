@@ -51,6 +51,7 @@ static int daemon_task;				/**< Handle of daemon task / thread */
 
 static int mavlink_fd = -1;
 static unsigned int running_frequency = 100; // [Hz]
+static int flush_in_seconds = 2;
 static bool debug = true;
 
 /**
@@ -67,7 +68,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[]);
  */
 static void usage(const char *reason);
 
-usage(const char *reason)
+void usage(const char *reason)
 {
 	if (reason)
 		warnx("%s\n", reason);
@@ -100,7 +101,7 @@ int skydog_autopilot_main(int argc, char *argv[])
 			thread_should_exit = false;
 			daemon_task = task_spawn_cmd("skydog_autopilot",
 						 SCHED_DEFAULT,
-						 SCHED_PRIORITY_MAX - 20,
+						 SCHED_PRIORITY_MAX - 40,
 						 2048,
 						 skydog_autopilot_thread_main,
 						 (const char **)argv);
@@ -169,6 +170,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 	int error_counter = 0;
 	uint8_t autopilot_mode = 0;
 	uint8_t current_autopilot_mode = 0;
+	int j = 0;
 
 		/* subscribe to sensor_combined topic */
 			int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -185,7 +187,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 
 		/* subscribe to vehicle mode topic */
 			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
-			//orb_set_interval(control_mode_sub_fd, rate);
+			orb_set_interval(control_mode_sub_fd, rate);
 
 		/* subscribe to airspeed channels topic */
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
@@ -233,11 +235,14 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     //Advertise that this controller will publish actuator and make first publication
 		     orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
 
+		     printf("skydog_autopilot going to initialize generated code\n");
+
 		     // initialize simulink model
-		     //Skydog_autopilot_initialize();
+		     Skydog_autopilot_initialize();
 
 		     // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
+		     printf("[skydog_autopilot] initialized\n");
 
 
 			while (!thread_should_exit){
@@ -256,14 +261,18 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									, poll_ret);
 							}
 							error_counter++;
+
 						} else {
 
 							if (fds[0].revents & POLLIN) {
 								/* copy vehicle mode data into local buffer */
 								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
 
+								//printf("[skydog_autopilot] copied data\n");
+
 								// is MODE MANUAL selected
-								if (control_mode.flag_control_manual_enabled && control_mode.flag_control_attitude_enabled == false && control_mode.flag_control_auto_enabled == false) {
+								//if (control_mode.flag_control_manual_enabled && control_mode.flag_control_attitude_enabled == false && control_mode.flag_control_auto_enabled == false) {
+								if (control_mode.flag_control_attitude_enabled == false && control_mode.flag_control_auto_enabled == false) {
 
 									autopilot_mode = 0;
 
@@ -271,7 +280,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 
 									// MODE MANUAL selected
-									printf("[skydog_autopilot] MODE MANUAL selected\n");
+									//printf("[skydog_autopilot] MODE MANUAL selected\n");
 
 									// just copy RC input directly to output
 									actuators.control[0] = rc_raw.roll;
@@ -295,7 +304,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									/* copy skydog data into local buffer */
 									orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
 
-/*									//fill in inputs for simulink code
+									//fill in inputs for simulink code
 									Roll_w = skydog.Roll_w;
 									Altitude_w = skydog.Altitude_w;
 									Groundspeed_w = skydog.Groundspeed_w;
@@ -310,15 +319,22 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									Roll_acc_r = attitude_raw.rollacc;
 									Pitch_acc_r = attitude_raw.pitchacc;
 									Yaw_acc_r = attitude_raw.yawacc;
-									RC_aileron_r = rc_raw.roll;
+			/*						RC_aileron_r = rc_raw.roll;
 									RC_elevator_r = rc_raw.pitch;
 									RC_rudder_r = rc_raw.yaw;
 									RC_throttle_r = rc_raw.throttle;
 									RC_flaps_r = rc_raw.aux1;
-*/
+	*/
+									// stabilization testing
+									RC_aileron_r = 0;
+									RC_elevator_r = 0;
+									RC_rudder_r = 0;
+									RC_throttle_r = 0.5;
+									RC_flaps_r = 0;
+
 									if (control_mode.flag_control_attitude_enabled && control_mode.flag_control_auto_enabled == false) {
 										// is MODE STABILIZATION selected
-										printf("[skydog_autopilot] MODE STABILIZATION selected\n");
+										//printf("[skydog_autopilot] MODE STABILIZATION selected\n");
 										Mode_w = 1;
 										autopilot_mode = 1;
 									}else{
@@ -326,7 +342,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 										if (skydog.Valid)
 										{
 											// is MODE AUTOPILOT selected
-											printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
+											//printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
 											Mode_w = 2;
 											autopilot_mode = 2;
 										}else{
@@ -337,49 +353,67 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									}
 
 									//run Simulink code
-									//Skydog_autopilot_step();
+									Skydog_autopilot_step();
 
-									// copy output
-									actuators.control[0] = Aileron_w;
-									actuators.control[1] = Elevator_w;
-									actuators.control[2] = Rudder_w;
+									// copy output in radians and normalize to [-1,1]
+									actuators.control[0] = Aileron_w * 2.65f;
+									actuators.control[1] = Elevator_w * 3.7f;
+									actuators.control[2] = Rudder_w * 4.09f;
 									actuators.control[3] = Throttle_w;
-									actuators.control[4] = Flaps_w;
+									//actuators.control[4] = Flaps_w;  NOT used so far
 
+									//printf("[skydog_autopilot] elevator %4.4f, pitch: %4.4f, pitch_speed: %4.4f\n",actuators.control[1],debug1,debug2);
 
-								// sanity check and publish actuator outputs
-								if (isfinite(actuators.control[0]) &&
-									isfinite(actuators.control[1]) &&
-									isfinite(actuators.control[2]) &&
-									isfinite(actuators.control[3]) &&
-									isfinite(actuators.control[4])) {
-									orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-									}else{
-										printf("[skydog_autopilot] actuator values not finite\n");
+								j++;
 
-									}
+								// flush data to console every x seconds
+								if (j%(flush_in_seconds*running_frequency)==0)
+								{
+									mavlink_log_info(mavlink_fd, "[sk] dbg1:%4.4f,dbg2:%4.4f",debug1,debug2);
+									mavlink_log_info(mavlink_fd, "[sk] Elev:%4.4f, Th:%4.4f", actuators.control[1],actuators.control[3]);
+									//mavlink_log_info(mavlink_fd, "[sk] Rol:%4.4f,pit:%4.4f,yaw:%4.4f",attitude_raw.roll,attitude_raw.pitch,attitude_raw.yaw);
+									j = 0;
+								}
+
+							}  // stabilised or auto mode
 
 								// check which mode selected and send this once to ground station
 								if (autopilot_mode != current_autopilot_mode){
 
 									if (autopilot_mode == 0){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] sleeping, manual mode");
-									}
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man: %d, att: %d, auto: %d", control_mode.flag_control_manual_enabled, control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
+										}
 									if (autopilot_mode == 1){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, stabilization mode");
-									}
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man: %d, att: %d, auto: %d", control_mode.flag_control_manual_enabled, control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
+										}
 									if (autopilot_mode == 2){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, autopilot mode");
+										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man: %d, att: %d, auto: %d", control_mode.flag_control_manual_enabled, control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
+										}
+										// update flag with current mode
+										current_autopilot_mode = autopilot_mode;
 									}
-									// update flag with current mode
-									current_autopilot_mode = autopilot_mode;
-								}
 
+
+							// sanity check and publish actuator outputs
+							if (isfinite(actuators.control[0]) &&
+								isfinite(actuators.control[1]) &&
+								isfinite(actuators.control[2]) &&
+								isfinite(actuators.control[3]) &&
+								isfinite(actuators.control[4]))
+							{
+								orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
+							}else{
+									printf("[skydog_autopilot] actuator values not finite\n");
 							}
 
-						}
-					}
-			}
+					} //if (fds[0].revents & POLLIN)
+
+				} // else (received data)
+
+			} //while (!thread_should_exit){
 
 			printf("[skydog_autopilot] exiting, stopping all motors.\n");
 				thread_running = false;
@@ -395,4 +429,5 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 				exit(0);
 
 				return 0;
-}
+
+} //int skydog_autopilot_thread_main(int argc, char *argv[])

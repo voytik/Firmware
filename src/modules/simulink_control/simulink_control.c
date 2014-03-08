@@ -139,23 +139,17 @@ int simulink_control_thread_main(int argc, char *argv[])
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
-			orb_set_interval(gps_sub_fd, rate);
 
 		/* subscribe to vehicle attitude topic */
 			int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
-			orb_set_interval(attitude_sub_fd, rate);
-
 
 		/* subscribe to airspeed channels topic */
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
-			orb_set_interval(airspeed_sub_fd, rate);
+
 
 			/* one could wait for multiple topics with this technique, just using one here */
 			struct pollfd fds[] = {
 				{ .fd = sensor_sub_fd,   .events = POLLIN },
-				{ .fd = gps_sub_fd,   .events = POLLIN },
-				{ .fd = attitude_sub_fd,   .events = POLLIN },
-				{ .fd = airspeed_sub_fd,   .events = POLLIN },
 			};
 
 			//buffs to hold data
@@ -183,10 +177,6 @@ int simulink_control_thread_main(int argc, char *argv[])
 
 		     // initialize simulink model
 		     myTest_initialize();
-
-		     uint64_t timestamp_start = hrt_absolute_time();;
-		     uint64_t timestamp;
-
 
 			while (!thread_should_exit){
 						/* wait for sensor update of 4 file descriptor for 1000 ms (1 second) */
@@ -237,16 +227,10 @@ int simulink_control_thread_main(int argc, char *argv[])
 
 								//run Simulink code
 
-								/*
-								inVar = attitude_raw.roll;
+								inVar = attitude_raw.pitch;
 								myTest_step();
 								printf("%4.4f, %4.4f\n", inVar, outVar);
-								*/
 
-
-								timestamp = (hrt_absolute_time() - timestamp_start)/10000;
-								//printf("test time: %" PRIu64 "\n", timestamp);
-								printf("test time: %Lu\n", timestamp);
 
 								// copy output
 								/* actuators.control[0] = aileron;
