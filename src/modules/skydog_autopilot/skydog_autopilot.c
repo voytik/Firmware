@@ -34,6 +34,7 @@
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/skydog_autopilot_setpoint.h>
+#include <uORB/topics/debug_key_value.h>
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
@@ -216,6 +217,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			struct skydog_autopilot_setpoint_s skydog;
 			// output struct
 			struct actuator_controls_s actuators;
+			struct debug_key_value_s debug_qgc;
 
 			//set all buffers to 0
 			memset(&sensors_raw, 0, sizeof(sensors_raw));
@@ -226,6 +228,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			memset(&rc_raw, 0, sizeof(rc_raw));
 			memset(&actuators, 0, sizeof(actuators));
 			memset(&skydog, 0, sizeof(skydog));
+			memset(&debug_qgc, 0, sizeof(debug_qgc));
 
 		    /* publish actuator controls with zero values */
 		    for (unsigned i = 0; i < NUM_ACTUATOR_CONTROLS; i++) {
@@ -233,6 +236,13 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     }
 		     //Advertise that this controller will publish actuator and make first publication
 		     orb_advert_t actuator_pub = orb_advertise(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, &actuators);
+
+		     //fill in name for debug value
+		     snprintf(debug_qgc.key, 10, "debug1");
+		     snprintf(debug_qgc.key2, 10, "debug2");
+
+		     //Advertise that this controller will publish actuator and make first publication
+		     orb_advert_t debug_pub = orb_advertise(ORB_ID(debug_key_value), &debug_qgc);
 
 		     // initialize simulink model
 		     Skydog_autopilot_initialize();
@@ -352,11 +362,18 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[3] = Throttle_w;
 									actuators.control[4] = 0;//Flaps_w;
 
+									//copy debug value to debug topic
+									debug_qgc.value = debug1;
+									debug_qgc.value2 = debug2;
+
+									// publish values to debug topic
+									orb_publish(ORB_ID(debug_key_value), debug_pub, &debug_qgc);
+
 									if (j>200){
 										printf("[skydog_autopilot] ailerons:%4.4f, elevator:%4.4f, rudder:%4.4f, throttle:%4.4f\n",actuators.control[0], actuators.control[1], actuators.control[2], Throttle_w);
 										printf("[skydog_autopilot] db1:%4.4f, db2:%4.4f\n", debug1, debug2);
 
-										mavlink_log_info(mavlink_fd, "[skydog_autopilot] db1:%4.4f, db2:%4.4f", debug1, debug2);
+										//mavlink_log_info(mavlink_fd, "[skydog_autopilot] db1:%4.4f, db2:%4.4f", debug1, debug2);
 										j = 0;
 									}
 									j++;
@@ -371,10 +388,9 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									isfinite(actuators.control[3]) &&
 									isfinite(actuators.control[4])) {
 									orb_publish(ORB_ID_VEHICLE_ATTITUDE_CONTROLS, actuator_pub, &actuators);
-									}else{
-										printf("[skydog_autopilot] actuator values not finite\n");
-
-									}
+								}else{
+									printf("[skydog_autopilot] actuator values not finite\n");
+								}
 
 								// check which mode selected and send this once to ground station
 								if (autopilot_mode != current_autopilot_mode){

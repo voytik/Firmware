@@ -63,6 +63,12 @@ struct debug_key_value_s {
 	uint32_t timestamp_ms;		/**< in milliseconds since system start */
 	char key[10];				/**< max. 10 characters as key / name */
 	float value;				/**< the value to send as debug output */
+	char key2[10];				/**< max. 10 characters as key / name */
+	float value2;				/**< the value to send as debug output */
+	char key3[10];				/**< max. 10 characters as key / name */
+	float value3;				/**< the value to send as debug output */
+	char key4[10];				/**< max. 10 characters as key / name */
+	float value4;				/**< the value to send as debug output */
 
 };
 
