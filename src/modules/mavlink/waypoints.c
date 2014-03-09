@@ -1061,7 +1061,7 @@ void skydog_waypoints()
 		skydogWP.waypoints[i].longitude = wpm->waypoints[i].y;
 		skydogWP.waypoints[i].latitude = wpm->waypoints[i].x;
 		skydogWP.waypoints[i].altitude = wpm->waypoints[i].z;
-		skydogWP.waypoints[i].speed = 10;
+		skydogWP.waypoints[i].speed = wpm->waypoints[i].param1;
 	}
 	skydogWP.wpm_count = wpm->size;
 

@@ -3,21 +3,10 @@ Model {
   Version		  7.8
   MdlSubVersion		  0
   GraphicalInterface {
-    NumRootInports	    1
-    Inport {
-      BusObject		      ""
-      SignalName	      "inVar"
-      Name		      "In1"
-    }
-    NumRootOutports	    1
-    Outport {
-      BusObject		      ""
-      BusOutputAsStruct	      "off"
-      SignalName	      "outVar"
-      Name		      "Out1"
-    }
+    NumRootInports	    0
+    NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.18"
+    ComputedModelVersion    "1.19"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -49,9 +38,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "Voytik"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Sat Mar 08 11:04:36 2014"
-  RTWModifiedTimeStamp	  316176735
-  ModelVersionFormat	  "1.%<AutoIncrement:18>"
+  LastModifiedDate	  "Sun Mar 09 19:12:54 2014"
+  RTWModifiedTimeStamp	  316293143
+  ModelVersionFormat	  "1.%<AutoIncrement:19>"
   ConfigurationManager	  "None"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -89,7 +78,6 @@ Model {
     $ObjectID		    2
     $ClassName		    "Simulink.SimulationData.ModelLoggingInfo"
     model_		    "test"
-    signals_		    []
     overrideMode_	    [0.0]
     Array {
       Type		      "Cell"
@@ -673,43 +661,34 @@ Model {
   }
   BlockParameterDefaults {
     Block {
-      BlockType		      DiscreteIntegrator
-      IntegratorMethod	      "Integration: Forward Euler"
-      gainval		      "1.0"
-      ExternalReset	      "none"
-      InitialConditionSource  "internal"
-      InitialCondition	      "0"
-      InitialConditionMode    "State and output"
-      SampleTime	      "1"
+      BlockType		      Constant
+      Value		      "1"
+      VectorParams1D	      on
+      SamplingMode	      "Sample based"
       OutMin		      "[]"
       OutMax		      "[]"
-      OutDataTypeStr	      "Inherit: Inherit via internal rule"
+      OutDataTypeStr	      "Inherit: Inherit from 'Constant value'"
       LockScale		      off
-      RndMeth		      "Floor"
-      SaturateOnIntegerOverflow	off
-      LimitOutput	      off
-      UpperSaturationLimit    "inf"
-      LowerSaturationLimit    "-inf"
-      ShowSaturationPort      off
-      ShowStatePort	      off
-      IgnoreLimit	      off
-      StateMustResolveToSignalObject off
-      RTWStateStorageClass    "Auto"
+      SampleTime	      "inf"
+      FramePeriod	      "inf"
+      PreserveConstantTs      off
     }
     Block {
-      BlockType		      Gain
-      Gain		      "1"
-      Multiplication	      "Element-wise(K.*u)"
-      ParamMin		      "[]"
-      ParamMax		      "[]"
-      ParamDataTypeStr	      "Inherit: Same as input"
+      BlockType		      DataTypeConversion
       OutMin		      "[]"
       OutMax		      "[]"
-      OutDataTypeStr	      "Inherit: Same as input"
+      OutDataTypeStr	      "Inherit: Inherit via back propagation"
       LockScale		      off
-      RndMeth		      "Floor"
+      ConvertRealWorld	      "Real World Value (RWV)"
+      RndMeth		      "Zero"
       SaturateOnIntegerOverflow	on
       SampleTime	      "-1"
+    }
+    Block {
+      BlockType		      Demux
+      Outputs		      "4"
+      DisplayOption	      "none"
+      BusSelectionMode	      off
     }
     Block {
       BlockType		      Inport
@@ -747,6 +726,30 @@ Model {
       InitialOutput	      "[]"
     }
     Block {
+      BlockType		      S-Function
+      FunctionName	      "system"
+      SFunctionModules	      "''"
+      PortCounts	      "[]"
+      SFunctionDeploymentMode off
+    }
+    Block {
+      BlockType		      Scope
+      ModelBased	      off
+      TickLabels	      "OneTimeTick"
+      ZoomMode		      "on"
+      Grid		      "on"
+      TimeRange		      "auto"
+      YMin		      "-5"
+      YMax		      "5"
+      SaveToWorkspace	      off
+      SaveName		      "ScopeData"
+      LimitDataPoints	      on
+      MaxDataPoints	      "5000"
+      Decimation	      "1"
+      SampleInput	      off
+      SampleTime	      "-1"
+    }
+    Block {
       BlockType		      SubSystem
       ShowPortLabels	      "FromPortIcon"
       Permissions	      "ReadWrite"
@@ -769,10 +772,13 @@ Model {
       Variant		      off
       GeneratePreprocessorConditionals off
     }
+    Block {
+      BlockType		      Terminator
+    }
   }
   System {
     Name		    "test"
-    Location		    [918, 360, 1454, 649]
+    Location		    [918, 397, 1454, 649]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    200
@@ -786,66 +792,58 @@ Model {
     ShowPageBoundaries	    off
     ZoomFactor		    "100"
     ReportName		    "simulink-default.rpt"
-    SIDHighWatermark	    "21"
+    SIDHighWatermark	    "32"
     Block {
-      BlockType		      Inport
-      Name		      "In1"
-      SID		      "4"
-      Position		      [45, 73, 75, 87]
-      ZOrder		      -1
-      IconDisplay	      "Port number"
+      BlockType		      Constant
+      Name		      "Constant"
+      SID		      "30"
+      Position		      [50, 65, 80, 95]
+      ZOrder		      -5
+    }
+    Block {
+      BlockType		      DataTypeConversion
+      Name		      "Data Type Conversion"
+      SID		      "31"
+      Position		      [125, 63, 200, 97]
+      ZOrder		      -7
       OutDataTypeStr	      "single"
-      Port {
-	PortNumber		1
-	Name			"inVar"
-	Simulink.Signal {
-	  $PropName		  "SignalObject"
-	  $ObjectID		  15
-	  Simulink.SignalRTWInfo {
-	    $PropName		    "RTWInfo"
-	    $ObjectID		    16
-	    StorageClass	    "Custom"
-	    Alignment		    -1
-	    CustomStorageClass	    "ExportToFile"
-	    SimulinkCSC.AttribClass_Simulink_ExportToFile {
-	      $PropName		      "CustomAttributes"
-	      $ObjectID		      17
-	      HeaderFile	      "globalSignals"
-	    }
-	  }
-	  Description		  ""
-	  DataType		  "auto"
-	  Min			  []
-	  Max			  []
-	  DocUnits		  ""
-	  Dimensions		  [-1.0]
-	  DimensionsMode	  "auto"
-	  Complexity		  "auto"
-	  SampleTime		  [-1.0]
-	  SamplingMode		  "auto"
-	  InitialValue		  ""
-	  Simulink.LoggingInfo {
-	    $PropName		    "LoggingInfo"
-	    $ObjectID		    18
-	    DataLogging		    0
-	    NameMode		    0
-	    LoggingName		    ""
-	    DecimateData	    0
-	    Decimation		    2
-	    LimitDataPoints	    0
-	    MaxPoints		    5000
-	  }
-	}
-	RTWStorageClass		"Auto"
-	DataLoggingNameMode	"SignalName"
+      RndMeth		      "Floor"
+      SaturateOnIntegerOverflow	off
+    }
+    Block {
+      BlockType		      Scope
+      Name		      "Scope"
+      SID		      "32"
+      Ports		      [1]
+      Position		      [410, 74, 440, 106]
+      ZOrder		      -3
+      Floating		      off
+      Location		      [188, 390, 512, 629]
+      Open		      off
+      NumInputPorts	      "1"
+      List {
+	ListType		AxesTitles
+	axes1			"%<SignalLabel>"
       }
+      List {
+	ListType		ScopeGraphics
+	FigureColor		"[0.5 0.5 0.5]"
+	AxesColor		"[0 0 0]"
+	AxesTickColor		"[1 1 1]"
+	LineColors		"[1 1 0;1 0 1;0 1 1;1 0 0;0 1 0;0 0 1]"
+	LineStyles		"-|-|-|-|-|-"
+	LineWidths		"[0.5 0.5 0.5 0.5 0.5 0.5]"
+	MarkerStyles		"none|none|none|none|none|none"
+      }
+      DataFormat	      "StructureWithTime"
+      SampleTime	      "0"
     }
     Block {
       BlockType		      SubSystem
       Name		      "myTest"
-      SID		      "7"
+      SID		      "27"
       Ports		      [1, 1]
-      Position		      [205, 36, 295, 124]
+      Position		      [230, 51, 335, 119]
       MinAlgLoopOccurrences   off
       PropExecContextOutsideSubsystem off
       RTWSystemCode	      "Auto"
@@ -853,54 +851,10 @@ Model {
       Opaque		      off
       RequestExecContextInheritance off
       MaskHideContents	      off
-      Port {
-	PortNumber		1
-	Name			"outVar"
-	Simulink.Signal {
-	  $PropName		  "SignalObject"
-	  $ObjectID		  19
-	  Simulink.SignalRTWInfo {
-	    $PropName		    "RTWInfo"
-	    $ObjectID		    20
-	    StorageClass	    "Custom"
-	    Alignment		    -1
-	    CustomStorageClass	    "ExportToFile"
-	    SimulinkCSC.AttribClass_Simulink_ExportToFile {
-	      $PropName		      "CustomAttributes"
-	      $ObjectID		      21
-	      HeaderFile	      "globalSignals"
-	    }
-	  }
-	  Description		  ""
-	  DataType		  "auto"
-	  Min			  []
-	  Max			  []
-	  DocUnits		  ""
-	  Dimensions		  [-1.0]
-	  DimensionsMode	  "auto"
-	  Complexity		  "auto"
-	  SampleTime		  [-1.0]
-	  SamplingMode		  "auto"
-	  InitialValue		  ""
-	  Simulink.LoggingInfo {
-	    $PropName		    "LoggingInfo"
-	    $ObjectID		    22
-	    DataLogging		    0
-	    NameMode		    0
-	    LoggingName		    ""
-	    DecimateData	    0
-	    Decimation		    2
-	    LimitDataPoints	    0
-	    MaxPoints		    5000
-	  }
-	}
-	RTWStorageClass		"Auto"
-	DataLoggingNameMode	"SignalName"
-      }
       System {
 	Name			"myTest"
-	Location		[1127, 308, 1807, 979]
-	Open			on
+	Location		[934, 630, 1404, 728]
+	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -915,88 +869,264 @@ Model {
 	Block {
 	  BlockType		  Inport
 	  Name			  "In1"
-	  SID			  "8"
-	  Position		  [25, 38, 55, 52]
+	  SID			  "28"
+	  Position		  [25, 43, 55, 57]
+	  ZOrder		  -1
 	  IconDisplay		  "Port number"
+	  OutDataTypeStr	  "single"
+	  Port {
+	    PortNumber		    1
+	    Name		    "inVar"
+	    Simulink.Signal {
+	      $PropName		      "SignalObject"
+	      $ObjectID		      15
+	      Simulink.SignalRTWInfo {
+		$PropName		"RTWInfo"
+		$ObjectID		16
+		StorageClass		"Custom"
+		Alignment		-1
+		CustomStorageClass	"ExportToFile"
+		SimulinkCSC.AttribClass_Simulink_ExportToFile {
+		  $PropName		  "CustomAttributes"
+		  $ObjectID		  17
+		  HeaderFile		  "Skydog_signals"
+		}
+	      }
+	      Description	      ""
+	      DataType		      "auto"
+	      Min		      []
+	      Max		      []
+	      DocUnits		      ""
+	      Dimensions	      [-1.0]
+	      DimensionsMode	      "auto"
+	      Complexity	      "auto"
+	      SampleTime	      [-1.0]
+	      SamplingMode	      "auto"
+	      InitialValue	      ""
+	      Simulink.LoggingInfo {
+		$PropName		"LoggingInfo"
+		$ObjectID		18
+		DataLogging		0
+		NameMode		0
+		LoggingName		""
+		DecimateData		0
+		Decimation		2
+		LimitDataPoints		0
+		MaxPoints		5000
+	      }
+	    }
+	    RTWStorageClass	    "Auto"
+	    DataLoggingNameMode	    "SignalName"
+	  }
 	}
 	Block {
-	  BlockType		  DiscreteIntegrator
-	  Name			  "Discrete-Time\nIntegrator"
-	  SID			  "21"
+	  BlockType		  SubSystem
+	  Name			  "MATLAB Function"
+	  SID			  "23"
 	  Ports			  [1, 1]
-	  Position		  [230, 34, 265, 66]
-	  ZOrder		  -10
-	  IntegratorMethod	  "Integration: Forward Euler"
-	  ExternalReset		  "none"
-	  InitialConditionSource  "internal"
-	  SampleTime		  "0.01"
-	  LimitOutput		  on
-	  UpperSaturationLimit	  "1"
-	  LowerSaturationLimit	  "-1"
-	  ICPrevOutput		  "DiscIntNeverNeededParam"
-	  ICPrevScaledInput	  "DiscIntNeverNeededParam"
-	}
-	Block {
-	  BlockType		  Gain
-	  Name			  "Gain"
-	  SID			  "2"
-	  Position		  [80, 28, 125, 62]
-	  ZOrder		  -8
-	  ParamDataTypeStr	  "Inherit: Inherit via internal rule"
-	  OutDataTypeStr	  "Inherit: Inherit via internal rule"
-	  SaturateOnIntegerOverflow off
+	  Position		  [175, 27, 245, 73]
+	  ZOrder		  -4
+	  LibraryVersion	  "1.32"
+	  ErrorFcn		  "Stateflow.Translate.translate"
+	  PermitHierarchicalResolution "ExplicitOnly"
+	  TreatAsAtomicUnit	  on
+	  MinAlgLoopOccurrences	  off
+	  PropExecContextOutsideSubsystem off
+	  RTWSystemCode		  "Auto"
+	  FunctionWithSeparateData off
+	  Opaque		  off
+	  RequestExecContextInheritance	off
+	  MaskHideContents	  off
+	  SFBlockType		  "MATLAB Function"
+	  MaskType		  "Stateflow"
+	  MaskDescription	  "Embedded MATLAB block"
+	  MaskSelfModifiable	  on
+	  MaskDisplay		  "bgColor = Simulink.Root.ColorString2Rgb(get_param(gcbh, 'BackgroundColor')); image(imread('private/"
+	  "eml_membrane_16.png','png','BackgroundColor',bgColor(1:3)),'center'); disp([10 10 'fcn']);"
+	  MaskIconFrame		  on
+	  MaskIconOpaque	  off
+	  MaskIconRotate	  "none"
+	  MaskPortRotate	  "default"
+	  MaskIconUnits		  "normalized"
+	  Port {
+	    PortNumber		    1
+	    Name		    "outVar"
+	    PropagatedSignals	    "y"
+	    Simulink.Signal {
+	      $PropName		      "SignalObject"
+	      $ObjectID		      19
+	      Simulink.SignalRTWInfo {
+		$PropName		"RTWInfo"
+		$ObjectID		20
+		StorageClass		"Custom"
+		Alignment		-1
+		CustomStorageClass	"ExportToFile"
+		SimulinkCSC.AttribClass_Simulink_ExportToFile {
+		  $PropName		  "CustomAttributes"
+		  $ObjectID		  21
+		  HeaderFile		  "Skydog_signals"
+		}
+	      }
+	      Description	      ""
+	      DataType		      "auto"
+	      Min		      []
+	      Max		      []
+	      DocUnits		      ""
+	      Dimensions	      [-1.0]
+	      DimensionsMode	      "auto"
+	      Complexity	      "auto"
+	      SampleTime	      [-1.0]
+	      SamplingMode	      "auto"
+	      InitialValue	      ""
+	      Simulink.LoggingInfo {
+		$PropName		"LoggingInfo"
+		$ObjectID		22
+		DataLogging		0
+		NameMode		0
+		LoggingName		""
+		DecimateData		0
+		Decimation		2
+		LimitDataPoints		0
+		MaxPoints		5000
+	      }
+	    }
+	    RTWStorageClass	    "Auto"
+	    DataLoggingNameMode	    "SignalName"
+	  }
+	  System {
+	    Name		    "MATLAB Function"
+	    Location		    [257, 457, 812, 717]
+	    Open		    off
+	    ModelBrowserVisibility  off
+	    ModelBrowserWidth	    200
+	    ScreenColor		    "white"
+	    PaperOrientation	    "landscape"
+	    PaperPositionMode	    "auto"
+	    PaperType		    "A4"
+	    PaperUnits		    "centimeters"
+	    TiledPaperMargins	    [1.270000, 1.270000, 1.270000, 1.270000]
+	    TiledPageScale	    1
+	    ShowPageBoundaries	    off
+	    ZoomFactor		    "100"
+	    SIDHighWatermark	    "17"
+	    Block {
+	      BlockType		      Inport
+	      Name		      "u"
+	      SID		      "23::1"
+	      Position		      [20, 101, 40, 119]
+	      IconDisplay	      "Port number"
+	    }
+	    Block {
+	      BlockType		      Demux
+	      Name		      " Demux "
+	      SID		      "23::15"
+	      Ports		      [1, 1]
+	      Position		      [270, 160, 320, 200]
+	      Outputs		      "1"
+	    }
+	    Block {
+	      BlockType		      S-Function
+	      Name		      " SFunction "
+	      SID		      "23::14"
+	      Tag		      "Stateflow S-Function test 1"
+	      Ports		      [1, 2]
+	      Position		      [180, 100, 230, 160]
+	      FunctionName	      "sf_sfun"
+	      PortCounts	      "[1 2]"
+	      EnableBusSupport	      on
+	      Port {
+		PortNumber		2
+		Name			"y"
+		RTWStorageClass		"Auto"
+		DataLoggingNameMode	"SignalName"
+	      }
+	    }
+	    Block {
+	      BlockType		      Terminator
+	      Name		      " Terminator "
+	      SID		      "23::17"
+	      Position		      [460, 171, 480, 189]
+	    }
+	    Block {
+	      BlockType		      Outport
+	      Name		      "y"
+	      SID		      "23::5"
+	      Position		      [460, 101, 480, 119]
+	      IconDisplay	      "Port number"
+	    }
+	    Line {
+	      SrcBlock		      " SFunction "
+	      SrcPort		      1
+	      DstBlock		      " Demux "
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      " Demux "
+	      SrcPort		      1
+	      DstBlock		      " Terminator "
+	      DstPort		      1
+	    }
+	    Line {
+	      Name		      "y"
+	      Labels		      [0, 0]
+	      SrcBlock		      " SFunction "
+	      SrcPort		      2
+	      DstBlock		      "y"
+	      DstPort		      1
+	    }
+	    Line {
+	      SrcBlock		      "u"
+	      SrcPort		      1
+	      DstBlock		      " SFunction "
+	      DstPort		      1
+	    }
+	  }
 	}
 	Block {
 	  BlockType		  Outport
 	  Name			  "Out1"
-	  SID			  "9"
-	  Position		  [385, 43, 415, 57]
+	  SID			  "29"
+	  Position		  [415, 43, 445, 57]
+	  ZOrder		  -23
 	  IconDisplay		  "Port number"
+	  OutDataTypeStr	  "single"
 	}
 	Line {
-	  SrcBlock		  "In1"
-	  SrcPort		  1
-	  DstBlock		  "Gain"
-	  DstPort		  1
-	}
-	Line {
-	  SrcBlock		  "Gain"
-	  SrcPort		  1
-	  Points		  [40, 0; 0, 5]
-	  DstBlock		  "Discrete-Time\nIntegrator"
-	  DstPort		  1
-	}
-	Line {
-	  SrcBlock		  "Discrete-Time\nIntegrator"
+	  Name			  "outVar"
+	  Labels		  [0, 0]
+	  SrcBlock		  "MATLAB Function"
 	  SrcPort		  1
 	  DstBlock		  "Out1"
 	  DstPort		  1
 	}
+	Line {
+	  Name			  "inVar"
+	  Labels		  [0, 0]
+	  SrcBlock		  "In1"
+	  SrcPort		  1
+	  DstBlock		  "MATLAB Function"
+	  DstPort		  1
+	}
       }
     }
-    Block {
-      BlockType		      Outport
-      Name		      "Out1"
-      SID		      "3"
-      Position		      [435, 73, 465, 87]
-      ZOrder		      -23
-      IconDisplay	      "Port number"
-      OutDataTypeStr	      "single"
+    Line {
+      SrcBlock		      "Constant"
+      SrcPort		      1
+      DstBlock		      "Data Type Conversion"
+      DstPort		      1
     }
     Line {
-      Name		      "inVar"
-      Labels		      [0, 0]
-      SrcBlock		      "In1"
+      SrcBlock		      "Data Type Conversion"
       SrcPort		      1
+      Points		      [5, 0; 0, 5]
       DstBlock		      "myTest"
       DstPort		      1
     }
     Line {
-      Name		      "outVar"
-      Labels		      [0, 0]
       SrcBlock		      "myTest"
       SrcPort		      1
-      DstBlock		      "Out1"
+      Points		      [25, 0; 0, 5]
+      DstBlock		      "Scope"
       DstPort		      1
     }
   }
@@ -1014,20 +1144,137 @@ Stateflow {
     name		    "test"
     created		    "10-Nov-2013 17:39:28"
     isLibrary		    0
-    firstTarget		    2
+    firstTarget		    9
     sfVersion		    76014001.0002
   }
-  target {
+  chart {
     id			    2
+    name		    "myTest/MATLAB Function"
+    windowPosition	    [390.75 188.25 200.25 189.75]
+    viewLimits		    [0 156.75 0 153.75]
+    screen		    [1 1 1920 1080 1.333333333333333]
+    treeNode		    [0 3 0 0]
+    firstTransition	    5
+    firstJunction	    4
+    viewObj		    2
+    machine		    1
+    toolbarMode		    LIBRARY_TOOLBAR
+    subviewS {
+    }
+    ssIdHighWaterMark	    5
+    decomposition	    CLUSTER_CHART
+    type		    EML_CHART
+    firstData		    6
+    chartFileNumber	    1
+    disableImplicitCasting  1
+    eml {
+      name		      "fcn"
+    }
+  }
+  state {
+    id			    3
+    labelString		    "eML_blk_kernel()"
+    position		    [18 64.5 118 66]
+    fontSize		    12
+    chart		    2
+    treeNode		    [2 0 0 0]
+    superState		    SUBCHART
+    subviewer		    2
+    ssIdNumber		    1
+    type		    FUNC_STATE
+    decomposition	    CLUSTER_STATE
+    eml {
+      isEML		      1
+      script		      "function y = fcn(u)\n%#codegen\n\ny = u+10;"
+      editorLayout	      "100 M4x1[205 227 1080 733]"
+    }
+  }
+  junction {
+    id			    4
+    position		    [23.5747 49.5747 7]
+    chart		    2
+    linkNode		    [2 0 0]
+    subviewer		    2
+    ssIdNumber		    3
+    type		    CONNECTIVE_JUNCTION
+  }
+  transition {
+    id			    5
+    labelString		    "{eML_blk_kernel();}"
+    labelPosition	    [32.125 19.875 102.544 14.964]
+    fontSize		    12
+    src {
+      intersection	      [0 0 1 0 23.5747 14.625 0 0]
+    }
+    dst {
+      id		      4
+      intersection	      [7 0 -1 -1 23.5747 42.5747 0 0]
+    }
+    midPoint		    [23.5747 24.9468]
+    chart		    2
+    linkNode		    [2 0 0]
+    dataLimits		    [23.575 23.575 14.625 34.575]
+    subviewer		    2
+    drawStyle		    SMART
+    executionOrder	    1
+    ssIdNumber		    2
+  }
+  data {
+    id			    6
+    ssIdNumber		    4
+    name		    "u"
+    linkNode		    [2 0 7]
+    scope		    INPUT_DATA
+    machine		    1
+    props {
+      array {
+	size			"-1"
+      }
+      type {
+	method			SF_INHERITED_TYPE
+	primitive		SF_DOUBLE_TYPE
+      }
+      complexity	      SF_COMPLEX_INHERITED
+    }
+    dataType		    "Inherit: Same as Simulink"
+  }
+  data {
+    id			    7
+    ssIdNumber		    5
+    name		    "y"
+    linkNode		    [2 6 0]
+    scope		    OUTPUT_DATA
+    machine		    1
+    props {
+      array {
+	size			"-1"
+      }
+      type {
+	method			SF_INHERITED_TYPE
+	primitive		SF_DOUBLE_TYPE
+      }
+      complexity	      SF_COMPLEX_INHERITED
+      frame		      SF_FRAME_NO
+    }
+    dataType		    "Inherit: Same as Simulink"
+  }
+  instance {
+    id			    8
+    name		    "myTest/MATLAB Function"
+    machine		    1
+    chart		    2
+  }
+  target {
+    id			    9
     name		    "sfun"
     description		    "Default Simulink S-Function Target."
     machine		    1
-    linkNode		    [1 0 3]
+    linkNode		    [1 0 10]
   }
   target {
-    id			    3
+    id			    10
     name		    "rtw"
     machine		    1
-    linkNode		    [1 2 0]
+    linkNode		    [1 9 0]
   }
 }

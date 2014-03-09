@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.148
+ * Model version                  : 1.212
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Dec 02 22:04:28 2013
+ * C/C++ source code generated on : Sun Mar 09 23:57:05 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -23,15 +23,18 @@
 
 /* Declaration for custom storage class: ExportToFile */
 extern real32_T Altitude2_r;
-extern real32_T Altitude_w;
-extern real32_T Groundspeed2_r;
-extern real32_T Groundspeed_w;
-extern int32_T Lattitude_r;
-extern int32_T Longitude_r;
-extern int32_T Mode2_w;
-extern real_T Non_fly_zone_w;
-extern real32_T Roll_w;
-extern real32_T Waypoints_w;
+extern real32_T Altitude2_w;
+extern boolean_T Error;
+extern real32_T Groundspeed2_r[3];
+extern int16_T Mode2_w;
+extern real32_T Nfz_w[24];
+extern real32_T P[3];
+extern real32_T Speed_w;
+extern real32_T Time;
+extern uint8_T Waypoints_count;
+extern real32_T Waypoints_w[60];
+extern real32_T X_earth_r;
+extern real32_T Y_earth_r;
 
 #endif                                 /* RTW_HEADER_SkydogSignals_h_ */
 

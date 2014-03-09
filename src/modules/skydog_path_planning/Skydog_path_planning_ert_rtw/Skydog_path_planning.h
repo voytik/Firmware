@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.148
+ * Model version                  : 1.212
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Dec 02 22:04:28 2013
+ * C/C++ source code generated on : Sun Mar 09 23:57:05 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -18,8 +18,13 @@
 #define RTW_HEADER_Skydog_path_planning_h_
 #ifndef Skydog_path_planning_COMMON_INCLUDES_
 # define Skydog_path_planning_COMMON_INCLUDES_
+#include <math.h>
 #include <stddef.h>
+#include <string.h>
 #include "rtwtypes.h"
+#include "rt_nonfinite.h"
+#include "rtGetInf.h"
+#include "rtGetNaN.h"
 #endif                                 /* Skydog_path_planning_COMMON_INCLUDES_ */
 
 #include "Skydog_path_planning_types.h"
@@ -36,16 +41,52 @@
 # define rtmSetErrorStatus(rtm, val)   ((rtm)->errorStatus = (val))
 #endif
 
+/* Block states (auto storage) for system '<Root>' */
+typedef struct {
+  real_T Memory1_PreviousInput;        /* '<S2>/Memory1' */
+  real_T Memory_PreviousInput;         /* '<S2>/Memory' */
+  struct {
+    void *LoggedData;
+  } Scope_PWORK;                       /* '<S2>/Scope' */
+
+  struct {
+    void *LoggedData;
+  } ToWorkspace1_PWORK;                /* '<S2>/To Workspace1' */
+
+  struct {
+    void *LoggedData;
+  } ToWorkspace4_PWORK;                /* '<S2>/To Workspace4' */
+
+  struct {
+    void *LoggedData;
+  } ToWorkspace6_PWORK;                /* '<S2>/To Workspace6' */
+
+  struct {
+    void *LoggedData;
+  } ToWorkspace7_PWORK;                /* '<S2>/To Workspace7' */
+} D_Work_Skydog_path_planning;
+
+/* External outputs (root outports fed by signals with auto storage) */
+typedef struct {
+  real32_T Roll2_w;                    /* '<Root>/Roll2_w' */
+} ExternalOutputs_Skydog_path_pla;
+
 /* Parameters (auto storage) */
 struct Parameters_Skydog_path_planning_ {
-  real32_T Gain3_Gain;                 /* Computed Parameter: Gain3_Gain
-                                        * Referenced by: '<S1>/Gain3'
+  real_T k_init_Value;                 /* Expression: 1
+                                        * Referenced by: '<S2>/k_init'
                                         */
-  real32_T Gain1_Gain;                 /* Computed Parameter: Gain1_Gain
-                                        * Referenced by: '<S1>/Gain1'
+  real_T Memory1_X0;                   /* Expression: 0
+                                        * Referenced by: '<S2>/Memory1'
                                         */
-  real32_T Gain2_Gain;                 /* Computed Parameter: Gain2_Gain
-                                        * Referenced by: '<S1>/Gain2'
+  real_T t0_init_Value;                /* Expression: 0
+                                        * Referenced by: '<S2>/t0_init'
+                                        */
+  real_T Memory_X0;                    /* Expression: 0
+                                        * Referenced by: '<S2>/Memory'
+                                        */
+  uint8_T Gain6_Gain;                  /* Computed Parameter: Gain6_Gain
+                                        * Referenced by: '<S2>/Gain6'
                                         */
 };
 
@@ -56,6 +97,12 @@ struct RT_MODEL_Skydog_path_planning {
 
 /* Block parameters (auto storage) */
 extern Parameters_Skydog_path_planning Skydog_path_planning_P;
+
+/* Block states (auto storage) */
+extern D_Work_Skydog_path_planning Skydog_path_planning_DWork;
+
+/* External outputs (root outports fed by signals with auto storage) */
+extern ExternalOutputs_Skydog_path_pla Skydog_path_planning_Y;
 
 /* Model entry point functions */
 extern void Skydog_path_planning_initialize(void);
@@ -77,14 +124,18 @@ extern struct RT_MODEL_Skydog_path_planning *const Skydog_path_planning_M;
  * MATLAB hilite_system command to trace the generated code back
  * to the parent model.  For example,
  *
- * hilite_system('SkyDog_Autopilot_template/Skydog_path_planning')    - opens subsystem SkyDog_Autopilot_template/Skydog_path_planning
- * hilite_system('SkyDog_Autopilot_template/Skydog_path_planning/Kp') - opens and selects block Kp
+ * hilite_system('SkyDog_Autopilot_discrete/Skydog_path_planning')    - opens subsystem SkyDog_Autopilot_discrete/Skydog_path_planning
+ * hilite_system('SkyDog_Autopilot_discrete/Skydog_path_planning/Kp') - opens and selects block Kp
  *
  * Here is the system hierarchy for this model
  *
- * '<Root>' : 'SkyDog_Autopilot_template'
- * '<S1>'   : 'SkyDog_Autopilot_template/Skydog_path_planning'
- * '<S2>'   : 'SkyDog_Autopilot_template/Skydog_path_planning/Path_planning'
+ * '<Root>' : 'SkyDog_Autopilot_discrete'
+ * '<S2>'   : 'SkyDog_Autopilot_discrete/Skydog_path_planning'
+ * '<S3>'   : 'SkyDog_Autopilot_discrete/Skydog_path_planning/P_wps_nfz'
+ * '<S4>'   : 'SkyDog_Autopilot_discrete/Skydog_path_planning/acc_lat_roll_angle'
+ * '<S5>'   : 'SkyDog_Autopilot_discrete/Skydog_path_planning/altitude_wanted'
+ * '<S6>'   : 'SkyDog_Autopilot_discrete/Skydog_path_planning/lambda_eta'
+ * '<S7>'   : 'SkyDog_Autopilot_discrete/Skydog_path_planning/speed_wanted'
  */
 #endif                                 /* RTW_HEADER_Skydog_path_planning_h_ */
 

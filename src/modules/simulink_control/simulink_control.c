@@ -40,7 +40,7 @@
 #include <systemlib/systemlib.h>
 
 // simulink model includes
-#include <simulink_control/myTest_ert_rtw/globalSignals.h>
+#include <simulink_control/myTest_ert_rtw/Skydog_signals.h>
 #include <simulink_control/myTest_ert_rtw/myTest.h>            /* Model's header file */
 #include <simulink_control/myTest_ert_rtw/rtwtypes.h>
 

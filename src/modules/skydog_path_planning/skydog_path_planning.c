@@ -32,8 +32,12 @@
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/airspeed.h>
+#include <uORB/topics/vehicle_local_position.h>
+#include <uORB/topics/home_position.h>
+#include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/skydog_autopilot_setpoint.h>
 #include <uORB/topics/skydog_waypoints.h>
+#include <uORB/topics/debug_key_value.h>
 #include <systemlib/systemlib.h>
 
 #include <mavlink/mavlink_log.h>
@@ -166,6 +170,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	// refresh rate in ms
 	int rate = 1000/running_frequency;
 	int error_counter = 0;
+	float current_time = 0;
 
 	bool manual_enabled = true;
 
@@ -176,23 +181,24 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
-			//orb_set_interval(gps_sub_fd, rate);
 
 		/* subscribe to airspeed channels topic */
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
-			//orb_set_interval(airspeed_sub_fd, rate);
 
-		/* subscribe to rc channels topic */
-			int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
-			//orb_set_interval(rc_sub_fd, rate);
+		/* subscribe to local position topic */
+			int position_sub_fd = orb_subscribe(ORB_ID(vehicle_local_position));
+
+		/* subscribe to home position topic */
+			int home_sub_fd = orb_subscribe(ORB_ID(home_position));
+
+		/* subscribe to vehicle status topic */
+			int status_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
 		/* subscribe to vehicle mode topic */
 			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
-			//orb_set_interval(control_mode_sub_fd, rate);
 
 		/* subscribe to waypoints topic */
 			int skydog_sub_fd = orb_subscribe(ORB_ID(skydog_waypoints));
-			//orb_set_interval(skydog_sub_fd, rate);
 
 			/* one could wait for multiple topics with this technique, just using one here */
 			struct pollfd fds[] = {
@@ -203,24 +209,37 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			struct sensor_combined_s sensors_raw;
 			struct vehicle_gps_position_s gps_raw;
 			struct airspeed_s airspeed_raw;
-			struct manual_control_setpoint_s rc_raw;
+			struct vehicle_local_position_s position;
+			struct home_position_s home;
 			struct vehicle_control_mode_s control_mode;
+			struct vehicle_status_s status;
 			struct skydog_waypoints_s waypoints;
 
 			// output struct
 			struct skydog_autopilot_setpoint_s skydog;
+			struct debug_key_value_s debug_qgc;
 
 			//set all buffers to 0
 			memset(&sensors_raw, 0, sizeof(sensors_raw));
 			memset(&gps_raw, 0, sizeof(gps_raw));
-			memset(&rc_raw, 0, sizeof(rc_raw));
 			memset(&airspeed_raw, 0, sizeof(airspeed_raw));
+			memset(&position, 0, sizeof(position));
+			memset(&home, 0, sizeof(home));
+			memset(&status, 0, sizeof(status));
 			memset(&skydog, 0, sizeof(skydog));
 			memset(&control_mode, 0, sizeof(control_mode));
 			memset(&waypoints, 0, sizeof(waypoints));
+			memset(&debug_qgc, 0, sizeof(debug_qgc));
 
 		     // advertise that this controller will publish skydog_topic
 		     orb_advert_t skydog_pub = orb_advertise(ORB_ID(skydog_autopilot_setpoint), &skydog);
+
+		     //fill in name for debug value
+			 snprintf(debug_qgc.key3, 10, "P_long");
+			 snprintf(debug_qgc.key4, 10, "P_lat");
+
+			 //Advertise that this controller will publish debug values and make first publication
+			 orb_advert_t debug_pub = orb_advertise(ORB_ID(debug_key_value), &debug_qgc);
 
 		     // initialize simulink model
 		     Skydog_path_planning_initialize();
@@ -250,9 +269,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								/* copy vehicle mode data into local buffer */
 								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
 
-								// check if not manual mode selected, if so don't run simulink code
-								if (!control_mode.flag_control_manual_enabled){
-
+								// check if auto mode selected, if not don't run simulink code
+								if (control_mode.flag_control_auto_enabled){
 
 									/* copy sensors raw data into local buffer */
 									orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
@@ -260,25 +278,46 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
 									/* copy airspeed raw data into local buffer */
 									orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
-									/* copy rc raw data into local buffer */
-									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+									/* copy position data into local buffer */
+									orb_copy(ORB_ID(vehicle_local_position), position_sub_fd, &position);
+									/* copy position data into local buffer */
+									orb_copy(ORB_ID(home_position), home_sub_fd, &home);
+									/* copy status data into local buffer */
+									orb_copy(ORB_ID(vehicle_status), status_sub_fd, &status);
 									/* copy waypoints data into local buffer */
 									orb_copy(ORB_ID(skydog_waypoints), skydog_sub_fd, &waypoints);
-
-									//mavlink_log_info(mavlink_fd, "[skydog_path_planning] waypoints count %u", waypoints.wpm_count);
 
 
 									//fill in arguments
 									Altitude2_r = sensors_raw.baro_alt_meter;
-									Lattitude_r = gps_raw.lat;
-									Longitude_r = gps_raw.lon;
-									Groundspeed2_r = gps_raw.vel_m_s;
-									Waypoints_w = 0; // TODO waypoint transfer
-									Non_fly_zone_w = 0; // TODO no fly zone implementation
+									X_earth_r = position.x;
+									Y_earth_r = position.y;
+									Groundspeed2_r[0] = gps_raw.vel_m_s;
+									//Nfz_w[0] = 0.0f; // TODO no fly zone implementation
 									Mode2_w = 2; // TODO mode
+									Time = current_time;
+									Waypoints_count = waypoints.wpm_count;
+
+									// if rc signal/mavlink lost,low battery go HOME
+									if (status.rc_signal_lost || status.offboard_control_signal_lost || status.battery_warning == VEHICLE_BATTERY_WARNING_LOW)
+									{
+										Error = true;
+									}else{
+										Error = false;
+									}
+
+									//waypoint transfer from skydog_waypoints topic
+									for (uint8_t i = 0; i < waypoints.wpm_count; i++)
+									{
+										Waypoints_w[i*4] = waypoints.waypoints[i].longitude;
+										Waypoints_w[i*4+1] = waypoints.waypoints[i].latitude;
+										Waypoints_w[i*4+2] = waypoints.waypoints[i].altitude;
+										Waypoints_w[i*4+3] = waypoints.waypoints[i].speed;
+									}
+
 
 									//run Simulink code
-									//Skydog_path_planning_step();
+									Skydog_path_planning_step();
 
 		/*							// copy output to skydog topic
 									skydog.Roll_w = Roll_w;
@@ -286,6 +325,13 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									skydog.Groundspeed_w = Groundspeed_w;
 									skydog.Valid = true;
 		*/
+
+									// copy debug values for QGC
+									debug_qgc.value3 = P[1];
+									debug_qgc.value4 = P[2];
+
+									// publish values to debug topic
+									orb_publish(ORB_ID(debug_key_value), debug_pub, &debug_qgc);
 
 									// skydog autopilot testing
 									skydog.Roll_w = 0;
@@ -295,6 +341,9 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 									/* publish values to skydog_autopilot_setpoint topic*/
 									orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
+
+									//update time
+									current_time = current_time + (1/running_frequency);
 
 								}
 

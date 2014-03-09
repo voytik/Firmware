@@ -1,5 +1,5 @@
 /*
- * File: Skydog_path_planning_types.h
+ * File: rtGetInf.h
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
@@ -14,17 +14,18 @@
  * Validation result: Not run
  */
 
-#ifndef RTW_HEADER_Skydog_path_planning_types_h_
-#define RTW_HEADER_Skydog_path_planning_types_h_
+#ifndef RTW_HEADER_rtGetInf_h_
+#define RTW_HEADER_rtGetInf_h_
+#include <stddef.h>
 #include "rtwtypes.h"
+#include "rt_nonfinite.h"
 
-/* Parameters (auto storage) */
-typedef struct Parameters_Skydog_path_planning_ Parameters_Skydog_path_planning;
+extern real_T rtGetInf(void);
+extern real32_T rtGetInfF(void);
+extern real_T rtGetMinusInf(void);
+extern real32_T rtGetMinusInfF(void);
 
-/* Forward declaration for rtModel */
-typedef struct RT_MODEL_Skydog_path_planning RT_MODEL_Skydog_path_planning;
-
-#endif                                 /* RTW_HEADER_Skydog_path_planning_types_h_ */
+#endif                                 /* RTW_HEADER_rtGetInf_h_ */
 
 /*
  * File trailer for generated code.

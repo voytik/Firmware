@@ -241,7 +241,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     snprintf(debug_qgc.key, 10, "debug1");
 		     snprintf(debug_qgc.key2, 10, "debug2");
 
-		     //Advertise that this controller will publish actuator and make first publication
+		     //Advertise that this controller will publish debug values and make first publication
 		     orb_advert_t debug_pub = orb_advertise(ORB_ID(debug_key_value), &debug_qgc);
 
 		     // initialize simulink model

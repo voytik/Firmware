@@ -69,6 +69,10 @@ struct debug_key_value_s {
 	float value3;				/**< the value to send as debug output */
 	char key4[10];				/**< max. 10 characters as key / name */
 	float value4;				/**< the value to send as debug output */
+	char key5[10];				/**< max. 10 characters as key / name */
+	float value5;				/**< the value to send as debug output */
+	char key6[10];				/**< max. 10 characters as key / name */
+	float value6;				/**< the value to send as debug output */
 
 };
 

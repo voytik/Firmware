@@ -1,5 +1,5 @@
 /*
- * File: Skydog_path_planning_types.h
+ * File: rtGetNaN.h
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
@@ -14,17 +14,16 @@
  * Validation result: Not run
  */
 
-#ifndef RTW_HEADER_Skydog_path_planning_types_h_
-#define RTW_HEADER_Skydog_path_planning_types_h_
+#ifndef RTW_HEADER_rtGetNaN_h_
+#define RTW_HEADER_rtGetNaN_h_
+#include <stddef.h>
 #include "rtwtypes.h"
+#include "rt_nonfinite.h"
 
-/* Parameters (auto storage) */
-typedef struct Parameters_Skydog_path_planning_ Parameters_Skydog_path_planning;
+extern real_T rtGetNaN(void);
+extern real32_T rtGetNaNF(void);
 
-/* Forward declaration for rtModel */
-typedef struct RT_MODEL_Skydog_path_planning RT_MODEL_Skydog_path_planning;
-
-#endif                                 /* RTW_HEADER_Skydog_path_planning_types_h_ */
+#endif                                 /* RTW_HEADER_rtGetNaN_h_ */
 
 /*
  * File trailer for generated code.

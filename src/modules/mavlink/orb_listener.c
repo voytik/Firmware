@@ -639,8 +639,10 @@ l_debug_key_value(const struct listener *l)
 	/* Enforce null termination */
 	debug.key[sizeof(debug.key) - 1] = '\0';
 	debug.key2[sizeof(debug.key2) - 1] = '\0';
-	debug.key3[sizeof(debug.key2) - 1] = '\0';
-	debug.key4[sizeof(debug.key2) - 1] = '\0';
+	debug.key3[sizeof(debug.key3) - 1] = '\0';
+	debug.key4[sizeof(debug.key4) - 1] = '\0';
+	debug.key3[sizeof(debug.key5) - 1] = '\0';
+	debug.key4[sizeof(debug.key6) - 1] = '\0';
 
 	mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
 					   last_sensor_timestamp / 1000,
@@ -661,6 +663,15 @@ l_debug_key_value(const struct listener *l)
 							   last_sensor_timestamp / 1000,
 							   debug.key4,
 							   debug.value4);
+	mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
+							   last_sensor_timestamp / 1000,
+							   debug.key5,
+							   debug.value5);
+
+	mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
+							   last_sensor_timestamp / 1000,
+							   debug.key6,
+							   debug.value6);
 }
 
 void
