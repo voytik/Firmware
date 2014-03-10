@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.212
+ * Model version                  : 1.214
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Sun Mar 09 23:57:05 2014
+ * C/C++ source code generated on : Mon Mar 10 12:21:42 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -27,6 +27,7 @@ real32_T Groundspeed2_r[3];
 int16_T Mode2_w;
 real32_T Nfz_w[24];
 real32_T P[3];
+real32_T Roll2_w;
 real32_T Speed_w;
 real32_T Time;
 uint8_T Waypoints_count;
@@ -36,9 +37,6 @@ real32_T Y_earth_r;
 
 /* Block states (auto storage) */
 D_Work_Skydog_path_planning Skydog_path_planning_DWork;
-
-/* External outputs (root outports fed by signals with auto storage) */
-ExternalOutputs_Skydog_path_pla Skydog_path_planning_Y;
 
 /* Real-time model */
 RT_MODEL_Skydog_path_planning Skydog_path_planning_M_;
@@ -94,11 +92,11 @@ real_T rt_powd_snf(real_T u0, real_T u1)
 void Skydog_path_planning_step(void)
 {
   /* local block i/o variables */
+  real_T rtb_DataTypeConversion9[60];
   real_T rtb_eta;
   real_T rtb_L1a;
   real_T rtb_acc_lat;
   real_T rtb_t01;
-  real32_T rtb_Roll2_w;
   uint16_T rtb_Gain6;
   real_T xE;
   real_T yE;
@@ -106,20 +104,10 @@ void Skydog_path_planning_step(void)
   real_T rtb_Sum;
   real_T rtb_Sum1;
   real_T rtb_k1;
-  real_T rtb_DataTypeConversion9[60];
   int32_T i;
   real_T rtb_P_idx;
   real_T dp_idx;
   real_T dp_idx_0;
-
-  /* DataTypeConversion: '<S2>/Data Type Conversion9' incorporates:
-   *  Inport: '<Root>/Waypoints_w'
-   */
-  for (i = 0; i < 60; i++) {
-    rtb_DataTypeConversion9[i] = Waypoints_w[i];
-  }
-
-  /* End of DataTypeConversion: '<S2>/Data Type Conversion9' */
 
   /* Sum: '<S2>/Sum' incorporates:
    *  Constant: '<S2>/k_init'
@@ -136,6 +124,7 @@ void Skydog_path_planning_step(void)
     Skydog_path_planning_DWork.Memory_PreviousInput;
 
   /* MATLAB Function: '<S2>/P_wps_nfz' incorporates:
+   *  Constant: '<S2>/Constant'
    *  DataTypeConversion: '<S2>/Data Type Conversion13'
    *  Inport: '<Root>/Time'
    */
@@ -148,13 +137,13 @@ void Skydog_path_planning_step(void)
   /* '<S3>:1:14' */
   /* compute altitude distance */
   /* '<S3>:1:15' */
-  xE = rtb_DataTypeConversion9[(int32_T)(rtb_Sum + 1.0) + 14] -
-    rtb_DataTypeConversion9[(int32_T)rtb_Sum + 14];
+  xE = Skydog_path_planning_P.Constant_Value[(int32_T)(rtb_Sum + 1.0) + 14] -
+    Skydog_path_planning_P.Constant_Value[(int32_T)rtb_Sum + 14];
 
   /* compute longitudal distance */
   /* '<S3>:1:16' */
-  yE = rtb_DataTypeConversion9[(int32_T)(rtb_Sum + 1.0) + 29] -
-    rtb_DataTypeConversion9[(int32_T)rtb_Sum + 29];
+  yE = Skydog_path_planning_P.Constant_Value[(int32_T)(rtb_Sum + 1.0) + 29] -
+    Skydog_path_planning_P.Constant_Value[(int32_T)rtb_Sum + 29];
 
   /* compute lateral distance */
   /* '<S3>:1:18' */
@@ -168,13 +157,13 @@ void Skydog_path_planning_step(void)
   /* difference btw. last wp and P (based on time counter) [m] */
   /* '<S3>:1:26' */
   /* '<S3>:1:27' */
-  dp_idx = ((real_T)Time - rtb_Sum1) * rtb_DataTypeConversion9[(int32_T)rtb_Sum
-    + 44] * (xE / dist);
+  dp_idx = ((real_T)Time - rtb_Sum1) * Skydog_path_planning_P.Constant_Value
+    [(int32_T)rtb_Sum + 44] * (xE / dist);
 
   /* actual difference btw. P and wp(k) in longitude direction */
   /* '<S3>:1:28' */
-  dp_idx_0 = ((real_T)Time - rtb_Sum1) * rtb_DataTypeConversion9[(int32_T)
-    rtb_Sum + 44] * (yE / dist);
+  dp_idx_0 = ((real_T)Time - rtb_Sum1) * Skydog_path_planning_P.Constant_Value
+    [(int32_T)rtb_Sum + 44] * (yE / dist);
 
   /* actual difference btw. P and wp(k) in latitude direction */
   /* '<S3>:1:29' */
@@ -183,10 +172,12 @@ void Skydog_path_planning_step(void)
   /* actual difference btw. P and wp(k) - real values */
   /* clasic planning */
   /* '<S3>:1:32' */
-  rtb_P_idx = rtb_DataTypeConversion9[(int32_T)rtb_Sum + 14] + dp_idx;
+  rtb_P_idx = Skydog_path_planning_P.Constant_Value[(int32_T)rtb_Sum + 14] +
+    dp_idx;
 
   /* '<S3>:1:33' */
-  dp_idx = rtb_DataTypeConversion9[(int32_T)rtb_Sum + 29] + dp_idx_0;
+  dp_idx = Skydog_path_planning_P.Constant_Value[(int32_T)rtb_Sum + 29] +
+    dp_idx_0;
 
   /* distance btw last pased waypoint and P-track point: */
   /*      distP = sqrt((P(3)-wp(k,3))^2+(P(2)-wp(k,2))^2); */
@@ -196,9 +187,9 @@ void Skydog_path_planning_step(void)
   /*      delta_alt = alt*distP/dist; */
   /* '<S3>:1:43' */
   /* '<S3>:1:45' */
-  dp_idx_0 = (rtb_DataTypeConversion9[(int32_T)(rtb_Sum + 1.0) - 1] -
-              rtb_DataTypeConversion9[(int32_T)rtb_Sum - 1]) * xE / dist +
-    rtb_DataTypeConversion9[(int32_T)rtb_Sum - 1];
+  dp_idx_0 = (Skydog_path_planning_P.Constant_Value[(int32_T)(rtb_Sum + 1.0) - 1]
+              - Skydog_path_planning_P.Constant_Value[(int32_T)rtb_Sum - 1]) *
+    xE / dist + Skydog_path_planning_P.Constant_Value[(int32_T)rtb_Sum - 1];
 
   /* bod "P" do logovaci appky */
   /* compute switching consistance: */
@@ -347,10 +338,7 @@ void Skydog_path_planning_step(void)
   /* End of MATLAB Function: '<S2>/acc_lat_roll_angle' */
 
   /* DataTypeConversion: '<S2>/Data Type Conversion4' */
-  rtb_Roll2_w = (real32_T)yE;
-
-  /* Outport: '<Root>/Roll2_w' */
-  Skydog_path_planning_Y.Roll2_w = rtb_Roll2_w;
+  Roll2_w = (real32_T)yE;
 
   /* MATLAB Function: '<S2>/altitude_wanted' */
   /* MATLAB Function 'Skydog_path_planning/altitude_wanted': '<S5>:1' */
@@ -369,18 +357,29 @@ void Skydog_path_planning_step(void)
   Altitude2_w = (real32_T)xE;
 
   /* DataTypeConversion: '<S2>/Data Type Conversion2' incorporates:
+   *  Constant: '<S2>/Constant'
    *  MATLAB Function: '<S2>/P_wps_nfz'
    *  MATLAB Function: '<S2>/speed_wanted'
    */
   /* MATLAB Function 'Skydog_path_planning/speed_wanted': '<S7>:1' */
   /* '<S7>:1:4' */
   /* speed_w = 11; */
-  Speed_w = (real32_T)rtb_DataTypeConversion9[(int32_T)rtb_Sum + 44];
+  Speed_w = (real32_T)Skydog_path_planning_P.Constant_Value[(int32_T)rtb_Sum +
+    44];
 
   /* DataTypeConversion: '<S2>/Data Type Conversion3' */
   P[0] = (real32_T)dp_idx_0;
   P[1] = (real32_T)rtb_P_idx;
   P[2] = (real32_T)dp_idx;
+
+  /* DataTypeConversion: '<S2>/Data Type Conversion9' incorporates:
+   *  Inport: '<Root>/Waypoints_w'
+   */
+  for (i = 0; i < 60; i++) {
+    rtb_DataTypeConversion9[i] = Waypoints_w[i];
+  }
+
+  /* End of DataTypeConversion: '<S2>/Data Type Conversion9' */
 
   /* Gain: '<S2>/Gain6' incorporates:
    *  Inport: '<Root>/Waypoints_count'
@@ -409,6 +408,7 @@ void Skydog_path_planning_initialize(void)
   /* block I/O */
 
   /* custom signals */
+  Roll2_w = 0.0F;
   Altitude2_w = 0.0F;
   Speed_w = 0.0F;
   P[0] = 0.0F;
@@ -445,10 +445,6 @@ void Skydog_path_planning_initialize(void)
   Time = 0.0F;
   Waypoints_count = 0U;
   Error = FALSE;
-
-  /* external outputs */
-  (void) memset((void *)&Skydog_path_planning_Y, 0,
-                sizeof(ExternalOutputs_Skydog_path_pla));
 
   /* InitializeConditions for Memory: '<S2>/Memory1' */
   Skydog_path_planning_DWork.Memory1_PreviousInput =

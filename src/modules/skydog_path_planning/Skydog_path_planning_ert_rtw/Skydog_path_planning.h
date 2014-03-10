@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.212
+ * Model version                  : 1.214
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Sun Mar 09 23:57:05 2014
+ * C/C++ source code generated on : Mon Mar 10 12:21:42 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -66,13 +66,11 @@ typedef struct {
   } ToWorkspace7_PWORK;                /* '<S2>/To Workspace7' */
 } D_Work_Skydog_path_planning;
 
-/* External outputs (root outports fed by signals with auto storage) */
-typedef struct {
-  real32_T Roll2_w;                    /* '<Root>/Roll2_w' */
-} ExternalOutputs_Skydog_path_pla;
-
 /* Parameters (auto storage) */
 struct Parameters_Skydog_path_planning_ {
+  real_T Constant_Value[60];           /* Expression: wps.variables.values
+                                        * Referenced by: '<S2>/Constant'
+                                        */
   real_T k_init_Value;                 /* Expression: 1
                                         * Referenced by: '<S2>/k_init'
                                         */
@@ -100,9 +98,6 @@ extern Parameters_Skydog_path_planning Skydog_path_planning_P;
 
 /* Block states (auto storage) */
 extern D_Work_Skydog_path_planning Skydog_path_planning_DWork;
-
-/* External outputs (root outports fed by signals with auto storage) */
-extern ExternalOutputs_Skydog_path_pla Skydog_path_planning_Y;
 
 /* Model entry point functions */
 extern void Skydog_path_planning_initialize(void);

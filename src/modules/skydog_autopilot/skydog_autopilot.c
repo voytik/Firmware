@@ -38,6 +38,7 @@
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
+#include <systemlib/param/param.h>
 
 // simulink model includes
 #include <Skydog_autopilot/Skydog_autopilot_ert_rtw/SkydogSignals.h>
@@ -247,6 +248,9 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     // initialize simulink model
 		     Skydog_autopilot_initialize();
 
+		     //parameters initialize
+		     //PARAM_DEFINE_FLOAT(SKYDOGAP_GAIN1,1.0f);
+
 		     // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
 
@@ -272,6 +276,13 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 							if (fds[0].revents & POLLIN) {
 								/* copy vehicle mode data into local buffer */
 								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
+
+								// testing only
+								if (true)
+								{
+									control_mode.flag_control_manual_enabled = true;
+									control_mode.flag_control_attitude_enabled = true;
+								}
 
 								// is MODE MANUAL selected
 								if (control_mode.flag_control_manual_enabled && control_mode.flag_control_attitude_enabled == false && control_mode.flag_control_auto_enabled == false) {

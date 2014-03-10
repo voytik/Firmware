@@ -105,7 +105,7 @@ int skydog_path_planning_main(int argc, char *argv[])
 			daemon_task = task_spawn_cmd("skydog_path_planning",
 						 SCHED_DEFAULT,
 						 SCHED_PRIORITY_DEFAULT,
-						 2048,
+						 4048,
 						 skydog_path_planning_thread_main,
 						 (const char **)argv);
 			exit(0);
@@ -172,7 +172,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	int error_counter = 0;
 	float current_time = 0;
 
-	bool manual_enabled = true;
+	bool manual_enabled = false;
 
 		/* subscribe to sensor_combined topic */
 			int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -237,6 +237,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 		     //fill in name for debug value
 			 snprintf(debug_qgc.key3, 10, "P_long");
 			 snprintf(debug_qgc.key4, 10, "P_lat");
+			 snprintf(debug_qgc.key5, 10, "Roll2_w");
+			 snprintf(debug_qgc.key6, 10, "Altitude2_w");
 
 			 //Advertise that this controller will publish debug values and make first publication
 			 orb_advert_t debug_pub = orb_advertise(ORB_ID(debug_key_value), &debug_qgc);
@@ -266,14 +268,17 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 							if (fds[0].revents & POLLIN) {
 
+								/* copy sensors raw data into local buffer */
+								orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
 								/* copy vehicle mode data into local buffer */
 								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
+
+								// testing only!
+								control_mode.flag_control_auto_enabled = true;
 
 								// check if auto mode selected, if not don't run simulink code
 								if (control_mode.flag_control_auto_enabled){
 
-									/* copy sensors raw data into local buffer */
-									orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
 									/* copy gps raw data into local buffer */
 									orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
 									/* copy airspeed raw data into local buffer */
@@ -292,7 +297,9 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									Altitude2_r = sensors_raw.baro_alt_meter;
 									X_earth_r = position.x;
 									Y_earth_r = position.y;
-									Groundspeed2_r[0] = gps_raw.vel_m_s;
+									Groundspeed2_r[0] =position.vx;
+									Groundspeed2_r[1] =position.vy;
+									Groundspeed2_r[2] =position.vz;
 									//Nfz_w[0] = 0.0f; // TODO no fly zone implementation
 									Mode2_w = 2; // TODO mode
 									Time = current_time;
@@ -325,10 +332,16 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									skydog.Groundspeed_w = Groundspeed_w;
 									skydog.Valid = true;
 		*/
+									// display wanted values for debug purposes
+									//printf("[skydog_path_planning] Roll_w:%4.4f, Altitude_w:%4.4.f, Speed_w:%4.4f\n", Roll2_w,Altitude2_w,Speed_w);
+
+
 
 									// copy debug values for QGC
 									debug_qgc.value3 = P[1];
 									debug_qgc.value4 = P[2];
+									debug_qgc.value5 = Roll2_w;
+									debug_qgc.value6 = Altitude2_w;
 
 									// publish values to debug topic
 									orb_publish(ORB_ID(debug_key_value), debug_pub, &debug_qgc);
@@ -343,21 +356,19 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
 
 									//update time
-									current_time = current_time + (1/running_frequency);
-
+									current_time = current_time + (1.0f/running_frequency);
 								}
 
 								// check which mode selected and send this once to ground station
-								if (control_mode.flag_control_manual_enabled!=manual_enabled){
+								if (control_mode.flag_control_auto_enabled!=manual_enabled){
 
-									if (control_mode.flag_control_manual_enabled){
+									if (!control_mode.flag_control_auto_enabled){
 										mavlink_log_info(mavlink_fd, "[skydog_path_planning] sleeping, manual mode");
-
 									}else{
 										mavlink_log_info(mavlink_fd, "[skydog_path_planning] running, auto mode");
 									}
 									// update flag with current mode
-									manual_enabled = control_mode.flag_control_manual_enabled;
+									manual_enabled = control_mode.flag_control_auto_enabled;
 								}
 							}
 					}
