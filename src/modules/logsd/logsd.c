@@ -32,6 +32,7 @@
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_outputs.h>
 #include <uORB/topics/skydog_autopilot_setpoint.h>
+#include <uORB/topics/rc_channels.h>
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
@@ -231,7 +232,9 @@ int logsd_thread_main(int argc, char *argv[])
 
 	/* subscribe to actuator outputs channels topic */
 		int actuators_sub_fd = orb_subscribe(ORB_ID(actuator_outputs_0));
-		//orb_set_interval(actuators_sub_fd, rate);
+
+	/* subscribe to actuator outputs channels topic */
+		int rc_chan_sub_fd = orb_subscribe(ORB_ID(rc_channels));
 
 	/* subscribe to skydog_attitude channels topic */
 		int skydog_autopilot_setpoint_sub_fd = orb_subscribe(ORB_ID(skydog_autopilot_setpoint));
@@ -265,6 +268,7 @@ int logsd_thread_main(int argc, char *argv[])
 		struct airspeed_s airspeed_raw;
 		struct actuator_outputs_s actuator_outputs_raw;
 		struct skydog_autopilot_setpoint_s skydog_autopilot_setpoint_raw;
+		struct rc_channels_s rc_chan;
 
 		//set all buffers to 0
 		memset(&sensors_raw, 0, sizeof(sensors_raw));
@@ -353,6 +357,9 @@ int logsd_thread_main(int argc, char *argv[])
 					orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 
 					/* copy rc raw data into local buffer */
+					orb_copy(ORB_ID(rc_channels), rc_chan_sub_fd, &rc_chan);
+
+					/* copy rc raw data into local buffer */
 					orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
 
 					/* copy rc raw data into local buffer */
@@ -394,7 +401,12 @@ int logsd_thread_main(int argc, char *argv[])
 						attitude_raw.rollacc,
 						attitude_raw.pitchacc,
 						attitude_raw.yawacc,
-						rc_raw.pitch,
+			/*			rc_chan.chan[2],
+						rc_chan.chan[3],
+						rc_chan.chan[0],
+						rc_chan.chan[1],
+						rc_chan.chan[9],
+			*/			rc_raw.pitch,
 						rc_raw.yaw,
 						rc_raw.throttle,
 						rc_raw.roll,

@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_autopilot'.
  *
- * Model version                  : 1.189
+ * Model version                  : 1.215
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Sat Mar 08 17:38:46 2014
+ * C/C++ source code generated on : Mon Mar 10 17:46:49 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -16,6 +16,44 @@
 
 #include "Skydog_autopilot.h"
 #include "Skydog_autopilot_private.h"
+
+/* Exported block parameters */
+real32_T Alti_control_I = 0.3F;        /* Variable: Alti_control_I
+                                        * Referenced by: '<S4>/Gain1'
+                                        */
+real32_T Alti_control_P = 0.6F;        /* Variable: Alti_control_P
+                                        * Referenced by: '<S4>/Gain'
+                                        */
+real32_T Pitch_control_I = 8.0F;       /* Variable: Pitch_control_I
+                                        * Referenced by: '<S6>/Gain1'
+                                        */
+real32_T Pitch_control_P = 8.5F;       /* Variable: Pitch_control_P
+                                        * Referenced by: '<S6>/Gain'
+                                        */
+real32_T Roll_control_I = 5.0F;        /* Variable: Roll_control_I
+                                        * Referenced by: '<S10>/Gain1'
+                                        */
+real32_T Roll_control_P = 8.0F;        /* Variable: Roll_control_P
+                                        * Referenced by: '<S10>/Gain'
+                                        */
+real32_T Roll_rate_control_P = 3.0F;   /* Variable: Roll_rate_control_P
+                                        * Referenced by: '<S9>/Gain'
+                                        */
+real32_T Roll_yaw_FF = 1.0F;           /* Variable: Roll_yaw_FF
+                                        * Referenced by: '<S2>/Gain'
+                                        */
+real32_T Speed_control_I = 0.0F;       /* Variable: Speed_control_I
+                                        * Referenced by: '<S5>/Gain1'
+                                        */
+real32_T Speed_control_P = 1.0F;       /* Variable: Speed_control_P
+                                        * Referenced by: '<S5>/Gain'
+                                        */
+real32_T Yaw_rate_control_I = 0.0F;    /* Variable: Yaw_rate_control_I
+                                        * Referenced by: '<S11>/Gain1'
+                                        */
+real32_T Yaw_rate_control_P = 0.01F;   /* Variable: Yaw_rate_control_P
+                                        * Referenced by: '<S11>/Gain'
+                                        */
 
 /* Exported data definition */
 
@@ -86,20 +124,17 @@ void Skydog_autopilot_step(void)
   /* Sum: '<S4>/Sum3' incorporates:
    *  Gain: '<S4>/Gain'
    */
-  rtb_Saturation1_p += Skydog_autopilot_P.Gain_Gain_l * rtb_Sum5;
+  rtb_Saturation1_p += Alti_control_P * rtb_Sum5;
 
   /* Saturate: '<S4>/Saturation1' */
-  rtb_Saturation1_p = rtb_Saturation1_p >=
-    Skydog_autopilot_P.Saturation1_UpperSat_j ?
-    Skydog_autopilot_P.Saturation1_UpperSat_j : rtb_Saturation1_p <=
-    Skydog_autopilot_P.Saturation1_LowerSat_i ?
-    Skydog_autopilot_P.Saturation1_LowerSat_i : rtb_Saturation1_p;
+  rtb_Saturation1_p = rtb_Saturation1_p >= 0.34906584F ? 0.34906584F :
+    rtb_Saturation1_p <= (-0.34906584F) ? (-0.34906584F) : rtb_Saturation1_p;
 
   /* Switch: '<S7>/Switch1' incorporates:
    *  Inport: '<Root>/Mode_w'
    *  Inport: '<Root>/RC_elevator_r'
    */
-  if (Mode_w > Skydog_autopilot_P.Switch1_Threshold) {
+  if (Mode_w > 1) {
     rtb_Saturation4 = rtb_Saturation1_p;
   } else {
     rtb_Saturation4 = RC_elevator_r;
@@ -108,10 +143,8 @@ void Skydog_autopilot_step(void)
   /* End of Switch: '<S7>/Switch1' */
 
   /* Saturate: '<S3>/Saturation4' */
-  rtb_Saturation4 = rtb_Saturation4 >= Skydog_autopilot_P.Saturation4_UpperSat ?
-    Skydog_autopilot_P.Saturation4_UpperSat : rtb_Saturation4 <=
-    Skydog_autopilot_P.Saturation4_LowerSat ?
-    Skydog_autopilot_P.Saturation4_LowerSat : rtb_Saturation4;
+  rtb_Saturation4 = rtb_Saturation4 >= 0.34906584F ? 0.34906584F :
+    rtb_Saturation4 <= (-0.34906584F) ? (-0.34906584F) : rtb_Saturation4;
 
   /* Sum: '<S3>/Sum6' incorporates:
    *  Inport: '<Root>/Pitch_r'
@@ -124,14 +157,11 @@ void Skydog_autopilot_step(void)
   /* Sum: '<S6>/Sum3' incorporates:
    *  Gain: '<S6>/Gain'
    */
-  rtb_Saturation1_e += Skydog_autopilot_P.Gain_Gain_b * rtb_Sum6;
+  rtb_Saturation1_e += Pitch_control_P * rtb_Sum6;
 
   /* Saturate: '<S6>/Saturation1' */
-  rtb_Saturation1_e = rtb_Saturation1_e >=
-    Skydog_autopilot_P.Saturation1_UpperSat_k ?
-    Skydog_autopilot_P.Saturation1_UpperSat_k : rtb_Saturation1_e <=
-    Skydog_autopilot_P.Saturation1_LowerSat_c ?
-    Skydog_autopilot_P.Saturation1_LowerSat_c : rtb_Saturation1_e;
+  rtb_Saturation1_e = rtb_Saturation1_e >= 3.0F ? 3.0F : rtb_Saturation1_e <=
+    (-3.0F) ? (-3.0F) : rtb_Saturation1_e;
 
   /* Sum: '<S3>/Sum5' incorporates:
    *  Inport: '<Root>/Pitch_speed_r'
@@ -139,26 +169,22 @@ void Skydog_autopilot_step(void)
   rtb_Sum5_m = rtb_Saturation1_e - Pitch_speed_r;
 
   /* Gain: '<S8>/Gain' */
-  rtb_Switch3 = Skydog_autopilot_P.Gain_Gain_p * rtb_Sum5_m;
+  rtb_Switch3 = (-3.0F) * rtb_Sum5_m;
 
   /* Saturate: '<S8>/Saturation1' */
-  rtb_Saturation1_l = rtb_Switch3 >= Skydog_autopilot_P.Saturation1_UpperSat_i ?
-    Skydog_autopilot_P.Saturation1_UpperSat_i : rtb_Switch3 <=
-    Skydog_autopilot_P.Saturation1_LowerSat_g ?
-    Skydog_autopilot_P.Saturation1_LowerSat_g : rtb_Switch3;
+  rtb_Saturation1_l = rtb_Switch3 >= 0.261799395F ? 0.261799395F : rtb_Switch3 <=
+    (-0.261799395F) ? (-0.261799395F) : rtb_Switch3;
 
   /* Saturate: '<S3>/Saturation2' */
-  Elevator_w = rtb_Saturation1_l >= Skydog_autopilot_P.Saturation2_UpperSat ?
-    Skydog_autopilot_P.Saturation2_UpperSat : rtb_Saturation1_l <=
-    Skydog_autopilot_P.Saturation2_LowerSat ?
-    Skydog_autopilot_P.Saturation2_LowerSat : rtb_Saturation1_l;
+  Elevator_w = rtb_Saturation1_l >= 0.261799395F ? 0.261799395F :
+    rtb_Saturation1_l <= (-0.261799395F) ? (-0.261799395F) : rtb_Saturation1_l;
 
   /* Switch: '<S7>/Switch' incorporates:
    *  Inport: '<Root>/Mode_w'
    *  Inport: '<Root>/RC_aileron_r'
    *  Inport: '<Root>/Roll_w'
    */
-  if (Mode_w > Skydog_autopilot_P.Switch_Threshold) {
+  if (Mode_w > 1) {
     rtb_Saturation5 = Roll_w;
   } else {
     rtb_Saturation5 = RC_aileron_r;
@@ -167,10 +193,8 @@ void Skydog_autopilot_step(void)
   /* End of Switch: '<S7>/Switch' */
 
   /* Saturate: '<S3>/Saturation5' */
-  rtb_Saturation5 = rtb_Saturation5 >= Skydog_autopilot_P.Saturation5_UpperSat ?
-    Skydog_autopilot_P.Saturation5_UpperSat : rtb_Saturation5 <=
-    Skydog_autopilot_P.Saturation5_LowerSat ?
-    Skydog_autopilot_P.Saturation5_LowerSat : rtb_Saturation5;
+  rtb_Saturation5 = rtb_Saturation5 >= 0.34906584F ? 0.34906584F :
+    rtb_Saturation5 <= (-0.34906584F) ? (-0.34906584F) : rtb_Saturation5;
 
   /* Sum: '<S3>/Sum3' incorporates:
    *  Inport: '<Root>/Roll_r'
@@ -183,14 +207,11 @@ void Skydog_autopilot_step(void)
   /* Sum: '<S10>/Sum3' incorporates:
    *  Gain: '<S10>/Gain'
    */
-  rtb_Saturation1_n += Skydog_autopilot_P.Gain_Gain_m * rtb_Sum3;
+  rtb_Saturation1_n += Roll_control_P * rtb_Sum3;
 
   /* Saturate: '<S10>/Saturation1' */
-  rtb_Saturation1_n = rtb_Saturation1_n >=
-    Skydog_autopilot_P.Saturation1_UpperSat_c ?
-    Skydog_autopilot_P.Saturation1_UpperSat_c : rtb_Saturation1_n <=
-    Skydog_autopilot_P.Saturation1_LowerSat_m ?
-    Skydog_autopilot_P.Saturation1_LowerSat_m : rtb_Saturation1_n;
+  rtb_Saturation1_n = rtb_Saturation1_n >= 3.0F ? 3.0F : rtb_Saturation1_n <=
+    (-3.0F) ? (-3.0F) : rtb_Saturation1_n;
 
   /* Sum: '<S3>/Sum2' incorporates:
    *  Inport: '<Root>/Roll_speed_r'
@@ -198,19 +219,15 @@ void Skydog_autopilot_step(void)
   rtb_Sum2 = rtb_Saturation1_n - Roll_speed_r;
 
   /* Gain: '<S9>/Gain' */
-  rtb_Saturation6 = Skydog_autopilot_P.Gain_Gain_e * rtb_Sum2;
+  rtb_Saturation6 = Roll_rate_control_P * rtb_Sum2;
 
   /* Saturate: '<S9>/Saturation1' */
-  rtb_Saturation6 = rtb_Saturation6 >= Skydog_autopilot_P.Saturation1_UpperSat_b
-    ? Skydog_autopilot_P.Saturation1_UpperSat_b : rtb_Saturation6 <=
-    Skydog_autopilot_P.Saturation1_LowerSat_ij ?
-    Skydog_autopilot_P.Saturation1_LowerSat_ij : rtb_Saturation6;
+  rtb_Saturation6 = rtb_Saturation6 >= 0.366519153F ? 0.366519153F :
+    rtb_Saturation6 <= (-0.366519153F) ? (-0.366519153F) : rtb_Saturation6;
 
   /* Saturate: '<S3>/Saturation' */
-  Aileron_w = rtb_Saturation6 >= Skydog_autopilot_P.Saturation_UpperSat ?
-    Skydog_autopilot_P.Saturation_UpperSat : rtb_Saturation6 <=
-    Skydog_autopilot_P.Saturation_LowerSat ?
-    Skydog_autopilot_P.Saturation_LowerSat : rtb_Saturation6;
+  Aileron_w = rtb_Saturation6 >= 0.366519153F ? 0.366519153F : rtb_Saturation6 <=
+    (-0.366519153F) ? (-0.366519153F) : rtb_Saturation6;
 
   /* Switch: '<S7>/Switch2' incorporates:
    *  Gain: '<S2>/Gain'
@@ -218,8 +235,8 @@ void Skydog_autopilot_step(void)
    *  Inport: '<Root>/RC_rudder_r'
    *  Inport: '<Root>/Roll_w'
    */
-  if (Mode_w > Skydog_autopilot_P.Switch2_Threshold) {
-    rtb_Saturation6 = Skydog_autopilot_P.Gain_Gain_k * Roll_w;
+  if (Mode_w > 1) {
+    rtb_Saturation6 = Roll_yaw_FF * Roll_w;
   } else {
     rtb_Saturation6 = RC_rudder_r;
   }
@@ -227,10 +244,8 @@ void Skydog_autopilot_step(void)
   /* End of Switch: '<S7>/Switch2' */
 
   /* Saturate: '<S3>/Saturation6' */
-  rtb_Saturation6 = rtb_Saturation6 >= Skydog_autopilot_P.Saturation6_UpperSat ?
-    Skydog_autopilot_P.Saturation6_UpperSat : rtb_Saturation6 <=
-    Skydog_autopilot_P.Saturation6_LowerSat ?
-    Skydog_autopilot_P.Saturation6_LowerSat : rtb_Saturation6;
+  rtb_Saturation6 = rtb_Saturation6 >= 1.0F ? 1.0F : rtb_Saturation6 <= (-1.0F) ?
+    (-1.0F) : rtb_Saturation6;
 
   /* Sum: '<S3>/Sum1' incorporates:
    *  Inport: '<Root>/Yaw_speed_r'
@@ -241,20 +256,16 @@ void Skydog_autopilot_step(void)
    *  DiscreteIntegrator: '<S11>/Discrete-Time Integrator'
    *  Gain: '<S11>/Gain'
    */
-  rtb_Switch3 = Skydog_autopilot_P.Gain_Gain_ba * rtb_Sum1_i +
+  rtb_Switch3 = Yaw_rate_control_P * rtb_Sum1_i +
     Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr;
 
   /* Saturate: '<S11>/Saturation1' */
-  rtb_Switch3 = rtb_Switch3 >= Skydog_autopilot_P.Saturation1_UpperSat_jh ?
-    Skydog_autopilot_P.Saturation1_UpperSat_jh : rtb_Switch3 <=
-    Skydog_autopilot_P.Saturation1_LowerSat_cj ?
-    Skydog_autopilot_P.Saturation1_LowerSat_cj : rtb_Switch3;
+  rtb_Switch3 = rtb_Switch3 >= 0.244346097F ? 0.244346097F : rtb_Switch3 <=
+    (-0.244346097F) ? (-0.244346097F) : rtb_Switch3;
 
   /* Saturate: '<S3>/Saturation1' */
-  Rudder_w = rtb_Switch3 >= Skydog_autopilot_P.Saturation1_UpperSat_e ?
-    Skydog_autopilot_P.Saturation1_UpperSat_e : rtb_Switch3 <=
-    Skydog_autopilot_P.Saturation1_LowerSat_ga ?
-    Skydog_autopilot_P.Saturation1_LowerSat_ga : rtb_Switch3;
+  Rudder_w = rtb_Switch3 >= 0.244346097F ? 0.244346097F : rtb_Switch3 <=
+    (-0.244346097F) ? (-0.244346097F) : rtb_Switch3;
 
   /* Sum: '<S2>/Sum1' incorporates:
    *  Inport: '<Root>/Groundspeed_r'
@@ -266,19 +277,17 @@ void Skydog_autopilot_step(void)
    *  Inport: '<Root>/Mode_w'
    *  Inport: '<Root>/RC_throttle_r'
    */
-  if (Mode_w > Skydog_autopilot_P.Switch3_Threshold) {
+  if (Mode_w > 1) {
     /* Sum: '<S5>/Sum3' incorporates:
      *  DiscreteIntegrator: '<S5>/Discrete-Time Integrator'
      *  Gain: '<S5>/Gain'
      */
-    rtb_Switch3 = Skydog_autopilot_P.Gain_Gain * rtb_Sum1 +
+    rtb_Switch3 = Speed_control_P * rtb_Sum1 +
       Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d;
 
     /* Saturate: '<S5>/Saturation1' */
-    rtb_Switch3 = rtb_Switch3 >= Skydog_autopilot_P.Saturation1_UpperSat ?
-      Skydog_autopilot_P.Saturation1_UpperSat : rtb_Switch3 <=
-      Skydog_autopilot_P.Saturation1_LowerSat ?
-      Skydog_autopilot_P.Saturation1_LowerSat : rtb_Switch3;
+    rtb_Switch3 = rtb_Switch3 >= 1.0F ? 1.0F : rtb_Switch3 <= 0.0F ? 0.0F :
+      rtb_Switch3;
   } else {
     rtb_Switch3 = RC_throttle_r;
   }
@@ -286,36 +295,30 @@ void Skydog_autopilot_step(void)
   /* End of Switch: '<S7>/Switch3' */
 
   /* Saturate: '<S3>/Saturation3' */
-  Throttle_w = rtb_Switch3 >= Skydog_autopilot_P.Saturation3_UpperSat ?
-    Skydog_autopilot_P.Saturation3_UpperSat : rtb_Switch3 <=
-    Skydog_autopilot_P.Saturation3_LowerSat ?
-    Skydog_autopilot_P.Saturation3_LowerSat : rtb_Switch3;
+  Throttle_w = rtb_Switch3 >= 1.0F ? 1.0F : rtb_Switch3 <= 0.0F ? 0.0F :
+    rtb_Switch3;
 
   /* Gain: '<S1>/Gain' */
-  debug1 = Skydog_autopilot_P.Gain_Gain_p1 * rtb_Saturation1_e;
+  debug1 = 1.0F * rtb_Saturation1_e;
 
   /* Gain: '<S1>/Gain1' */
-  debug2 = Skydog_autopilot_P.Gain1_Gain * rtb_Saturation1_l;
+  debug2 = 1.0F * rtb_Saturation1_l;
 
   /* Gain: '<S4>/Gain1' */
-  rtb_Switch3 = Skydog_autopilot_P.Gain1_Gain_n * rtb_Sum5;
+  rtb_Switch3 = Alti_control_I * rtb_Sum5;
 
   /* Gain: '<S5>/Gain1' */
-  rtb_Saturation1_l = Skydog_autopilot_P.Gain1_Gain_j * rtb_Sum1;
+  rtb_Saturation1_l = Speed_control_I * rtb_Sum1;
 
   /* Update for DiscreteIntegrator: '<S4>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_gainval * rtb_Switch3 +
+  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE = 0.01F * rtb_Switch3 +
     Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE;
-  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE >=
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperSat) {
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE =
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperSat;
+  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE >= 0.52359879F) {
+    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE = 0.52359879F;
   } else {
-    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE <=
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerSat) {
-      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE =
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerSat;
+    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE <= (-0.52359879F))
+    {
+      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE = -0.52359879F;
     }
   }
 
@@ -324,19 +327,13 @@ void Skydog_autopilot_step(void)
   /* Update for DiscreteIntegrator: '<S6>/Discrete-Time Integrator' incorporates:
    *  Gain: '<S6>/Gain1'
    */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b =
-    Skydog_autopilot_P.Gain1_Gain_k * rtb_Sum6 *
-    Skydog_autopilot_P.DiscreteTimeIntegrator_gainva_d +
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b;
-  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b >=
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_o) {
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b =
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_o;
+  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b = Pitch_control_I *
+    rtb_Sum6 * 0.01F + Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b;
+  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b >= 4.5F) {
+    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b = 4.5F;
   } else {
-    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b <=
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_a) {
-      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b =
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_a;
+    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b <= (-4.5F)) {
+      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b = -4.5F;
     }
   }
 
@@ -345,19 +342,13 @@ void Skydog_autopilot_step(void)
   /* Update for DiscreteIntegrator: '<S10>/Discrete-Time Integrator' incorporates:
    *  Gain: '<S10>/Gain1'
    */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f =
-    Skydog_autopilot_P.Gain1_Gain_e * rtb_Sum3 *
-    Skydog_autopilot_P.DiscreteTimeIntegrator_gainva_g +
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f;
-  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f >=
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_k) {
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f =
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_k;
+  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f = Roll_control_I *
+    rtb_Sum3 * 0.01F + Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f;
+  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f >= 4.5F) {
+    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f = 4.5F;
   } else {
-    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f <=
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_c) {
-      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f =
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_c;
+    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f <= (-4.5F)) {
+      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f = -4.5F;
     }
   }
 
@@ -366,37 +357,28 @@ void Skydog_autopilot_step(void)
   /* Update for DiscreteIntegrator: '<S11>/Discrete-Time Integrator' incorporates:
    *  Gain: '<S11>/Gain1'
    */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr =
-    Skydog_autopilot_P.Gain1_Gain_m * rtb_Sum1_i *
-    Skydog_autopilot_P.DiscreteTimeIntegrator_gainva_f +
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr;
-  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr >=
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_a) {
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr =
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_a;
+  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr = Yaw_rate_control_I *
+    rtb_Sum1_i * 0.01F + Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr;
+  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr >= 0.366519153F) {
+    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr = 0.366519153F;
   } else {
-    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr <=
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_l) {
-      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr =
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_l;
+    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr <= (-0.366519153F))
+    {
+      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr = -0.366519153F;
     }
   }
 
   /* End of Update for DiscreteIntegrator: '<S11>/Discrete-Time Integrator' */
 
   /* Update for DiscreteIntegrator: '<S5>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_gainva_h * rtb_Saturation1_l +
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d;
-  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d >=
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_b) {
-    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d =
-      Skydog_autopilot_P.DiscreteTimeIntegrator_UpperS_b;
+  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d = 0.01F *
+    rtb_Saturation1_l + Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d;
+  if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d >= 0.52359879F) {
+    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d = 0.52359879F;
   } else {
-    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d <=
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_m) {
-      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d =
-        Skydog_autopilot_P.DiscreteTimeIntegrator_LowerS_m;
+    if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d <= (-0.52359879F))
+    {
+      Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d = -0.52359879F;
     }
   }
 
@@ -446,26 +428,6 @@ void Skydog_autopilot_initialize(void)
   RC_throttle_r = 0.0F;
   RC_flaps_r = 0.0F;
   Mode_w = 0;
-
-  /* InitializeConditions for DiscreteIntegrator: '<S4>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_IC;
-
-  /* InitializeConditions for DiscreteIntegrator: '<S6>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_b =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_IC_h;
-
-  /* InitializeConditions for DiscreteIntegrator: '<S10>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_f =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_IC_i;
-
-  /* InitializeConditions for DiscreteIntegrator: '<S11>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTAT_fr =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_IC_k;
-
-  /* InitializeConditions for DiscreteIntegrator: '<S5>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d =
-    Skydog_autopilot_P.DiscreteTimeIntegrator_IC_m;
 }
 
 /* Model terminate function */

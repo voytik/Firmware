@@ -82,7 +82,7 @@ COMPILER_TOOL_CHAIN = vcx64
 #                            and do not build an executable
 
 MODEL                   = Skydog_autopilot
-MODULES                 = Skydog_autopilot_data.c 
+MODULES                 = 
 MAKEFILE                = Skydog_autopilot.mk
 MATLAB_ROOT             = C:\Program Files\MATLAB\R2011b
 ALT_MATLAB_ROOT         = C:\PROGRA~1\MATLAB\R2011b

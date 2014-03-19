@@ -285,7 +285,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								}
 
 								// is MODE MANUAL selected
-								if (control_mode.flag_control_manual_enabled && control_mode.flag_control_attitude_enabled == false && control_mode.flag_control_auto_enabled == false) {
+								if (control_mode.flag_control_attitude_enabled == false && control_mode.flag_control_auto_enabled == false) {
 
 									autopilot_mode = 0;
 
@@ -332,17 +332,30 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									Roll_acc_r = attitude_raw.rollacc;
 									Pitch_acc_r = attitude_raw.pitchacc;
 									Yaw_acc_r = attitude_raw.yawacc;
-	/*								RC_aileron_r = rc_raw.roll;
-									RC_elevator_r = rc_raw.pitch;
-									RC_rudder_r = rc_raw.yaw;
+									RC_aileron_r = rc_raw.roll * 0.7854f; //recalculate to radians
+									RC_elevator_r = rc_raw.pitch *  0.3491f; //recalculate to radians
+									RC_rudder_r = rc_raw.yaw; //dont need to recalculate
 									RC_throttle_r = rc_raw.throttle;
-									RC_flaps_r = rc_raw.aux1;
-*/
-									RC_aileron_r = 0;
+									RC_flaps_r = 0; //rc_raw.aux1;
+
+									Alti_control_I = 0.3F;
+									Alti_control_P = 0.6F;
+									Pitch_control_I = 8.0F;
+									Pitch_control_P = 8.5F;
+									Roll_control_I = 5.0F;
+									Roll_control_P = 8.0F;
+									Roll_rate_control_P = 3.0F;
+									Roll_yaw_FF = 1.0F;
+									Speed_control_I = 0.0F;
+									Speed_control_P = 1.0F;
+									Yaw_rate_control_I = 0.0F;
+									Yaw_rate_control_P = 0.01F;
+
+			/*						RC_aileron_r = 0;
 									RC_elevator_r = 0;
 									RC_rudder_r = 0;
 									RC_throttle_r = 0.5;
-
+			 	 */
 									if (control_mode.flag_control_attitude_enabled && control_mode.flag_control_auto_enabled) {
 										if (skydog.Valid)
 										{
@@ -367,8 +380,8 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									Skydog_autopilot_step();
 
 									// copy output in radians and normalize to [-1,1]
-									actuators.control[0] = 0.2f*(Aileron_w * 2.65f);
-									actuators.control[1] = -0.4f*(Elevator_w * 3.7f);
+									actuators.control[0] = (Aileron_w * 2.65f);
+									actuators.control[1] = (Elevator_w * 3.7f);
 									actuators.control[2] = Rudder_w * 4.09f;
 									actuators.control[3] = Throttle_w;
 									actuators.control[4] = 0;//Flaps_w;
