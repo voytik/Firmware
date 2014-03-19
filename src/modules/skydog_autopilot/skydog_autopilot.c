@@ -46,7 +46,6 @@
 #include <skydog_autopilot/Skydog_autopilot_ert_rtw/Skydog_autopilot.h>
 #include <skydog_autopilot/Skydog_autopilot_ert_rtw/rtwtypes.h>
 
-
  
 static bool thread_should_exit = false;		/**< daemon exit flag */
 static bool thread_running = false;		/**< daemon status flag */
@@ -185,9 +184,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		/* subscribe to vehicle attitude topic */
 			int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
 
-		/* subscribe to vehicle mode topic */
-			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
-
 		/* subscribe to vehicle status topic */
 			int status_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
@@ -210,7 +206,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			struct sensor_combined_s sensors_raw;
 			struct vehicle_gps_position_s gps_raw;
 			struct vehicle_attitude_s attitude_raw;
-			struct vehicle_control_mode_s control_mode;
 			struct vehicle_status_s status;
 			struct airspeed_s airspeed_raw;
 			struct manual_control_setpoint_s rc_raw;
@@ -223,7 +218,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			memset(&sensors_raw, 0, sizeof(sensors_raw));
 			memset(&gps_raw, 0, sizeof(gps_raw));
 			memset(&attitude_raw, 0, sizeof(attitude_raw));
-			memset(&control_mode, 0, sizeof(control_mode));
 			memset(&status, 0, sizeof(status));
 			memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 			memset(&rc_raw, 0, sizeof(rc_raw));
@@ -313,6 +307,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									/* copy skydog data into local buffer */
 									orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
 
+
 									//fill in inputs for simulink code
 									Roll_w = skydog.Roll_w;
 									Altitude_w = skydog.Altitude_w;
@@ -373,14 +368,13 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 										printf("[skydog_autopilot] MODE STABILIZATION selected\n");
 										Mode_w = 1;
 										autopilot_mode = 1;
-
 									}
 
 									//run Simulink code
 									Skydog_autopilot_step();
 
 									// get output in radians and normalize to [-1,1]
-									actuators.control[0] = (Aileron_w * 2.65f);
+									actuators.control[0] = Aileron_w * 2.65f;
 									actuators.control[1] = -(Elevator_w * 3.7f);
 									actuators.control[2] = Rudder_w * 4.09f;
 									actuators.control[3] = Throttle_w;
@@ -420,6 +414,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								if (autopilot_mode != current_autopilot_mode){
 
 									if (autopilot_mode == 0){
+										Skydog_autopilot_initialize();
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] sleeping, manual mode");
 									}
 									if (autopilot_mode == 1){
@@ -428,7 +423,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									if (autopilot_mode == 2){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, autopilot mode");
 										}
-									mavlink_log_info(mavlink_fd, "[skydog_autopilot] state:%d",status.main_state);
 									// update flag with current mode
 									current_autopilot_mode = autopilot_mode;
 								}

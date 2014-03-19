@@ -172,8 +172,6 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	int error_counter = 0;
 	float current_time = 0;
 
-	bool manual_enabled = false;
-
 		/* subscribe to sensor_combined topic */
 			int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
 			/* limit the interval*/
@@ -194,9 +192,6 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 		/* subscribe to vehicle status topic */
 			int status_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
-		/* subscribe to vehicle mode topic */
-			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
-
 		/* subscribe to waypoints topic */
 			int skydog_sub_fd = orb_subscribe(ORB_ID(skydog_waypoints));
 
@@ -211,7 +206,6 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			struct airspeed_s airspeed_raw;
 			struct vehicle_local_position_s position;
 			struct home_position_s home;
-			struct vehicle_control_mode_s control_mode;
 			struct vehicle_status_s status;
 			struct skydog_waypoints_s waypoints;
 
@@ -227,7 +221,6 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 			memset(&home, 0, sizeof(home));
 			memset(&status, 0, sizeof(status));
 			memset(&skydog, 0, sizeof(skydog));
-			memset(&control_mode, 0, sizeof(control_mode));
 			memset(&waypoints, 0, sizeof(waypoints));
 			memset(&debug_qgc, 0, sizeof(debug_qgc));
 
@@ -270,106 +263,99 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 								/* copy sensors raw data into local buffer */
 								orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
-								/* copy vehicle mode data into local buffer */
-								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
+								/* copy gps raw data into local buffer */
+								orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
+								/* copy airspeed raw data into local buffer */
+								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+								/* copy position data into local buffer */
+								orb_copy(ORB_ID(vehicle_local_position), position_sub_fd, &position);
+								/* copy position data into local buffer */
+								orb_copy(ORB_ID(home_position), home_sub_fd, &home);
+								/* copy status data into local buffer */
+								orb_copy(ORB_ID(vehicle_status), status_sub_fd, &status);
+								/* copy waypoints data into local buffer */
+								orb_copy(ORB_ID(skydog_waypoints), skydog_sub_fd, &waypoints);
 
-								// testing only!
-								control_mode.flag_control_auto_enabled = true;
-
-								// check if auto mode selected, if not don't run simulink code
-								if (control_mode.flag_control_auto_enabled){
-
-									/* copy gps raw data into local buffer */
-									orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
-									/* copy airspeed raw data into local buffer */
-									orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
-									/* copy position data into local buffer */
-									orb_copy(ORB_ID(vehicle_local_position), position_sub_fd, &position);
-									/* copy position data into local buffer */
-									orb_copy(ORB_ID(home_position), home_sub_fd, &home);
-									/* copy status data into local buffer */
-									orb_copy(ORB_ID(vehicle_status), status_sub_fd, &status);
-									/* copy waypoints data into local buffer */
-									orb_copy(ORB_ID(skydog_waypoints), skydog_sub_fd, &waypoints);
-
-
-									//fill in arguments
-									Altitude2_r = sensors_raw.baro_alt_meter;
-									X_earth_r = position.x;
-									Y_earth_r = position.y;
-									Groundspeed2_r[0] =position.vx;
-									Groundspeed2_r[1] =position.vy;
-									Groundspeed2_r[2] =position.vz;
-									//Nfz_w[0] = 0.0f; // TODO no fly zone implementation
-									Mode2_w = 2; // TODO mode
-									Time = current_time;
-									Waypoints_count = waypoints.wpm_count;
-
-									// if rc signal/mavlink lost,low battery go HOME
-									if (status.rc_signal_lost || status.offboard_control_signal_lost || status.battery_warning == VEHICLE_BATTERY_WARNING_LOW)
-									{
-										Error = true;
-									}else{
-										Error = false;
-									}
-
-									//waypoint transfer from skydog_waypoints topic
-									for (uint8_t i = 0; i < waypoints.wpm_count; i++)
-									{
-										Waypoints_w[i*4] = waypoints.waypoints[i].longitude;
-										Waypoints_w[i*4+1] = waypoints.waypoints[i].latitude;
-										Waypoints_w[i*4+2] = waypoints.waypoints[i].altitude;
-										Waypoints_w[i*4+3] = waypoints.waypoints[i].speed;
-									}
-
-
-									//run Simulink code
-									Skydog_path_planning_step();
-
-		/*							// copy output to skydog topic
-									skydog.Roll_w = Roll_w;
-									skydog.Altitude_w = Altitude_w;
-									skydog.Groundspeed_w = Groundspeed_w;
+								// get current state
+								if (status.main_state == MAIN_STATE_MANUAL) {
+									Mode2_w = 0;
+									skydog.Valid = false;
+								}
+								if(status.main_state == MAIN_STATE_SEATBELT ||status.main_state == MAIN_STATE_EASY){
+									Mode2_w = 1;
+									skydog.Valid = false;
+								}
+								if (status.main_state == MAIN_STATE_AUTO) {
+									Mode2_w = 2;
 									skydog.Valid = true;
-		*/
-									// display wanted values for debug purposes
-									//printf("[skydog_path_planning] Roll_w:%4.4f, Altitude_w:%4.4.f, Speed_w:%4.4f\n", Roll2_w,Altitude2_w,Speed_w);
-
-
-
-									// copy debug values for QGC
-									debug_qgc.value3 = P[1];
-									debug_qgc.value4 = P[2];
-									debug_qgc.value5 = Roll2_w;
-									debug_qgc.value6 = Altitude2_w;
-
-									// publish values to debug topic
-									orb_publish(ORB_ID(debug_key_value), debug_pub, &debug_qgc);
-
-									// skydog autopilot testing
-									skydog.Roll_w = 30;
-									skydog.Altitude_w = 1000;
-									skydog.Groundspeed_w = 15;
-									skydog.Valid = true;
-
-									/* publish values to skydog_autopilot_setpoint topic*/
-									orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
-
-									//update time
-									current_time = current_time + (1.0f/running_frequency);
 								}
 
-								// check which mode selected and send this once to ground station
-								if (control_mode.flag_control_auto_enabled!=manual_enabled){
 
-									if (!control_mode.flag_control_auto_enabled){
-										mavlink_log_info(mavlink_fd, "[skydog_path_planning] sleeping, manual mode");
-									}else{
-										mavlink_log_info(mavlink_fd, "[skydog_path_planning] running, auto mode");
-									}
-									// update flag with current mode
-									manual_enabled = control_mode.flag_control_auto_enabled;
+								//fill in data
+								Altitude2_r = sensors_raw.baro_alt_meter;
+								X_earth_r = position.x;
+								Y_earth_r = position.y;
+								Groundspeed2_r[0] =position.vx;
+								Groundspeed2_r[1] =position.vy;
+								Groundspeed2_r[2] =position.vz;
+								//Nfz_w[0] = 0.0f; // TODO no fly zone implementation
+								Time = current_time;
+
+
+								// if rc signal/mavlink lost,low battery set error flag to true (and go HOME)
+								if (status.rc_signal_lost || status.offboard_control_signal_lost || status.battery_warning == VEHICLE_BATTERY_WARNING_LOW)
+								{
+									Error = true;
+								}else{
+									Error = false;
 								}
+
+								//waypoint transfer from skydog_waypoints topic
+								for (uint8_t i = 0; i < waypoints.wpm_count; i++)
+								{
+									Waypoints_w[i*4] = waypoints.waypoints[i].longitude;
+									Waypoints_w[i*4+1] = waypoints.waypoints[i].latitude;
+									Waypoints_w[i*4+2] = waypoints.waypoints[i].altitude;
+									Waypoints_w[i*4+3] = waypoints.waypoints[i].speed;
+								}
+								Waypoints_count = waypoints.wpm_count;
+
+
+								//run Simulink code
+								Skydog_path_planning_step();
+
+	/*							// copy output to skydog topic
+								skydog.Roll_w = Roll_w;
+								skydog.Altitude_w = Altitude_w;
+								skydog.Groundspeed_w = Groundspeed_w;
+								skydog.Valid = true;
+	*/
+								// display wanted values for debug purposes
+								//printf("[skydog_path_planning] Roll_w:%4.4f, Altitude_w:%4.4.f, Speed_w:%4.4f\n", Roll2_w,Altitude2_w,Speed_w);
+
+
+								// copy debug values for QGC
+								debug_qgc.value3 = P[1];
+								debug_qgc.value4 = P[2];
+								debug_qgc.value5 = Roll2_w;
+								debug_qgc.value6 = Altitude2_w;
+
+								// publish values to debug topic
+								orb_publish(ORB_ID(debug_key_value), debug_pub, &debug_qgc);
+
+								// skydog autopilot testing
+								skydog.Roll_w = 0;
+								skydog.Altitude_w = 1000;
+								skydog.Groundspeed_w = 12;
+
+								/* publish values to skydog_autopilot_setpoint topic*/
+								orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
+
+								//update time
+								current_time = current_time + (1.0f/running_frequency);
+
+
+
 							}
 					}
 			}
