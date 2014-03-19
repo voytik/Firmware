@@ -30,6 +30,7 @@
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_control_mode.h>
+#include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_controls.h>
@@ -180,27 +181,24 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
-			//orb_set_interval(gps_sub_fd, rate);
 
 		/* subscribe to vehicle attitude topic */
 			int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
-			//orb_set_interval(attitude_sub_fd, rate);
 
 		/* subscribe to vehicle mode topic */
 			int control_mode_sub_fd = orb_subscribe(ORB_ID(vehicle_control_mode));
-			//orb_set_interval(control_mode_sub_fd, rate);
+
+		/* subscribe to vehicle status topic */
+			int status_sub_fd = orb_subscribe(ORB_ID(vehicle_status));
 
 		/* subscribe to airspeed channels topic */
 			int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
-			//orb_set_interval(airspeed_sub_fd, rate);
 
 		/* subscribe to rc channels topic */
 			int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
-			//orb_set_interval(rc_sub_fd, rate);
 
 		/* subscribe to skydog_autopilot_setpoint  topic */
 			int skydog_sub_fd = orb_subscribe(ORB_ID(skydog_autopilot_setpoint));
-			//orb_set_interval(skydog_sub_fd, rate);
 
 
 			/* one could wait for multiple topics with this technique */
@@ -213,6 +211,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			struct vehicle_gps_position_s gps_raw;
 			struct vehicle_attitude_s attitude_raw;
 			struct vehicle_control_mode_s control_mode;
+			struct vehicle_status_s status;
 			struct airspeed_s airspeed_raw;
 			struct manual_control_setpoint_s rc_raw;
 			struct skydog_autopilot_setpoint_s skydog;
@@ -225,6 +224,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			memset(&gps_raw, 0, sizeof(gps_raw));
 			memset(&attitude_raw, 0, sizeof(attitude_raw));
 			memset(&control_mode, 0, sizeof(control_mode));
+			memset(&status, 0, sizeof(status));
 			memset(&airspeed_raw, 0, sizeof(airspeed_raw));
 			memset(&rc_raw, 0, sizeof(rc_raw));
 			memset(&actuators, 0, sizeof(actuators));
@@ -274,18 +274,14 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 						} else {
 
 							if (fds[0].revents & POLLIN) {
-								/* copy vehicle mode data into local buffer */
-								orb_copy(ORB_ID(vehicle_control_mode), control_mode_sub_fd, &control_mode);
+								/* copy sensors raw data into local buffer */
+								orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
+								/* copy status data into local buffer */
+								orb_copy(ORB_ID(vehicle_status), status_sub_fd, &status);
 
-								// testing only
-								if (true)
-								{
-									control_mode.flag_control_manual_enabled = true;
-									control_mode.flag_control_attitude_enabled = true;
-								}
 
 								// is MODE MANUAL selected
-								if (control_mode.flag_control_attitude_enabled == false && control_mode.flag_control_auto_enabled == false) {
+								if (status.main_state == MAIN_STATE_MANUAL) {
 
 									autopilot_mode = 0;
 
@@ -293,7 +289,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 
 									// MODE MANUAL selected
-									printf("[skydog_autopilot] MODE MANUAL selected\n");
+									//printf("[skydog_autopilot] MODE MANUAL selected\n");
 
 									// just copy RC input directly to output
 									actuators.control[0] = rc_raw.roll;
@@ -338,6 +334,8 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									RC_throttle_r = rc_raw.throttle;
 									RC_flaps_r = 0; //rc_raw.aux1;
 
+									/*
+									// simulink model parameters
 									Alti_control_I = 0.3F;
 									Alti_control_P = 0.6F;
 									Pitch_control_I = 8.0F;
@@ -350,13 +348,14 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									Speed_control_P = 1.0F;
 									Yaw_rate_control_I = 0.0F;
 									Yaw_rate_control_P = 0.01F;
+									*/
 
-			/*						RC_aileron_r = 0;
+									RC_aileron_r = 0;
 									RC_elevator_r = 0;
 									RC_rudder_r = 0;
 									RC_throttle_r = 0.5;
-			 	 */
-									if (control_mode.flag_control_attitude_enabled && control_mode.flag_control_auto_enabled) {
+
+									if (status.main_state == MAIN_STATE_AUTO) {
 										if (skydog.Valid)
 										{
 											// is MODE AUTOPILOT selected
@@ -368,7 +367,8 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 											Mode_w = 1;
 											autopilot_mode = 1;
 										}
-									}else{
+									}
+									if(status.main_state == MAIN_STATE_SEATBELT ||status.main_state == MAIN_STATE_EASY){
 										// is MODE STABILIZATION selected
 										printf("[skydog_autopilot] MODE STABILIZATION selected\n");
 										Mode_w = 1;
@@ -379,9 +379,9 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									//run Simulink code
 									Skydog_autopilot_step();
 
-									// copy output in radians and normalize to [-1,1]
+									// get output in radians and normalize to [-1,1]
 									actuators.control[0] = (Aileron_w * 2.65f);
-									actuators.control[1] = (Elevator_w * 3.7f);
+									actuators.control[1] = -(Elevator_w * 3.7f);
 									actuators.control[2] = Rudder_w * 4.09f;
 									actuators.control[3] = Throttle_w;
 									actuators.control[4] = 0;//Flaps_w;
@@ -421,16 +421,14 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 
 									if (autopilot_mode == 0){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] sleeping, manual mode");
-										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man:%d,att:%d,auto:%d",control_mode.flag_control_manual_enabled,control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
 									}
 									if (autopilot_mode == 1){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, stabilization mode");
-										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man:%d,att:%d,auto:%d",control_mode.flag_control_manual_enabled,control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
 									}
 									if (autopilot_mode == 2){
 										mavlink_log_info(mavlink_fd, "[skydog_autopilot] running, autopilot mode");
-										mavlink_log_info(mavlink_fd, "[skydog_autopilot] man:%d,att:%d,auto:%d",control_mode.flag_control_manual_enabled,control_mode.flag_control_attitude_enabled, control_mode.flag_control_auto_enabled);
-									}
+										}
+									mavlink_log_info(mavlink_fd, "[skydog_autopilot] state:%d",status.main_state);
 									// update flag with current mode
 									current_autopilot_mode = autopilot_mode;
 								}

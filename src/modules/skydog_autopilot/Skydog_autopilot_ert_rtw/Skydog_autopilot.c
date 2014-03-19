@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_autopilot'.
  *
- * Model version                  : 1.215
+ * Model version                  : 1.216
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Mar 10 17:46:49 2014
+ * C/C++ source code generated on : Wed Mar 19 21:15:43 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -18,34 +18,37 @@
 #include "Skydog_autopilot_private.h"
 
 /* Exported block parameters */
-real32_T Alti_control_I = 0.3F;        /* Variable: Alti_control_I
+real32_T Alti_control_I = 0.05F;       /* Variable: Alti_control_I
                                         * Referenced by: '<S4>/Gain1'
                                         */
-real32_T Alti_control_P = 0.6F;        /* Variable: Alti_control_P
+real32_T Alti_control_P = 0.2F;        /* Variable: Alti_control_P
                                         * Referenced by: '<S4>/Gain'
                                         */
-real32_T Pitch_control_I = 8.0F;       /* Variable: Pitch_control_I
+real32_T Pitch_control_I = 0.5F;       /* Variable: Pitch_control_I
                                         * Referenced by: '<S6>/Gain1'
                                         */
-real32_T Pitch_control_P = 8.5F;       /* Variable: Pitch_control_P
+real32_T Pitch_control_P = 1.0F;       /* Variable: Pitch_control_P
                                         * Referenced by: '<S6>/Gain'
                                         */
-real32_T Roll_control_I = 5.0F;        /* Variable: Roll_control_I
+real32_T Pitch_rate_control_P = -0.2F; /* Variable: Pitch_rate_control_P
+                                        * Referenced by: '<S8>/Gain'
+                                        */
+real32_T Roll_control_I = 1.0F;        /* Variable: Roll_control_I
                                         * Referenced by: '<S10>/Gain1'
                                         */
-real32_T Roll_control_P = 8.0F;        /* Variable: Roll_control_P
+real32_T Roll_control_P = 3.0F;        /* Variable: Roll_control_P
                                         * Referenced by: '<S10>/Gain'
                                         */
-real32_T Roll_rate_control_P = 3.0F;   /* Variable: Roll_rate_control_P
+real32_T Roll_rate_control_P = 0.1F;   /* Variable: Roll_rate_control_P
                                         * Referenced by: '<S9>/Gain'
                                         */
-real32_T Roll_yaw_FF = 1.0F;           /* Variable: Roll_yaw_FF
+real32_T Roll_yaw_FF = 0.0F;           /* Variable: Roll_yaw_FF
                                         * Referenced by: '<S2>/Gain'
                                         */
-real32_T Speed_control_I = 0.0F;       /* Variable: Speed_control_I
+real32_T Speed_control_I = 0.3F;       /* Variable: Speed_control_I
                                         * Referenced by: '<S5>/Gain1'
                                         */
-real32_T Speed_control_P = 1.0F;       /* Variable: Speed_control_P
+real32_T Speed_control_P = 0.5F;       /* Variable: Speed_control_P
                                         * Referenced by: '<S5>/Gain'
                                         */
 real32_T Yaw_rate_control_I = 0.0F;    /* Variable: Yaw_rate_control_I
@@ -169,7 +172,7 @@ void Skydog_autopilot_step(void)
   rtb_Sum5_m = rtb_Saturation1_e - Pitch_speed_r;
 
   /* Gain: '<S8>/Gain' */
-  rtb_Switch3 = (-3.0F) * rtb_Sum5_m;
+  rtb_Switch3 = Pitch_rate_control_P * rtb_Sum5_m;
 
   /* Saturate: '<S8>/Saturation1' */
   rtb_Saturation1_l = rtb_Switch3 >= 0.261799395F ? 0.261799395F : rtb_Switch3 <=

@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_autopilot'.
  *
- * Model version                  : 1.215
+ * Model version                  : 1.216
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Mar 10 17:46:49 2014
+ * C/C++ source code generated on : Wed Mar 19 21:15:43 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -105,6 +105,9 @@ extern real32_T Pitch_control_I;       /* Variable: Pitch_control_I
                                         */
 extern real32_T Pitch_control_P;       /* Variable: Pitch_control_P
                                         * Referenced by: '<S6>/Gain'
+                                        */
+extern real32_T Pitch_rate_control_P;  /* Variable: Pitch_rate_control_P
+                                        * Referenced by: '<S8>/Gain'
                                         */
 extern real32_T Roll_control_I;        /* Variable: Roll_control_I
                                         * Referenced by: '<S10>/Gain1'

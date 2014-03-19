@@ -234,7 +234,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 		     // advertise that this controller will publish skydog_topic
 		     orb_advert_t skydog_pub = orb_advertise(ORB_ID(skydog_autopilot_setpoint), &skydog);
 
-		     //fill in name for debug value
+		     //fill in names for debug value
 			 snprintf(debug_qgc.key3, 10, "P_long");
 			 snprintf(debug_qgc.key4, 10, "P_lat");
 			 snprintf(debug_qgc.key5, 10, "Roll2_w");
@@ -347,7 +347,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									orb_publish(ORB_ID(debug_key_value), debug_pub, &debug_qgc);
 
 									// skydog autopilot testing
-									skydog.Roll_w = 0;
+									skydog.Roll_w = 30;
 									skydog.Altitude_w = 1000;
 									skydog.Groundspeed_w = 15;
 									skydog.Valid = true;
