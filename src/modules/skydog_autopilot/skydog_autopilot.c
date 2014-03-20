@@ -39,7 +39,7 @@
 
 #include <systemlib/systemlib.h>
 #include <mavlink/mavlink_log.h>
-#include <systemlib/param/param.h>
+#include <Skydog_autopilot/Skydog_autopilot_params.h>
 
 // simulink model includes
 #include <Skydog_autopilot/Skydog_autopilot_ert_rtw/SkydogSignals.h>
@@ -243,7 +243,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     Skydog_autopilot_initialize();
 
 		     //parameters initialize
-		     //PARAM_DEFINE_FLOAT(SKYDOGAP_GAIN1,1.0f);
 
 		     // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
