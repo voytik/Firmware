@@ -1,85 +1,65 @@
-/****************************************************************************
+ /**
+ * @file skydog_autopilot_params.c
+ * Parameters for skydog_autopilot
  *
- *   Copyright (C) 2013 Anton Babushkin. All rights reserved.
- *   Author: 	Anton Babushkin	<rk3dov@gmail.com>
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- * 3. Neither the name PX4 nor the names of its contributors may be
- *    used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- * OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
-
-/*
- * @file position_estimator_inav_params.c
- *
- * Parameters for position_estimator_inav
+ * Author: Vojtech Kuchar
+ * vojtech.kuchar@seznam.cz
  */
 
 #include "Skydog_autopilot_params.h"
+#include <skydog_autopilot/Skydog_autopilot_ert_rtw/Skydog_autopilot.h>
+//const float test = Alti_control_I;
 
-PARAM_DEFINE_FLOAT(INAV_W_SKDG1, 0.5f);
-PARAM_DEFINE_FLOAT(INAV_W_SKDG2, 50.0f);
+
+PARAM_DEFINE_FLOAT(INAV_Alti_control_I, 0.05F);
+PARAM_DEFINE_FLOAT(INAV_Alti_control_P, 0.2f);
+PARAM_DEFINE_FLOAT(INAV_Pitch_control_I, 0.5F);
+PARAM_DEFINE_FLOAT(INAV_Pitch_control_P, 1.0F);
+PARAM_DEFINE_FLOAT(INAV_Pitch_rate_control_P, 0.2F);
+PARAM_DEFINE_FLOAT(INAV_Roll_control_I, 1.0F);
+PARAM_DEFINE_FLOAT(INAV_Roll_control_P, 3.0F);
+PARAM_DEFINE_FLOAT(INAV_Roll_rate_control, 0.1F);
+PARAM_DEFINE_FLOAT(INAV_Roll_yaw_FF, 0.0F);
+PARAM_DEFINE_FLOAT(INAV_Speed_control_I, 0.3F);
+PARAM_DEFINE_FLOAT(INAV_Speed_control_P, 0.5F);
+PARAM_DEFINE_FLOAT(INAV_Yaw_rate_control_I, 0.0F);
+PARAM_DEFINE_FLOAT(INAV_Yaw_rate_control_P, 0.01F);
 
 
-int parameters_init(struct position_estimator_inav_param_handles *h)
+
+int parameters_init(struct skydog_autopilot_param_handles *h)
 {
-	h->w_alt_baro = param_find("INAV_W_ALT_BARO");
-	h->w_alt_acc = param_find("INAV_W_ALT_ACC");
-	h->w_alt_sonar = param_find("INAV_W_ALT_SONAR");
-	h->w_pos_gps_p = param_find("INAV_W_POS_GPS_P");
-	h->w_pos_gps_v = param_find("INAV_W_POS_GPS_V");
-	h->w_pos_acc = param_find("INAV_W_POS_ACC");
-	h->w_pos_flow = param_find("INAV_W_POS_FLOW");
-	h->w_acc_bias = param_find("INAV_W_ACC_BIAS");
-	h->flow_k = param_find("INAV_FLOW_K");
-	h->sonar_filt = param_find("INAV_SONAR_FILT");
-	h->sonar_err = param_find("INAV_SONAR_ERR");
-	h->land_t = param_find("INAV_LAND_T");
-	h->land_disp = param_find("INAV_LAND_DISP");
-	h->land_thr = param_find("INAV_LAND_THR");
+	h->Alti_control_I = param_find("INAV_Alti_control_I");
+	h->Alti_control_P = param_find("INAV_Alti_control_P");
+	h->Pitch_control_I = param_find("INAV_Pitch_control_I");
+	h->Pitch_control_P = param_find("INAV_Pitch_control_P");
+	h->Pitch_rate_control_P = param_find("INAV_Pitch_rate_control_P");
+	h->Roll_control_I = param_find("INAV_Roll_control_I");
+	h->Roll_control_P = param_find("INAV_Roll_control_P");
+	h->Roll_rate_control = param_find("INAV_Roll_rate_control");
+	h->Roll_yaw_FF = param_find("INAV_Roll_yaw_FF");
+	h->Speed_control_I = param_find("INAV_Speed_control_I");
+	h->Speed_control_P = param_find("INAV_Speed_control_P");
+	h->Yaw_rate_control_I = param_find("INAV_Yaw_rate_control_I");
+	h->Yaw_rate_control_P = param_find("INAV_Yaw_rate_control_P");
 
 	return OK;
 }
 
-int parameters_update(const struct position_estimator_inav_param_handles *h, struct position_estimator_inav_params *p)
+int parameters_update(const struct skydog_autopilot_param_handles *h, struct skydog_autopilot_params *p)
 {
-	param_get(h->w_alt_baro, &(p->w_alt_baro));
-	param_get(h->w_alt_acc, &(p->w_alt_acc));
-	param_get(h->w_alt_sonar, &(p->w_alt_sonar));
-	param_get(h->w_pos_gps_p, &(p->w_pos_gps_p));
-	param_get(h->w_pos_gps_v, &(p->w_pos_gps_v));
-	param_get(h->w_pos_acc, &(p->w_pos_acc));
-	param_get(h->w_pos_flow, &(p->w_pos_flow));
-	param_get(h->w_acc_bias, &(p->w_acc_bias));
-	param_get(h->flow_k, &(p->flow_k));
-	param_get(h->sonar_filt, &(p->sonar_filt));
-	param_get(h->sonar_err, &(p->sonar_err));
-	param_get(h->land_t, &(p->land_t));
-	param_get(h->land_disp, &(p->land_disp));
-	param_get(h->land_thr, &(p->land_thr));
+	param_get(h->Alti_control_I, &(p->Alti_control_I));
+	param_get(h->Alti_control_P, &(p->Alti_control_P));
+	param_get(h->Pitch_control_I, &(p->Pitch_control_I));
+	param_get(h->Pitch_control_P, &(p->Pitch_control_P));
+	param_get(h->Pitch_rate_control_P, &(p->Pitch_rate_control_P));
+	param_get(h->Roll_control_I, &(p->Roll_control_I));
+	param_get(h->Roll_control_P, &(p->Roll_control_P));
+	param_get(h->Roll_rate_control, &(p->Roll_rate_control));
+	param_get(h->Speed_control_I, &(p->Speed_control_I));
+	param_get(h->Speed_control_P, &(p->Speed_control_P));
+	param_get(h->Yaw_rate_control_I, &(p->Yaw_rate_control_I));
+	param_get(h->Yaw_rate_control_P, &(p->Yaw_rate_control_P));
 
 	return OK;
 }
