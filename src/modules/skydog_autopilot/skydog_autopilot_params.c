@@ -40,12 +40,15 @@
 
 #include "Skydog_autopilot_params.h"
 
-PARAM_DEFINE_FLOAT(INAV_W_SKDG1, 0.5f);
-PARAM_DEFINE_FLOAT(INAV_W_SKDG2, 50.0f);
+PARAM_DEFINE_FLOAT(INAV_W_SKDG, 50.0f);
+PARAM_DEFINE_FLOAT(SKDG_ALT_I, 0.5f);
 
 
-int parameters_init(struct position_estimator_inav_param_handles *h)
+
+int parameters_init(struct skydog_autopilot_param_handles *h)
 {
+	h->alt_I = param_find("SKDG_ALT_I");
+	/*
 	h->w_alt_baro = param_find("INAV_W_ALT_BARO");
 	h->w_alt_acc = param_find("INAV_W_ALT_ACC");
 	h->w_alt_sonar = param_find("INAV_W_ALT_SONAR");
@@ -60,13 +63,14 @@ int parameters_init(struct position_estimator_inav_param_handles *h)
 	h->land_t = param_find("INAV_LAND_T");
 	h->land_disp = param_find("INAV_LAND_DISP");
 	h->land_thr = param_find("INAV_LAND_THR");
-
+*/
 	return OK;
 }
 
-int parameters_update(const struct position_estimator_inav_param_handles *h, struct position_estimator_inav_params *p)
+int parameters_update(const struct skydog_autopilot_param_handles *h, struct skydog_autopilot_params *p)
 {
-	param_get(h->w_alt_baro, &(p->w_alt_baro));
+	param_get(h->alt_I, &(p->alt_I));
+	/*
 	param_get(h->w_alt_acc, &(p->w_alt_acc));
 	param_get(h->w_alt_sonar, &(p->w_alt_sonar));
 	param_get(h->w_pos_gps_p, &(p->w_pos_gps_p));
@@ -80,6 +84,6 @@ int parameters_update(const struct position_estimator_inav_param_handles *h, str
 	param_get(h->land_t, &(p->land_t));
 	param_get(h->land_disp, &(p->land_disp));
 	param_get(h->land_thr, &(p->land_thr));
-
+*/
 	return OK;
 }

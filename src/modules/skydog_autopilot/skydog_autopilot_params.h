@@ -40,8 +40,9 @@
 
 #include <systemlib/param/param.h>
 
-struct position_estimator_inav_params {
-	float w_alt_baro;
+struct skydog_autopilot_params {
+	float alt_I;
+	/*
 	float w_alt_acc;
 	float w_alt_sonar;
 	float w_pos_gps_p;
@@ -55,10 +56,12 @@ struct position_estimator_inav_params {
 	float land_t;
 	float land_disp;
 	float land_thr;
+	*/
 };
 
-struct position_estimator_inav_param_handles {
-	param_t w_alt_baro;
+struct skydog_autopilot_param_handles {
+	param_t alt_I;
+	/*
 	param_t w_alt_acc;
 	param_t w_alt_sonar;
 	param_t w_pos_gps_p;
@@ -72,16 +75,17 @@ struct position_estimator_inav_param_handles {
 	param_t land_t;
 	param_t land_disp;
 	param_t land_thr;
+	*/
 };
 
 /**
  * Initialize all parameter handles and values
  *
  */
-int parameters_init(struct position_estimator_inav_param_handles *h);
+int parameters_init(struct skydog_autopilot_param_handles *h);
 
 /**
  * Update all parameters
  *
  */
-int parameters_update(const struct position_estimator_inav_param_handles *h, struct position_estimator_inav_params *p);
+int parameters_update(const struct skydog_autopilot_param_handles *h, struct skydog_autopilot_params *p);
