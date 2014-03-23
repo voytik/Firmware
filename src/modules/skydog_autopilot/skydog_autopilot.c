@@ -180,7 +180,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			orb_set_interval(sensor_sub_fd, rate);
 
 		/* subscribe to parameters topic */
-		int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
+			int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
@@ -251,12 +251,13 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     struct skydog_autopilot_params params;
 		     struct skydog_autopilot_param_handles param_handles;
 		     // initialize parameter handles
-		     parameters_init(&param_handles);
+		     	 //parameters_init(&param_handles);
 		     //first parameter update
 		     orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update); /* read from param topic to clear updated flag */
 		     // first parameters update
-		     parameters_update(&param_handles, &params);
+		     	 //parameters_update(&param_handles, &params);
 		     // update simulink model parameters
+		     /*
 			Alti_control_I = params.Alti_control_I;
 			Alti_control_P = params.Alti_control_P;
 			Pitch_control_I = params.Pitch_control_I;
@@ -270,7 +271,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			Speed_control_P = params.Speed_control_P;
 			Yaw_rate_control_I = params.Yaw_rate_control_I;
 			Yaw_rate_control_P = params.Yaw_rate_control_P;
-
+		      */
 		     // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
 
@@ -303,6 +304,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								orb_check(param_sub_fd, &param_updated);
 								//if updated, update local copies
 								if(param_updated){
+									/*
 									parameters_update(&param_handles, &params);
 									// update simulink model parameters
 									Alti_control_I = params.Alti_control_I;
@@ -318,6 +320,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									Speed_control_P = params.Speed_control_P;
 									Yaw_rate_control_I = params.Yaw_rate_control_I;
 									Yaw_rate_control_P = params.Yaw_rate_control_P;
+									*/
 								}
 
 								// is MODE MANUAL selected
@@ -336,7 +339,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[1] = rc_raw.pitch;
 									actuators.control[2] = rc_raw.yaw;
 									actuators.control[3] = rc_raw.throttle;
-									actuators.control[4] = rc_raw.aux1;
+									actuators.control[4] = 0;
 
 								}else{
 
