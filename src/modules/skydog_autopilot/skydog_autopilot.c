@@ -27,6 +27,7 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_control_mode.h>
@@ -172,11 +173,15 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 	uint8_t autopilot_mode = 0;
 	uint8_t current_autopilot_mode = 0;
 	int j = 0;
+	bool param_updated;
 
 		/* subscribe to sensor_combined topic */
 			int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
 			/* limit the interval*/
 			orb_set_interval(sensor_sub_fd, rate);
+
+		/* subscribe to parameters topic */
+					int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
@@ -204,6 +209,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 
 			//buffs to hold data
 			struct sensor_combined_s sensors_raw;
+			struct parameter_update_s param_update;
 			struct vehicle_gps_position_s gps_raw;
 			struct vehicle_attitude_s attitude_raw;
 			struct vehicle_status_s status;
@@ -243,6 +249,19 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 		     Skydog_autopilot_initialize();
 
 		     //parameters initialize
+		     struct skydog_autopilot_params params;
+			 struct skydog_autopilot_param_handles param_handles;
+			 // initialize parameter handles
+			 parameters_init(&param_handles);
+			 //update topic
+			 orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update); /* read from param topic to clear updated flag */
+			 // first parameters update
+			 parameters_update(&param_handles, &params);
+			 // update simulink model parameters
+			 Alti_control_P = params.Alt_P;
+			 Alti_control_I = params.Alt_I;
+			 Pitch_control_P = params.Pitch_P;
+			 Pitch_control_I = params.Pitch_I;
 
 		     // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
@@ -272,6 +291,36 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								/* copy status data into local buffer */
 								orb_copy(ORB_ID(vehicle_status), status_sub_fd, &status);
 
+								//check if parameters updated
+								orb_check(param_sub_fd, &param_updated);
+								//if updated, update local copies
+								if(param_updated){
+									//clear update flag
+									orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update);
+									// update simulink model parameters
+									/*
+									Alti_control_P = params.Alt_P;
+									Alti_control_I = params.Alt_I;
+									Pitch_control_P = params.Pitch_P;
+									Pitch_control_I = params.Pitch_I;
+
+									Alti_control_I = params.Alti_control_I;
+									Alti_control_P = params.Alti_control_P;
+									Pitch_control_I = params.Pitch_control_I;
+									Pitch_control_P = params.Pitch_control_P;
+									Pitch_rate_control_P = params.Pitch_rate_control_P;
+									Roll_control_I = params.Roll_control_I;
+									Roll_control_P = params.Roll_control_P;
+									Roll_rate_control_P = params.Roll_rate_control;
+									Roll_yaw_FF = params.Roll_yaw_FF;
+									Speed_control_I = params.Speed_control_I;
+									Speed_control_P = params.Speed_control_P;
+									Yaw_rate_control_I = params.Yaw_rate_control_I;
+									Yaw_rate_control_P = params.Yaw_rate_control_P;
+									*/
+									//mavlink_log_info(mavlink_fd, "[skydog_autopilot] parameters updated");
+									mavlink_log_info(mavlink_fd, "[skdg_ap] Alt_P:%4.4f, Pitch_P:%4.4f",Alti_control_P,Pitch_control_P);
+								}
 
 								// is MODE MANUAL selected
 								if (status.main_state == MAIN_STATE_MANUAL) {
@@ -306,7 +355,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									/* copy skydog data into local buffer */
 									orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
 
-
 									//fill in inputs for simulink code
 									Roll_w = skydog.Roll_w;
 									Altitude_w = skydog.Altitude_w;
@@ -327,22 +375,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									RC_rudder_r = rc_raw.yaw; //dont need to recalculate
 									RC_throttle_r = rc_raw.throttle;
 									RC_flaps_r = 0; //rc_raw.aux1;
-
-									/*
-									// simulink model parameters
-									Alti_control_I = 0.3F;
-									Alti_control_P = 0.6F;
-									Pitch_control_I = 8.0F;
-									Pitch_control_P = 8.5F;
-									Roll_control_I = 5.0F;
-									Roll_control_P = 8.0F;
-									Roll_rate_control_P = 3.0F;
-									Roll_yaw_FF = 1.0F;
-									Speed_control_I = 0.0F;
-									Speed_control_P = 1.0F;
-									Yaw_rate_control_I = 0.0F;
-									Yaw_rate_control_P = 0.01F;
-									*/
 
 									RC_aileron_r = 0;
 									RC_elevator_r = 0;

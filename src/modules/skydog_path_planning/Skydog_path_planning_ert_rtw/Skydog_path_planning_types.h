@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.214
+ * Model version                  : 1.257
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Mar 10 12:21:42 2014
+ * C/C++ source code generated on : Mon Mar 24 21:36:42 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -16,10 +16,6 @@
 
 #ifndef RTW_HEADER_Skydog_path_planning_types_h_
 #define RTW_HEADER_Skydog_path_planning_types_h_
-#include "rtwtypes.h"
-
-/* Parameters (auto storage) */
-typedef struct Parameters_Skydog_path_planning_ Parameters_Skydog_path_planning;
 
 /* Forward declaration for rtModel */
 typedef struct RT_MODEL_Skydog_path_planning RT_MODEL_Skydog_path_planning;

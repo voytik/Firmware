@@ -41,7 +41,10 @@
 #include <systemlib/param/param.h>
 
 struct skydog_autopilot_params {
-	float alt_I;
+	float Alt_P;
+	float Alt_I;
+	float Pitch_P;
+	float Pitch_I;
 	/*
 	float w_alt_acc;
 	float w_alt_sonar;
@@ -60,7 +63,10 @@ struct skydog_autopilot_params {
 };
 
 struct skydog_autopilot_param_handles {
-	param_t alt_I;
+	param_t Alt_P;
+	param_t Alt_I;
+	param_t Pitch_P;
+	param_t Pitch_I;
 	/*
 	param_t w_alt_acc;
 	param_t w_alt_sonar;
