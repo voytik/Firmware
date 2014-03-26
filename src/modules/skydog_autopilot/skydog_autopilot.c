@@ -295,15 +295,17 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								orb_check(param_sub_fd, &param_updated);
 								//if updated, update local copies
 								if(param_updated){
+								//if (j>200){
 									//clear update flag
 									orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update);
+									parameters_update(&param_handles, &params);
 									// update simulink model parameters
-									/*
+
 									Alti_control_P = params.Alt_P;
 									Alti_control_I = params.Alt_I;
 									Pitch_control_P = params.Pitch_P;
 									Pitch_control_I = params.Pitch_I;
-
+									/*
 									Alti_control_I = params.Alti_control_I;
 									Alti_control_P = params.Alti_control_P;
 									Pitch_control_I = params.Pitch_control_I;
@@ -376,10 +378,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									RC_throttle_r = rc_raw.throttle;
 									RC_flaps_r = 0; //rc_raw.aux1;
 
-									RC_aileron_r = 0;
-									RC_elevator_r = 0;
-									RC_rudder_r = 0;
-									RC_throttle_r = 0.5;
 
 									if (status.main_state == MAIN_STATE_AUTO) {
 										if (skydog.Valid)

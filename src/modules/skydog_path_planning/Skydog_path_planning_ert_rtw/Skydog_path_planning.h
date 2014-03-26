@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.257
+ * Model version                  : 1.281
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Mar 24 21:36:42 2014
+ * C/C++ source code generated on : Wed Mar 26 23:42:29 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -43,26 +43,34 @@
 
 /* Block states (auto storage) for system '<Root>' */
 typedef struct {
-  real_T Memory1_PreviousInput;        /* '<S3>/Memory1' */
+  real_T Memory1_PreviousInput;        /* '<S2>/Memory1' */
   struct {
     void *LoggedData;
-  } Scope_PWORK;                       /* '<S3>/Scope' */
+  } ToWorkspace1_PWORK;                /* '<S2>/To Workspace1' */
 
   struct {
     void *LoggedData;
-  } ToWorkspace1_PWORK;                /* '<S3>/To Workspace1' */
+  } ToWorkspace2_PWORK;                /* '<S2>/To Workspace2' */
 
   struct {
     void *LoggedData;
-  } ToWorkspace2_PWORK;                /* '<S3>/To Workspace2' */
+  } ToWorkspace3_PWORK;                /* '<S2>/To Workspace3' */
 
   struct {
     void *LoggedData;
-  } ToWorkspace4_PWORK;                /* '<S3>/To Workspace4' */
+  } ToWorkspace4_PWORK;                /* '<S2>/To Workspace4' */
 
   struct {
     void *LoggedData;
-  } ToWorkspace6_PWORK;                /* '<S3>/To Workspace6' */
+  } ToWorkspace5_PWORK;                /* '<S2>/To Workspace5' */
+
+  struct {
+    void *LoggedData;
+  } ToWorkspace6_PWORK;                /* '<S2>/To Workspace6' */
+
+  struct {
+    void *LoggedData;
+  } wanted_values_for_regs_PWORK;      /* '<S2>/wanted_values_for_regs' */
 } D_Work_Skydog_path_planning;
 
 /* Real-time Model Data Structure */
@@ -82,13 +90,13 @@ extern D_Work_Skydog_path_planning Skydog_path_planning_DWork;
  *
  */
 extern real_T L_want;                  /* Variable: L_want
-                                        * Referenced by: '<S3>/Constant7'
+                                        * Referenced by: '<S2>/L_dist_UP'
                                         */
 extern real_T R_want;                  /* Variable: R_want
-                                        * Referenced by: '<S3>/Constant9'
+                                        * Referenced by: '<S2>/R_radius_circle_path'
                                         */
 extern real_T Trash_want;              /* Variable: Trash_want
-                                        * Referenced by: '<S3>/Constant10'
+                                        * Referenced by: '<S2>/T_trash_dist'
                                         */
 
 /* Model entry point functions */
@@ -111,20 +119,21 @@ extern struct RT_MODEL_Skydog_path_planning *const Skydog_path_planning_M;
  * MATLAB hilite_system command to trace the generated code back
  * to the parent model.  For example,
  *
- * hilite_system('SkyDog_Autopilot_discrete2/Skydog_path_planning')    - opens subsystem SkyDog_Autopilot_discrete2/Skydog_path_planning
- * hilite_system('SkyDog_Autopilot_discrete2/Skydog_path_planning/Kp') - opens and selects block Kp
+ * hilite_system('SkyDog_Autopilot_discrete_new/Skydog_path_planning')    - opens subsystem SkyDog_Autopilot_discrete_new/Skydog_path_planning
+ * hilite_system('SkyDog_Autopilot_discrete_new/Skydog_path_planning/Kp') - opens and selects block Kp
  *
  * Here is the system hierarchy for this model
  *
- * '<Root>' : 'SkyDog_Autopilot_discrete2'
- * '<S3>'   : 'SkyDog_Autopilot_discrete2/Skydog_path_planning'
- * '<S4>'   : 'SkyDog_Autopilot_discrete2/Skydog_path_planning/P_wps_nfz'
- * '<S5>'   : 'SkyDog_Autopilot_discrete2/Skydog_path_planning/acc_lat_roll_angle'
- * '<S6>'   : 'SkyDog_Autopilot_discrete2/Skydog_path_planning/altitude_wanted'
- * '<S7>'   : 'SkyDog_Autopilot_discrete2/Skydog_path_planning/lambda_eta'
- * '<S8>'   : 'SkyDog_Autopilot_discrete2/Skydog_path_planning/recalc_GPS_meters'
- * '<S9>'   : 'SkyDog_Autopilot_discrete2/Skydog_path_planning/recalculate_GPS_meters_U'
- * '<S10>'  : 'SkyDog_Autopilot_discrete2/Skydog_path_planning/speed_wanted'
+ * '<Root>' : 'SkyDog_Autopilot_discrete_new'
+ * '<S2>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning'
+ * '<S3>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/P_wps_nfz'
+ * '<S4>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/acc_lat_roll_angle'
+ * '<S5>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/altitude_wanted'
+ * '<S6>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/lambda_eta'
+ * '<S7>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/recalc_GPS_meters'
+ * '<S8>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/recalc_GPS_meters1'
+ * '<S9>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/recalculate_GPS_meters_U'
+ * '<S10>'  : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/speed_wanted'
  */
 #endif                                 /* RTW_HEADER_Skydog_path_planning_h_ */
 

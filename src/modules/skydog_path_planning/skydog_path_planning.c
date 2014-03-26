@@ -296,8 +296,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								Altitude2_r = sensors_raw.baro_alt_meter;
 								X_earth_r = gps_raw.lon/10000000.0f;
 								Y_earth_r = gps_raw.lat/10000000.0f;
-								Groundspeed2_r[0] = gps_raw.vel_n_m_s;
-								Groundspeed2_r[1] = gps_raw.vel_e_m_s;
+								Groundspeed2_r[0] = -gps_raw.vel_e_m_s;
+								Groundspeed2_r[1] = -gps_raw.vel_n_m_s;
 								Groundspeed2_r[2] = gps_raw.vel_d_m_s;
 								Home_position[0] = home.alt/1000.0f;
 								Home_position[1] = home.lon/10000000.0f;
@@ -305,13 +305,13 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								Home_position[3] = 11;
 
 								//update parameters
-								real_T L_want = 20.0;
+								L_want = 20.0;
 								/*
-								real_T R_want = 25.0;
-								real_T Trash_want = 10.0;
+								R_want = 25.0;
+								Trash_want = 10.0;
 								*/
 
-								// if rc signal/mavlink lost,low battery set error flag to true (and go HOME)
+								// if rc signal/mavlink lost or low battery set error flag to true (and go HOME)
 								if (status.rc_signal_lost || status.offboard_control_signal_lost || status.battery_warning == VEHICLE_BATTERY_WARNING_LOW)
 								{
 									Error = 1;
@@ -341,23 +341,24 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								Skydog_path_planning_step();
 
 								// copy output to skydog topic
-								skydog.Roll_w = Roll2_w;
+								skydog.Roll_w = 0.5f * Roll2_w;
 								skydog.Altitude_w = Altitude2_w;
 								skydog.Groundspeed_w = Speed_w;
 								skydog.Valid = true;
 
-								// skydog autopilot testing
-								/*
-								skydog.Roll_w = 0;
-								skydog.Altitude_w = 1000;
-								skydog.Groundspeed_w = 12;
-								*/
+								//copy debug for logging data
+								skydog.Current_waypoint = Act_wps_index-1.0f;
+								skydog.P[0] = P[0];
+								skydog.P[1] = P[1];
+								skydog.P[2] = P[2];
+								skydog.U[0] = U[0];
+								skydog.U[1] = U[1];
+								skydog.U[2] = U[2];
+								skydog.eta = eta;
+								skydog.d2 = d2;
 
 								/* publish values to skydog_autopilot_setpoint topic*/
 								orb_publish(ORB_ID(skydog_autopilot_setpoint), skydog_pub, &skydog);
-
-								// display wanted values for debug purposes
-								//printf("[skydog_path_planning] Roll_w:%4.4f, Altitude_w:%4.4.f, Speed_w:%4.4f\n", Roll2_w,Altitude2_w,Speed_w);
 
 								// copy debug values for QGC
 								debug_qgc.value3 = P[1];
@@ -370,8 +371,11 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 								//send actual waypoint to QGC
 								if (current_wp != Act_wps_index){
-									mavlink_log_info(mavlink_fd, "[skydog_path_planning] Act wp:%1.0f", Act_wps_index);
+									mavlink_log_critical(mavlink_fd, "#audio: skydog switched to waypoint %1.0f", Act_wps_index-1.0f);
 									current_wp = Act_wps_index;
+								}
+								if (Act_wps_index > waypoints.wpm_count && waypoints.wpm_count != 0){
+									mavlink_log_critical(mavlink_fd, "#audio: skydog flying home");
 								}
 
 								//send debug values directly to QGC debug console
@@ -382,11 +386,12 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									//mavlink_log_info(mavlink_fd, "[wp2] Lat:%4.4f, Lon:%4.4f, Alt:%4.4f",Waypoints_w[2+4],Waypoints_w[1+4],Waypoints_w[0+4]);
 									//mavlink_log_info(mavlink_fd, "[wp_act] error:%d,rc::%d,mav:%d,batt:%d",Error,status.rc_signal_lost,status.offboard_control_signal_lost,status.battery_warning);
 									//mavlink_log_info(mavlink_fd, "[pos_act] lat:%4.4f,lon:%4.4f,alt:%4.4f",Y_earth_r,X_earth_r,Altitude2_r);
-									//mavlink_log_info(mavlink_fd, "[wp_act] Act wp:%1.0f",Act_wps_index);
-									mavlink_log_info(mavlink_fd, "w1:%4.4f,w2:%4.4f,w3:%4.4f,w4:%4.4f", wp_actual[0],wp_actual[2],wp_actual[4],wp_actual[6]);
-									mavlink_log_info(mavlink_fd, "w5:%4.4f,w6:%4.4f,w7:%4.4f,w8:%4.4f", wp_actual[1],wp_actual[3],wp_actual[5],wp_actual[7]);
-									mavlink_log_info(mavlink_fd, "U1:%4.4f,U2:%4.4f,U3:%4.4f", U[0],U[1],U[2]);
-									mavlink_log_info(mavlink_fd, "P1:%4.4f,P2:%4.4f,P3:%4.4f", P[0],P[1],P[2]);
+									//mavlink_log_info(mavlink_fd, "w1:%4.4f,w2:%4.4f,w3:%4.4f,w4:%4.4f", wp_actual[0],wp_actual[2],wp_actual[4],wp_actual[6]);
+									//mavlink_log_info(mavlink_fd, "w5:%4.4f,w6:%4.4f,w7:%4.4f,w8:%4.4f", wp_actual[1],wp_actual[3],wp_actual[5],wp_actual[7]);
+									//mavlink_log_info(mavlink_fd, "skydog flying to waypointp %1.0f",Act_wps_index);
+									//mavlink_log_info(mavlink_fd, "U1:%4.4f,U2:%4.4f,U3:%4.4f", U[0],U[1],U[2]);
+									//mavlink_log_info(mavlink_fd, "P1:%4.4f,P2:%4.4f,P3:%4.4f", P[0],P[1],P[2]);
+									//mavlink_log_info(mavlink_fd, "eta: %4.4f", eta);
 									//mavlink_log_info(mavlink_fd, "[gspeed] gs1:%4.4f, gs2%4.4f, gs3:%4.4f",Groundspeed2_r[0],Groundspeed2_r[1],Groundspeed2_r[2]);
 									j = 0;
 								}

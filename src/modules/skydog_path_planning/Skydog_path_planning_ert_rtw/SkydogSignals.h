@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.257
+ * Model version                  : 1.281
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Mon Mar 24 21:36:42 2014
+ * C/C++ source code generated on : Wed Mar 26 23:42:29 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -36,7 +36,8 @@ extern real32_T U[3];
 extern real32_T Waypoints_w[60];
 extern real32_T X_earth_r;
 extern real32_T Y_earth_r;
-extern real32_T wp_actual[8];
+extern real32_T d2;
+extern real32_T eta;
 
 #endif                                 /* RTW_HEADER_SkydogSignals_h_ */
 
