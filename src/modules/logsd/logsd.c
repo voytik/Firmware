@@ -70,7 +70,7 @@ static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
 static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
 // logging constants
-static size_t buff_size = 500; // [bytes]
+static size_t buff_size = 600; // [bytes]
 static int logging_frequency = 100; // [Hz]
 static int flush_in_seconds = 10;
 /*

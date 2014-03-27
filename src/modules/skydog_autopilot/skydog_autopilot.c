@@ -259,9 +259,18 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			 parameters_update(&param_handles, &params);
 			 // update simulink model parameters
 			 Alti_control_P = params.Alt_P;
-			 Alti_control_I = params.Alt_I;
-			 Pitch_control_P = params.Pitch_P;
-			 Pitch_control_I = params.Pitch_I;
+			Alti_control_I = params.Alt_I;
+			Pitch_control_P = params.Pitch_P;
+			Pitch_control_I = params.Pitch_I;
+			Pitch_rate_control_P = params.Pitch_rate_control_P;
+			Roll_control_I = params.Roll_control_I;
+			Roll_control_P = params.Roll_control_P;
+			Roll_rate_control_P = params.Roll_rate_control_P;
+			Roll_yaw_FF = params.Roll_yaw_FF;
+			Speed_control_I = params.Speed_control_I;
+			Speed_control_P = params.Speed_control_P;
+			Yaw_rate_control_I = params.Yaw_rate_control_I;
+			Yaw_rate_control_P = params.Yaw_rate_control_P;
 
 		     // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
@@ -298,30 +307,25 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								//if (j>200){
 									//clear update flag
 									orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update);
+									//update parameters
 									parameters_update(&param_handles, &params);
 									// update simulink model parameters
-
 									Alti_control_P = params.Alt_P;
 									Alti_control_I = params.Alt_I;
 									Pitch_control_P = params.Pitch_P;
 									Pitch_control_I = params.Pitch_I;
-									/*
-									Alti_control_I = params.Alti_control_I;
-									Alti_control_P = params.Alti_control_P;
-									Pitch_control_I = params.Pitch_control_I;
-									Pitch_control_P = params.Pitch_control_P;
 									Pitch_rate_control_P = params.Pitch_rate_control_P;
 									Roll_control_I = params.Roll_control_I;
 									Roll_control_P = params.Roll_control_P;
-									Roll_rate_control_P = params.Roll_rate_control;
+									Roll_rate_control_P = params.Roll_rate_control_P;
 									Roll_yaw_FF = params.Roll_yaw_FF;
 									Speed_control_I = params.Speed_control_I;
 									Speed_control_P = params.Speed_control_P;
 									Yaw_rate_control_I = params.Yaw_rate_control_I;
 									Yaw_rate_control_P = params.Yaw_rate_control_P;
-									*/
+
 									//mavlink_log_info(mavlink_fd, "[skydog_autopilot] parameters updated");
-									mavlink_log_info(mavlink_fd, "[skdg_ap] Alt_P:%4.4f, Pitch_P:%4.4f",Alti_control_P,Pitch_control_P);
+									mavlink_log_info(mavlink_fd, "[skdg_ap] parameters updated");
 								}
 
 								// is MODE MANUAL selected

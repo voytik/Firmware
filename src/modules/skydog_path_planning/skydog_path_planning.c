@@ -306,10 +306,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 								//update parameters
 								L_want = 20.0;
-								/*
 								R_want = 25.0;
-								Trash_want = 10.0;
-								*/
+								Trash_want = 20.0;
 
 								// if rc signal/mavlink lost or low battery set error flag to true (and go HOME)
 								if (status.rc_signal_lost || status.offboard_control_signal_lost || status.battery_warning == VEHICLE_BATTERY_WARNING_LOW)
@@ -341,7 +339,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								Skydog_path_planning_step();
 
 								// copy output to skydog topic
-								skydog.Roll_w = 0.5f * Roll2_w;
+								skydog.Roll_w = Roll2_w;
 								skydog.Altitude_w = Altitude2_w;
 								skydog.Groundspeed_w = Speed_w;
 								skydog.Valid = true;

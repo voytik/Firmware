@@ -45,21 +45,16 @@ struct skydog_autopilot_params {
 	float Alt_I;
 	float Pitch_P;
 	float Pitch_I;
-	/*
-	float w_alt_acc;
-	float w_alt_sonar;
-	float w_pos_gps_p;
-	float w_pos_gps_v;
-	float w_pos_acc;
-	float w_pos_flow;
-	float w_acc_bias;
-	float flow_k;
-	float sonar_filt;
-	float sonar_err;
-	float land_t;
-	float land_disp;
-	float land_thr;
-	*/
+	float Pitch_rate_control_P;
+	float Roll_control_I;
+	float Roll_control_P;
+	float Roll_rate_control_P;
+	float Roll_yaw_FF;
+	float Speed_control_I;
+	float Speed_control_P;
+	float Yaw_rate_control_I;
+	float Yaw_rate_control_P;
+
 };
 
 struct skydog_autopilot_param_handles {
@@ -67,21 +62,16 @@ struct skydog_autopilot_param_handles {
 	param_t Alt_I;
 	param_t Pitch_P;
 	param_t Pitch_I;
-	/*
-	param_t w_alt_acc;
-	param_t w_alt_sonar;
-	param_t w_pos_gps_p;
-	param_t w_pos_gps_v;
-	param_t w_pos_acc;
-	param_t w_pos_flow;
-	param_t w_acc_bias;
-	param_t flow_k;
-	param_t sonar_filt;
-	param_t sonar_err;
-	param_t land_t;
-	param_t land_disp;
-	param_t land_thr;
-	*/
+	param_t Pitch_rate_control_P;
+	param_t Roll_control_I;
+	param_t Roll_control_P;
+	param_t Roll_rate_control_P;
+	param_t Roll_yaw_FF;
+	param_t Speed_control_I;
+	param_t Speed_control_P;
+	param_t Yaw_rate_control_I;
+	param_t Yaw_rate_control_P;
+
 };
 
 /**
