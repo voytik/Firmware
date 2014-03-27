@@ -171,6 +171,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	int rate = 1000/running_frequency;
 	int error_counter = 0;
 	float current_wp = 0.0f;
+	float home_wp = 0.0f;
 	int j = 0;
 
 		/* subscribe to sensor_combined topic */
@@ -316,7 +317,11 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								}else{
 									Error = 0;
 								}
-								Error = 0;
+								//turn error off if in HIL
+								if (status.hil_state == HIL_STATE_ON)
+								{
+									Error = 0;
+								}
 
 								//waypoint transfer from skydog_waypoints topic
 								for (uint8_t i = 0; i < waypoints.wpm_count; i++)
@@ -372,8 +377,9 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									mavlink_log_critical(mavlink_fd, "#audio: skydog switched to waypoint %1.0f", Act_wps_index-1.0f);
 									current_wp = Act_wps_index;
 								}
-								if (Act_wps_index > waypoints.wpm_count && waypoints.wpm_count != 0){
+								if (Act_wps_index > waypoints.wpm_count && waypoints.wpm_count != 0 && home_wp != Act_wps_index){
 									mavlink_log_critical(mavlink_fd, "#audio: skydog flying home");
+									home_wp = Act_wps_index;
 								}
 
 								//send debug values directly to QGC debug console
