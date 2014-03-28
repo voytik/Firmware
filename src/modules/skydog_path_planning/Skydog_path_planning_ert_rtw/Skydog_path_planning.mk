@@ -82,7 +82,7 @@ COMPILER_TOOL_CHAIN = vcx64
 #                            and do not build an executable
 
 MODEL                   = Skydog_path_planning
-MODULES                 = Skydog_path_planning_data.c rtGetInf.c rtGetNaN.c rt_nonfinite.c 
+MODULES                 = rtGetInf.c rtGetNaN.c rt_nonfinite.c 
 MAKEFILE                = Skydog_path_planning.mk
 MATLAB_ROOT             = C:\Program Files\MATLAB\R2011b
 ALT_MATLAB_ROOT         = C:\PROGRA~1\MATLAB\R2011b
@@ -115,7 +115,7 @@ SHARED_BIN_DIR          =
 SHARED_LIB              = 
 GEN_SAMPLE_MAIN         = 1
 TARGET_LANG_EXT         = c
-MEX_OPT_FILE            = -f "$(MATLAB_BIN)\$(ML_ARCH)\mexopts\msvc100opts.bat"
+MEX_OPT_FILE            = -f C:\Users\Voytik\AppData\Roaming\MATHWO~1\MATLAB\R2011b\mexopts.bat
 COMPUTER                = PCWIN64
 PORTABLE_WORDSIZES      = 0
 SHRLIBTARGET            = 0

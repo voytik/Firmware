@@ -27,11 +27,12 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/vehicle_attitude.h>
+#include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_status.h>
 #include <uORB/topics/manual_control_setpoint.h>
-#include <uORB/topics/parameter_update.h>
 #include <uORB/topics/airspeed.h>
 #include <uORB/topics/actuator_controls.h>
 #include <uORB/topics/skydog_autopilot_setpoint.h>
@@ -180,7 +181,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			orb_set_interval(sensor_sub_fd, rate);
 
 		/* subscribe to parameters topic */
-			int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
+					int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
@@ -249,29 +250,28 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 
 		     //parameters initialize
 		     struct skydog_autopilot_params params;
-		     struct skydog_autopilot_param_handles param_handles;
-		     // initialize parameter handles
-		     	 //parameters_init(&param_handles);
-		     //first parameter update
-		     orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update); /* read from param topic to clear updated flag */
-		     // first parameters update
-		     	 //parameters_update(&param_handles, &params);
-		     // update simulink model parameters
-		     /*
-			Alti_control_I = params.Alti_control_I;
-			Alti_control_P = params.Alti_control_P;
-			Pitch_control_I = params.Pitch_control_I;
-			Pitch_control_P = params.Pitch_control_P;
+			 struct skydog_autopilot_param_handles param_handles;
+			 // initialize parameter handles
+			 parameters_init(&param_handles);
+			 //update topic
+			 orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update); /* read from param topic to clear updated flag */
+			 // first parameters update
+			 parameters_update(&param_handles, &params);
+			 // update simulink model parameters
+			 Alti_control_P = params.Alt_P;
+			Alti_control_I = params.Alt_I;
+			Pitch_control_P = params.Pitch_P;
+			Pitch_control_I = params.Pitch_I;
 			Pitch_rate_control_P = params.Pitch_rate_control_P;
 			Roll_control_I = params.Roll_control_I;
 			Roll_control_P = params.Roll_control_P;
-			Roll_rate_control_P = params.Roll_rate_control;
+			Roll_rate_control_P = params.Roll_rate_control_P;
 			Roll_yaw_FF = params.Roll_yaw_FF;
 			Speed_control_I = params.Speed_control_I;
 			Speed_control_P = params.Speed_control_P;
 			Yaw_rate_control_I = params.Yaw_rate_control_I;
 			Yaw_rate_control_P = params.Yaw_rate_control_P;
-		      */
+
 		     // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_autopilot] initialized");
 
@@ -300,27 +300,32 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 								/* copy status data into local buffer */
 								orb_copy(ORB_ID(vehicle_status), status_sub_fd, &status);
 
-								//check if update parameters
+								//check if parameters updated
 								orb_check(param_sub_fd, &param_updated);
 								//if updated, update local copies
 								if(param_updated){
-									/*
+								//if (j>200){
+									//clear update flag
+									orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update);
+									//update parameters
 									parameters_update(&param_handles, &params);
 									// update simulink model parameters
-									Alti_control_I = params.Alti_control_I;
-									Alti_control_P = params.Alti_control_P;
-									Pitch_control_I = params.Pitch_control_I;
-									Pitch_control_P = params.Pitch_control_P;
+									Alti_control_P = params.Alt_P;
+									Alti_control_I = params.Alt_I;
+									Pitch_control_P = params.Pitch_P;
+									Pitch_control_I = params.Pitch_I;
 									Pitch_rate_control_P = params.Pitch_rate_control_P;
 									Roll_control_I = params.Roll_control_I;
 									Roll_control_P = params.Roll_control_P;
-									Roll_rate_control_P = params.Roll_rate_control;
+									Roll_rate_control_P = params.Roll_rate_control_P;
 									Roll_yaw_FF = params.Roll_yaw_FF;
 									Speed_control_I = params.Speed_control_I;
 									Speed_control_P = params.Speed_control_P;
 									Yaw_rate_control_I = params.Yaw_rate_control_I;
 									Yaw_rate_control_P = params.Yaw_rate_control_P;
-									*/
+
+									//mavlink_log_info(mavlink_fd, "[skydog_autopilot] parameters updated");
+									mavlink_log_info(mavlink_fd, "[skdg_ap] parameters updated");
 								}
 
 								// is MODE MANUAL selected
@@ -339,7 +344,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[1] = rc_raw.pitch;
 									actuators.control[2] = rc_raw.yaw;
 									actuators.control[3] = rc_raw.throttle;
-									actuators.control[4] = 0;
+									actuators.control[4] = rc_raw.aux1;
 
 								}else{
 
@@ -355,7 +360,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 									/* copy skydog data into local buffer */
 									orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
-
 
 									//fill in inputs for simulink code
 									Roll_w = skydog.Roll_w;
@@ -378,14 +382,6 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									RC_throttle_r = rc_raw.throttle;
 									RC_flaps_r = 0; //rc_raw.aux1;
 
-
-
-									/*
-									RC_aileron_r = 0;
-									RC_elevator_r = 0;
-									RC_rudder_r = 0;
-									RC_throttle_r = 0.5;
-									*/
 
 									if (status.main_state == MAIN_STATE_AUTO) {
 										if (skydog.Valid)

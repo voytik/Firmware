@@ -23,6 +23,13 @@ struct skydog_autopilot_setpoint_s
 	float Altitude_w;	// wanted altitude [m]
 	float Groundspeed_w;	// wanted speed [m/s]
 	bool Valid;			// other values valid?
+	float Current_waypoint;
+	float P[3];
+	float U[3];
+	float eta;
+	float d2;
+
+
 };
 
 /* register this as object request broker structure */

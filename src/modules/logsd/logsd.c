@@ -70,7 +70,7 @@ static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
 static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
 // logging constants
-static size_t buff_size = 500; // [bytes]
+static size_t buff_size = 600; // [bytes]
 static int logging_frequency = 100; // [Hz]
 static int flush_in_seconds = 10;
 /*
@@ -298,7 +298,7 @@ int logsd_thread_main(int argc, char *argv[])
 		n = snprintf(buff_all, buff_size,"%% Time[ms],Flag[t/f],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
 				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
 				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
-				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Autopilot_roll[rad],Autopilot_speed[m/s],Autopilot_altitude[m],Autopilot_valid[t/f]\n"
+				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],AP_roll[rad],AP_speed[m/s],AP_altitude[m],AP_valid[t/f], AP_P[1],AP_P[2],AP_P[3],AP_U[1],AP_U[2],AP_U[3],AP_eta[rad],AP_dist[m]\n"
 				"%% Logging frequency %d Hz\n",logging_frequency);
 
 		//check if buffer large enough
@@ -389,7 +389,8 @@ int logsd_thread_main(int argc, char *argv[])
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  // output to servos
 							"%d,%d,%d,"			// gps data
 							"%4.4f,%4.4f,%4.4f,%4.4f,"  //altitude, airspeed
-							"%4.4f,%4.4f,%4.4f,%d\n", 	// skydog autopilot values
+							"%4.4f,%4.4f,%4.4f,%d," 	// skydog path planning wanted values
+							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n", 	// skydog path planning debug values
 						timestamp,
 						rc_flag,
 						attitude_raw.roll,
@@ -426,7 +427,15 @@ int logsd_thread_main(int argc, char *argv[])
 						skydog_autopilot_setpoint_raw.Roll_w,
 						skydog_autopilot_setpoint_raw.Groundspeed_w,
 						skydog_autopilot_setpoint_raw.Altitude_w,
-						skydog_autopilot_setpoint_raw.Valid);
+						skydog_autopilot_setpoint_raw.Valid,
+						skydog_autopilot_setpoint_raw.P[0],
+						skydog_autopilot_setpoint_raw.P[1],
+						skydog_autopilot_setpoint_raw.P[2],
+						skydog_autopilot_setpoint_raw.U[0],
+						skydog_autopilot_setpoint_raw.U[1],
+						skydog_autopilot_setpoint_raw.U[2],
+						skydog_autopilot_setpoint_raw.eta,
+						skydog_autopilot_setpoint_raw.d2);
 
 
 					// check if buffer not overloaded

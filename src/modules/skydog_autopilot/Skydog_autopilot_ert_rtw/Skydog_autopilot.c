@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_autopilot'.
  *
- * Model version                  : 1.216
+ * Model version                  : 1.219
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Wed Mar 19 21:15:43 2014
+ * C/C++ source code generated on : Sun Mar 23 16:05:48 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -106,13 +106,13 @@ void Skydog_autopilot_step(void)
   real32_T rtb_Sum2;
   real32_T rtb_Sum1_i;
   real32_T rtb_Saturation4;
-  real32_T rtb_Saturation5;
   real32_T rtb_Saturation1_p;
   real32_T rtb_Saturation1_e;
   real32_T rtb_Saturation1_n;
+  real32_T rtb_Saturation5;
   real32_T rtb_Saturation6;
-  real32_T rtb_Saturation1_l;
   real32_T rtb_Switch3;
+  real32_T rtb_Gain1;
   real32_T rtb_Sum1;
 
   /* Sum: '<S2>/Sum5' incorporates:
@@ -172,15 +172,15 @@ void Skydog_autopilot_step(void)
   rtb_Sum5_m = rtb_Saturation1_e - Pitch_speed_r;
 
   /* Gain: '<S8>/Gain' */
-  rtb_Switch3 = Pitch_rate_control_P * rtb_Sum5_m;
+  rtb_Saturation5 = Pitch_rate_control_P * rtb_Sum5_m;
 
   /* Saturate: '<S8>/Saturation1' */
-  rtb_Saturation1_l = rtb_Switch3 >= 0.261799395F ? 0.261799395F : rtb_Switch3 <=
-    (-0.261799395F) ? (-0.261799395F) : rtb_Switch3;
+  rtb_Saturation5 = rtb_Saturation5 >= 0.261799395F ? 0.261799395F :
+    rtb_Saturation5 <= (-0.261799395F) ? (-0.261799395F) : rtb_Saturation5;
 
   /* Saturate: '<S3>/Saturation2' */
-  Elevator_w = rtb_Saturation1_l >= 0.261799395F ? 0.261799395F :
-    rtb_Saturation1_l <= (-0.261799395F) ? (-0.261799395F) : rtb_Saturation1_l;
+  Elevator_w = rtb_Saturation5 >= 0.261799395F ? 0.261799395F : rtb_Saturation5 <=
+    (-0.261799395F) ? (-0.261799395F) : rtb_Saturation5;
 
   /* Switch: '<S7>/Switch' incorporates:
    *  Inport: '<Root>/Mode_w'
@@ -196,8 +196,8 @@ void Skydog_autopilot_step(void)
   /* End of Switch: '<S7>/Switch' */
 
   /* Saturate: '<S3>/Saturation5' */
-  rtb_Saturation5 = rtb_Saturation5 >= 0.34906584F ? 0.34906584F :
-    rtb_Saturation5 <= (-0.34906584F) ? (-0.34906584F) : rtb_Saturation5;
+  rtb_Saturation5 = rtb_Saturation5 >= 0.785398185F ? 0.785398185F :
+    rtb_Saturation5 <= (-0.785398185F) ? (-0.785398185F) : rtb_Saturation5;
 
   /* Sum: '<S3>/Sum3' incorporates:
    *  Inport: '<Root>/Roll_r'
@@ -302,19 +302,19 @@ void Skydog_autopilot_step(void)
     rtb_Switch3;
 
   /* Gain: '<S1>/Gain' */
-  debug1 = 1.0F * rtb_Saturation1_e;
+  debug1 = 1.0F * rtb_Saturation5;
 
   /* Gain: '<S1>/Gain1' */
-  debug2 = 1.0F * rtb_Saturation1_l;
+  debug2 = 1.0F * rtb_Sum3;
 
   /* Gain: '<S4>/Gain1' */
-  rtb_Switch3 = Alti_control_I * rtb_Sum5;
+  rtb_Gain1 = Alti_control_I * rtb_Sum5;
 
   /* Gain: '<S5>/Gain1' */
-  rtb_Saturation1_l = Speed_control_I * rtb_Sum1;
+  rtb_Switch3 = Speed_control_I * rtb_Sum1;
 
   /* Update for DiscreteIntegrator: '<S4>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE = 0.01F * rtb_Switch3 +
+  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE = 0.01F * rtb_Gain1 +
     Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE;
   if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE >= 0.52359879F) {
     Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE = 0.52359879F;
@@ -374,8 +374,8 @@ void Skydog_autopilot_step(void)
   /* End of Update for DiscreteIntegrator: '<S11>/Discrete-Time Integrator' */
 
   /* Update for DiscreteIntegrator: '<S5>/Discrete-Time Integrator' */
-  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d = 0.01F *
-    rtb_Saturation1_l + Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d;
+  Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d = 0.01F * rtb_Switch3 +
+    Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d;
   if (Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d >= 0.52359879F) {
     Skydog_autopilot_DWork.DiscreteTimeIntegrator_DSTATE_d = 0.52359879F;
   } else {
