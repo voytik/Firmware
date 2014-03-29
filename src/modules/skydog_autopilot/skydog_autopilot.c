@@ -344,7 +344,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[1] = rc_raw.pitch;
 									actuators.control[2] = rc_raw.yaw;
 									actuators.control[3] = rc_raw.throttle;
-									actuators.control[4] = rc_raw.aux1;
+									actuators.control[4] = rc_raw.flaps;
 
 								}else{
 
@@ -380,7 +380,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									RC_elevator_r = rc_raw.pitch *  0.3491f; //recalculate to radians
 									RC_rudder_r = rc_raw.yaw; //dont need to recalculate
 									RC_throttle_r = rc_raw.throttle;
-									RC_flaps_r = 0; //rc_raw.aux1;
+									RC_flaps_r = rc_raw.flaps;
 
 
 									if (status.main_state == MAIN_STATE_AUTO) {
@@ -411,7 +411,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									actuators.control[1] = -(Elevator_w * 3.7f);
 									actuators.control[2] = Rudder_w * 4.09f;
 									actuators.control[3] = Throttle_w;
-									actuators.control[4] = 0;//Flaps_w;
+									actuators.control[4] = rc_raw.flaps;
 
 									//copy debug value to debug topic
 									debug_qgc.value = debug1;

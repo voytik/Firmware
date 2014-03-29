@@ -28,6 +28,7 @@ struct skydog_autopilot_setpoint_s
 	float U[3];
 	float eta;
 	float d2;
+	short Autopilot_mode;
 
 
 };

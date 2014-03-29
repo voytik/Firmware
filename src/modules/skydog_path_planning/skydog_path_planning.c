@@ -348,6 +348,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								skydog.Altitude_w = Altitude2_w;
 								skydog.Groundspeed_w = Speed_w;
 								skydog.Valid = true;
+								skydog.Autopilot_mode = Mode2_w;
 
 								//copy debug for logging data
 								skydog.Current_waypoint = Act_wps_index-1.0f;

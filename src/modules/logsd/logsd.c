@@ -389,6 +389,7 @@ int logsd_thread_main(int argc, char *argv[])
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,"  // output to servos
 							"%d,%d,%d,"			// gps data
 							"%4.4f,%4.4f,%4.4f,%4.4f,"  //altitude, airspeed
+							"%d,"  // skydog autopilot mode
 							"%4.4f,%4.4f,%4.4f,%d," 	// skydog path planning wanted values
 							"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n", 	// skydog path planning debug values
 						timestamp,
@@ -424,6 +425,7 @@ int logsd_thread_main(int argc, char *argv[])
 						airspeed_raw.true_airspeed_m_s,
 						sensors_raw.differential_pressure_pa,
 						gps_raw.vel_m_s,
+						skydog_autopilot_setpoint_raw.Autopilot_mode,
 						skydog_autopilot_setpoint_raw.Roll_w,
 						skydog_autopilot_setpoint_raw.Groundspeed_w,
 						skydog_autopilot_setpoint_raw.Altitude_w,
