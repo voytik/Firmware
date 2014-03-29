@@ -19,7 +19,7 @@ PARAM_DEFINE_FLOAT(INAV_W_SKDG4, 50.0f);
 PARAM_DEFINE_FLOAT(SKDG_PITCH_I, 0.5f);
 PARAM_DEFINE_FLOAT(INAV_W_SKDG5, 50.0f);
 
-PARAM_DEFINE_FLOAT(SKDG_PITCH_RATE_P, -0.2F);
+PARAM_DEFINE_FLOAT(SKDG_PITCH_RATE, -0.2F);
 
 PARAM_DEFINE_FLOAT(INAV_W_SKDG6, 50.0f);
 PARAM_DEFINE_FLOAT(SKDG_ROLL_I, 1.0F);
@@ -53,7 +53,7 @@ int parameters_init(struct skydog_autopilot_param_handles *h)
 	h->Alt_I = param_find("SKDG_ALT_I");
 	h->Pitch_P = param_find("SKDG_PITCH_P");
 	h->Pitch_I = param_find("SKDG_PITCH_I");
-	h->Pitch_rate_control_P = param_find("SKDG_PITCH_RATE_P");
+	h->Pitch_rate_control_P = param_find("SKDG_PITCH_RATE");
 	h->Roll_control_I = param_find("SKDG_ROLL_I");
 	h->Roll_control_P = param_find("SKDG_ROLL_P");
 	h->Roll_rate_control_P = param_find("SKDG_ROLL_RATE_P");
