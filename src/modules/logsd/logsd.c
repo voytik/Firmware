@@ -70,9 +70,9 @@ static const int MAX_NO_LOGFILE = 999;		/**< Maximum number of log files */
 static const char *mountpoint = "/fs/microsd";
 static char folder_path[64];
 // logging constants
-static size_t buff_size = 600; // [bytes]
+static size_t buff_size = 700; // [bytes]
 static int logging_frequency = 100; // [Hz]
-static int flush_in_seconds = 10;
+static int flush_in_seconds = 5;
 /*
 static useconds_t sleep_delay = 0;
 static useconds_t sleep_delay_wanted = 0;
@@ -403,12 +403,7 @@ int logsd_thread_main(int argc, char *argv[])
 						attitude_raw.rollacc,
 						attitude_raw.pitchacc,
 						attitude_raw.yawacc,
-			/*			rc_chan.chan[2],
-						rc_chan.chan[3],
-						rc_chan.chan[0],
-						rc_chan.chan[1],
-						rc_chan.chan[9],
-			*/			rc_raw.pitch,
+						rc_raw.pitch,
 						rc_raw.yaw,
 						rc_raw.throttle,
 						rc_raw.roll,

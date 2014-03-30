@@ -1069,5 +1069,5 @@ void skydog_waypoints()
 	orb_publish(ORB_ID(skydog_waypoints), skydog_pub, &skydogWP);
 
 	// send message to QGC
-	mavlink_missionlib_send_gcs_string("SKYDOG GOT WAYPOINTS");
+	mavlink_missionlib_send_gcs_string("#audio: skydog got waypoints");
 }
