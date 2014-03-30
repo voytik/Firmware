@@ -298,7 +298,7 @@ int logsd_thread_main(int argc, char *argv[])
 		n = snprintf(buff_all, buff_size,"%% Time[ms],Flag[t/f],Roll[rad],Pitch[rad],Yaw[rad],Rollspeed[rad/s],Pitchspeed[rad/s],Yawspeed[rad/s],"
 				"Rollacc[rad/s2],Pitchacc[rad/s2],Yawacc[rad/s2],RC_Elevator[],RC_Rudder[],RC_Throttle[],RC_Ailerons[],RC_Flaps[],"
 				"Elevator[],Rudder[],Throttle[],Ailerons[],Flaps[],Latitude[NSdegrees*e7],Longitude[EWdegrees*e7],GPSaltitude[m*e3],"
-				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],AP_roll[rad],AP_speed[m/s],AP_altitude[m],AP_valid[t/f], AP_P[1],AP_P[2],AP_P[3],AP_U[1],AP_U[2],AP_U[3],AP_eta[rad],AP_dist[m]\n"
+				"Altitude[m],Airspeed[m/s],DiffPressure[pa],GPSspeed[m/s],Mode[],AP_roll[rad],AP_speed[m/s],AP_altitude[m],AP_valid[t/f], AP_P[1],AP_P[2],AP_P[3],AP_U[1],AP_U[2],AP_U[3],AP_eta[rad],AP_dist[m]\n"
 				"%% Logging frequency %d Hz\n",logging_frequency);
 
 		//check if buffer large enough
