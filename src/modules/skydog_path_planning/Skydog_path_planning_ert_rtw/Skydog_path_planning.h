@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.281
+ * Model version                  : 1.302
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Wed Mar 26 23:42:29 2014
+ * C/C++ source code generated on : Tue Apr 01 19:50:56 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -119,21 +119,21 @@ extern struct RT_MODEL_Skydog_path_planning *const Skydog_path_planning_M;
  * MATLAB hilite_system command to trace the generated code back
  * to the parent model.  For example,
  *
- * hilite_system('SkyDog_Autopilot_discrete_new/Skydog_path_planning')    - opens subsystem SkyDog_Autopilot_discrete_new/Skydog_path_planning
- * hilite_system('SkyDog_Autopilot_discrete_new/Skydog_path_planning/Kp') - opens and selects block Kp
+ * hilite_system('SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning')    - opens subsystem SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning
+ * hilite_system('SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/Kp') - opens and selects block Kp
  *
  * Here is the system hierarchy for this model
  *
- * '<Root>' : 'SkyDog_Autopilot_discrete_new'
- * '<S2>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning'
- * '<S3>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/P_wps_nfz'
- * '<S4>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/acc_lat_roll_angle'
- * '<S5>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/altitude_wanted'
- * '<S6>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/lambda_eta'
- * '<S7>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/recalc_GPS_meters'
- * '<S8>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/recalc_GPS_meters1'
- * '<S9>'   : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/recalculate_GPS_meters_U'
- * '<S10>'  : 'SkyDog_Autopilot_discrete_new/Skydog_path_planning/speed_wanted'
+ * '<Root>' : 'SkyDog_Autopilot_discrete_kuba_new'
+ * '<S2>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning'
+ * '<S3>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/P_wps_nfz'
+ * '<S4>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/acc_lat_roll_angle'
+ * '<S5>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/altitude_wanted'
+ * '<S6>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/go_zero'
+ * '<S7>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/lambda_eta'
+ * '<S8>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/recalc_GPS_meters'
+ * '<S9>'   : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/recalculate_GPS_meters_U'
+ * '<S10>'  : 'SkyDog_Autopilot_discrete_kuba_new/Skydog_path_planning/speed_wanted'
  */
 #endif                                 /* RTW_HEADER_Skydog_path_planning_h_ */
 

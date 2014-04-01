@@ -170,7 +170,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	// refresh rate in ms
 	int rate = 1000/running_frequency;
 	int error_counter = 0;
-	float current_wp = 0.0f;
+	float current_wp = 1.0f;
 	float home_wp = 0.0f;
 	int j = 0;
 
@@ -343,7 +343,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								//run Simulink code
 								Skydog_path_planning_step();
 
-								// copy output to skydog topic
+								// check and copy output to skydog topic
 								skydog.Roll_w = Roll2_w;
 								skydog.Altitude_w = Altitude2_w;
 								skydog.Groundspeed_w = Speed_w;

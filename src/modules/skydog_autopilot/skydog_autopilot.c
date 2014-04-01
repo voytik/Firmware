@@ -283,12 +283,12 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 						/* handle the poll result */
 						if (poll_ret == 0) {
 							/* this means none of our providers is giving us data */
-							printf("[simulink_control] Got no data within a second\n");
+							printf("[skydog_autopilot] Got no data within a second\n");
 						} else if (poll_ret < 0) {
 							/* this is seriously bad - should be an emergency */
 							if (error_counter < 10 || error_counter % 50 == 0) {
 								/* use a counter to prevent flooding (and slowing us down) */
-								printf("[simulink_control] ERROR return value from poll(): %d\n"
+								printf("[skydog_autopilot] ERROR return value from poll(): %d\n"
 									, poll_ret);
 							}
 							error_counter++;
@@ -361,10 +361,26 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									/* copy skydog data into local buffer */
 									orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_sub_fd, &skydog);
 
-									//fill in inputs for simulink code
-									Roll_w = skydog.Roll_w;
-									Altitude_w = skydog.Altitude_w;
-									Groundspeed_w = skydog.Groundspeed_w;
+									//check and fill in inputs for simulink code from path planning
+									if (skydog.Roll_w > -2.0f && skydog.Roll_w < 2.0f){
+										Roll_w = skydog.Roll_w;
+									}else{
+										Roll_w = 0;
+									}
+
+									if (skydog.Altitude_w > 0.0f && skydog.Altitude_w < 2000.0f){
+										Altitude_w = skydog.Altitude_w;
+									}else{
+										Altitude_w = 0;
+									}
+
+									if (skydog.Groundspeed_w > 0.0f && skydog.Groundspeed_w < 20.0f){
+										Groundspeed_w = skydog.Groundspeed_w;
+									}else{
+										Groundspeed_w = 11;
+									}
+
+									//fill in measured inputs for simulink code
 									Altitude_r = sensors_raw.baro_alt_meter;
 									Roll_r = attitude_raw.roll;
 									Groundspeed_r = gps_raw.vel_m_s;
@@ -387,7 +403,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 										if (skydog.Valid)
 										{
 											// is MODE AUTOPILOT selected
-											printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
+											//printf("[skydog_autopilot] MODE AUTOPILOT selected\n");
 											Mode_w = 2;
 											autopilot_mode = 2;
 										}else{
@@ -398,7 +414,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									}
 									if(status.main_state == MAIN_STATE_SEATBELT ||status.main_state == MAIN_STATE_EASY){
 										// is MODE STABILIZATION selected
-										printf("[skydog_autopilot] MODE STABILIZATION selected\n");
+										//printf("[skydog_autopilot] MODE STABILIZATION selected\n");
 										Mode_w = 1;
 										autopilot_mode = 1;
 									}

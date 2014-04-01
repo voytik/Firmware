@@ -1219,7 +1219,8 @@ int commander_thread_main(int argc, char *argv[])
 		}
 
 		if (arming_state_changed || main_state_changed || navigation_state_changed) {
-			mavlink_log_info(mavlink_fd, "[cmd] state: arm %d, main %d, nav %d", status.arming_state, status.main_state, status.navigation_state);
+			// disabled for skydog
+			//mavlink_log_info(mavlink_fd, "[cmd] state: arm %d, main %d, nav %d", status.arming_state, status.main_state, status.navigation_state);
 			status_changed = true;
 		}
 
@@ -1646,10 +1647,12 @@ check_navigation_state_machine(struct vehicle_status_s *status, struct vehicle_c
 
 				} else {
 					if (status->condition_landed) {
-						mavlink_log_critical(mavlink_fd, "#audio: FAILSAFE: ALT HOLD (LAND)");
+						// disabled for skydog
+						//mavlink_log_critical(mavlink_fd, "#audio: FAILSAFE: ALT HOLD (LAND)");
 
 					} else {
-						mavlink_log_critical(mavlink_fd, "#audio: FAILSAFE: ALT HOLD");
+						// disabled for skydog
+						//mavlink_log_critical(mavlink_fd, "#audio: FAILSAFE: ALT HOLD");
 					}
 				}
 			}
