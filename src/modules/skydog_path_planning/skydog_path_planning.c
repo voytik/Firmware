@@ -28,6 +28,7 @@
 
 #include <uORB/uORB.h>
 #include <uORB/topics/sensor_combined.h>
+#include <uORB/topics/parameter_update.h>
 #include <uORB/topics/vehicle_gps_position.h>
 #include <uORB/topics/manual_control_setpoint.h>
 #include <uORB/topics/vehicle_control_mode.h>
@@ -41,6 +42,7 @@
 #include <systemlib/systemlib.h>
 
 #include <mavlink/mavlink_log.h>
+#include <skydog_path_planning/skydog_path_planning_params.h>
 
 // simulink model includes
 #include <skydog_path_planning/Skydog_path_planning_ert_rtw/SkydogSignals.h>
@@ -173,11 +175,16 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	float current_wp = 1.0f;
 	float home_wp = 0.0f;
 	int j = 0;
+	bool param_updated;
+	bool home_set = false;
 
 		/* subscribe to sensor_combined topic */
 			int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
 			/* limit the interval*/
 			orb_set_interval(sensor_sub_fd, rate);
+
+		/* subscribe to parameters topic */
+			int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
@@ -204,6 +211,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 			//buffs to hold data
 			struct sensor_combined_s sensors_raw;
+			struct parameter_update_s param_update;
 			struct vehicle_gps_position_s gps_raw;
 			struct airspeed_s airspeed_raw;
 			struct vehicle_local_position_s position;
@@ -241,6 +249,21 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 		     // initialize simulink model
 		     Skydog_path_planning_initialize();
 
+		     //parameters initialize
+			 struct skydog_path_planning_params params;
+			 struct skydog_path_planniong_param_handles param_handles;
+			 // initialize parameter handles
+			 parameters_init(&param_handles);
+			 //update topic
+			 orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update); /* read from param topic to clear updated flag */
+			 // first parameters update
+			 parameters_update(&param_handles, &params);
+			 // update simulink model parameters
+			 L_want = params.L;
+			 R_want = params.R;
+			 Trash_want = params.Trash;
+
+			 // notify user through QGC that the autopilot is initialized
 		     mavlink_log_info(mavlink_fd, "[skydog_path_planning] initialized");
 
 			while (!thread_should_exit){
@@ -263,19 +286,37 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 							if (fds[0].revents & POLLIN) {
 
-								/* copy sensors raw data into local buffer */
+								//check if parameters updated
+								orb_check(param_sub_fd, &param_updated);
+								//if updated, update local copies
+								if(param_updated){
+								//if (j>200){
+									//clear update flag
+									orb_copy(ORB_ID(parameter_update), param_sub_fd, &param_update);
+									//update parameters
+									parameters_update(&param_handles, &params);
+									// update simulink model parameters
+									L_want = params.L;
+									 R_want = params.R;
+									 Trash_want = params.Trash;
+
+									//mavlink_log_info(mavlink_fd, "[skdg_ap] parameters updated");
+									mavlink_log_critical(mavlink_fd, "#audio: skydog path parameters updated");
+								}
+
+								/* copy sensors raw data into local copy */
 								orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
-								/* copy gps raw data into local buffer */
+								/* copy gps raw data into local copy */
 								orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
-								/* copy airspeed raw data into local buffer */
+								/* copy airspeed raw data into local copy */
 								orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
-								/* copy position data into local buffer */
+								/* copy position data into local copy */
 								orb_copy(ORB_ID(vehicle_local_position), position_sub_fd, &position);
-								/* copy position data into local buffer */
+								/* copy position data into local copy */
 								orb_copy(ORB_ID(home_position), home_sub_fd, &home);
-								/* copy status data into local buffer */
+								/* copy status data into local copy */
 								orb_copy(ORB_ID(vehicle_status), status_sub_fd, &status);
-								/* copy waypoints data into local buffer */
+								/* copy waypoints data into local copy */
 								orb_copy(ORB_ID(skydog_waypoints), skydog_sub_fd, &waypoints);
 
 								// get current state
@@ -292,6 +333,11 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 									skydog.Valid = true;
 								}
 
+								//check if home position is set and send to QGC once
+								if(home.alt != 0 && !home_set){
+									mavlink_log_critical(mavlink_fd, "#audio: skydog home set");
+									home_set = true;
+								}
 
 								//fill in data
 								Altitude2_r = sensors_raw.baro_alt_meter;
@@ -304,11 +350,6 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								Home_position[1] = home.lon/10000000.0f;
 								Home_position[2] = home.lat/10000000.0f;
 								Home_position[3] = 11;
-
-								//update parameters
-								L_want = 20.0;
-								R_want = 25.0;
-								Trash_want = 20.0;
 
 								// if rc signal/mavlink lost or low battery set error flag to true (and go HOME)
 								if (status.rc_signal_lost || status.offboard_control_signal_lost || status.battery_warning == VEHICLE_BATTERY_WARNING_LOW)
@@ -374,10 +415,11 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 								orb_publish(ORB_ID(debug_key_value), debug_pub, &debug_qgc);
 
 								//send actual waypoint to QGC
-								if (current_wp != Act_wps_index){
+								if (current_wp != Act_wps_index && Act_wps_index <= waypoints.wpm_count){
 									mavlink_log_critical(mavlink_fd, "#audio: skydog switched to waypoint %1.0f", Act_wps_index-1.0f);
 									current_wp = Act_wps_index;
 								}
+								// send flying home notofication
 								if (Act_wps_index > waypoints.wpm_count && waypoints.wpm_count != 0 && home_wp != Act_wps_index){
 									mavlink_log_critical(mavlink_fd, "#audio: skydog flying home");
 									home_wp = Act_wps_index;

@@ -1030,8 +1030,9 @@ int commander_thread_main(int argc, char *argv[])
 		if (updated) {
 			orb_copy(ORB_ID(vehicle_gps_position), gps_sub, &gps_position);
 			/* check if GPS fix is ok */
-			float hdop_threshold_m = 4.0f;
-			float vdop_threshold_m = 8.0f;
+			// skydog changed from 4 and 8
+			float hdop_threshold_m = 15.0f;
+			float vdop_threshold_m = 15.0f;
 
 			/*
 			 * If horizontal dilution of precision (hdop / eph)
@@ -1043,10 +1044,14 @@ int commander_thread_main(int argc, char *argv[])
 			 * position to the current position.
 			 */
 
+			//mavlink_log_info(mavlink_fd, "[cmd] h_set:%d,gps_fix:%d",home_position_set,gps_position.fix_type);
+			//mavlink_log_info(mavlink_fd, "[cmd] gps_eph:%4.4f,gps_epv:%4.4f",gps_position.eph_m,gps_position.epv_m);
+
 			if (!home_position_set && gps_position.fix_type >= 3 &&
 			    (gps_position.eph_m < hdop_threshold_m) && (gps_position.epv_m < vdop_threshold_m) &&	// XXX note that vdop is 0 for mtk
 			    (hrt_absolute_time() < gps_position.timestamp_position + POSITION_TIMEOUT) && !armed.armed) {
 				/* copy position data to uORB home message, store it locally as well */
+
 				// TODO use global position estimate
 				home.lat = gps_position.lat;
 				home.lon = gps_position.lon;
@@ -1062,6 +1067,7 @@ int commander_thread_main(int argc, char *argv[])
 				double home_lon_d = home.lon * 1e-7;
 				warnx("home: lat = %.7f, lon = %.7f", home_lat_d, home_lon_d);
 				mavlink_log_info(mavlink_fd, "[cmd] home: %.7f, %.7f", home_lat_d, home_lon_d);
+
 
 				/* announce new home position */
 				if (home_pub > 0) {
@@ -1220,7 +1226,7 @@ int commander_thread_main(int argc, char *argv[])
 
 		if (arming_state_changed || main_state_changed || navigation_state_changed) {
 			// disabled for skydog
-			//mavlink_log_info(mavlink_fd, "[cmd] state: arm %d, main %d, nav %d", status.arming_state, status.main_state, status.navigation_state);
+			mavlink_log_info(mavlink_fd, "[cmd] state: arm %d, main %d, nav %d", status.arming_state, status.main_state, status.navigation_state);
 			status_changed = true;
 		}
 

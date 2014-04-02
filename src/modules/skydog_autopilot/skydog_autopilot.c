@@ -181,7 +181,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 			orb_set_interval(sensor_sub_fd, rate);
 
 		/* subscribe to parameters topic */
-					int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
+			int param_sub_fd = orb_subscribe(ORB_ID(parameter_update));
 
 		/* subscribe to gps topic */
 			int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
@@ -324,8 +324,8 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									Yaw_rate_control_I = params.Yaw_rate_control_I;
 									Yaw_rate_control_P = params.Yaw_rate_control_P;
 
-									//mavlink_log_info(mavlink_fd, "[skydog_autopilot] parameters updated");
-									mavlink_log_info(mavlink_fd, "[skdg_ap] parameters updated");
+									//mavlink_log_info(mavlink_fd, "[skdg_ap] parameters updated");
+									mavlink_log_critical(mavlink_fd, "#audio: skydog autopilot parameters updated");
 								}
 
 								// is MODE MANUAL selected
@@ -371,7 +371,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 									if (skydog.Altitude_w > 0.0f && skydog.Altitude_w < 2000.0f){
 										Altitude_w = skydog.Altitude_w;
 									}else{
-										Altitude_w = 0;
+										Altitude_w = 500;
 									}
 
 									if (skydog.Groundspeed_w > 0.0f && skydog.Groundspeed_w < 20.0f){
