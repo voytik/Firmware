@@ -215,26 +215,27 @@ int logsd_thread_main(int argc, char *argv[])
 
 	/* subscribe to gps topic */
 		int gps_sub_fd = orb_subscribe(ORB_ID(vehicle_gps_position));
-		//orb_set_interval(gps_sub_fd, rate);
+		bool gps_updated;
 
 	/* subscribe to vehicle attitude topic */
 		int attitude_sub_fd = orb_subscribe(ORB_ID(vehicle_attitude));
-		//orb_set_interval(attitude_sub_fd, rate);
+		bool attitude_updated;
 
 	/* subscribe to rc channels topic */
 		int rc_sub_fd = orb_subscribe(ORB_ID(manual_control_setpoint));
-		//orb_set_interval(rc_sub_fd, rate);
+		bool rc_updated;
 
 	/* subscribe to airspeed channels topic */
 		int airspeed_sub_fd = orb_subscribe(ORB_ID(airspeed));
-		//orb_set_interval(airspeed_sub_fd, rate);
+		bool airspeed_updated;
 
 	/* subscribe to actuator outputs channels topic */
 		int actuators_sub_fd = orb_subscribe(ORB_ID(actuator_outputs_0));
+		bool actuators_updated;
 
 	/* subscribe to skydog_attitude channels topic */
 		int skydog_autopilot_setpoint_sub_fd = orb_subscribe(ORB_ID(skydog_autopilot_setpoint));
-		//orb_set_interval(skydog_attitude_sub_fd, rate);
+		bool skydog_updated;
 
 		/* one could wait for multiple topics with this technique, just using one here */
 		struct pollfd fds[] = {
@@ -274,6 +275,7 @@ int logsd_thread_main(int argc, char *argv[])
 		memset(&actuator_outputs_raw, 0, sizeof(actuator_outputs_raw));
 		memset(&skydog_autopilot_setpoint_raw, 0, sizeof(skydog_autopilot_setpoint_raw));
 		memset(&buff_all, 0, sizeof(buff_all));
+
 
 		/* create file to log into */
 		printf("[logsd] start logging\n");
@@ -343,23 +345,46 @@ int logsd_thread_main(int argc, char *argv[])
 					orb_copy(ORB_ID(sensor_combined), sensor_sub_fd, &sensors_raw);
 
 					/* copy gps raw data into local buffer */
-					orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
+					orb_check(gps_sub_fd, &gps_updated);
+					if (gps_updated)
+					{
+						orb_copy(ORB_ID(vehicle_gps_position), gps_sub_fd, &gps_raw);
+					}
 
 					/* copy attitude raw data into local buffer */
-					orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
+					orb_check(attitude_sub_fd, &attitude_updated);
+					if (attitude_updated)
+					{
+						orb_copy(ORB_ID(vehicle_attitude), attitude_sub_fd, &attitude_raw);
+					}
 
 					/* copy rc raw data into local buffer */
-					orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+					orb_check(rc_sub_fd, &rc_updated);
+					if (rc_updated)
+					{
+						orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
+					}
 
-					/* copy rc raw data into local buffer */
-					orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+					/* copy airspeed data into local buffer */
+					orb_check(airspeed_sub_fd, &airspeed_updated);
+					if (airspeed_updated)
+					{
+						orb_copy(ORB_ID(airspeed), airspeed_sub_fd, &airspeed_raw);
+					}
 
-					/* copy rc raw data into local buffer */
-					orb_copy(ORB_ID(actuator_outputs_0), actuators_sub_fd, &actuator_outputs_raw);
+					/* copy actuators data into local buffer */
+					orb_check(actuators_sub_fd, &actuators_updated);
+					if (actuators_updated)
+					{
+						orb_copy(ORB_ID(actuator_outputs_0), actuators_sub_fd, &actuator_outputs_raw);
+					}
 
 				    /* copy skydog attitude data into local buffer */
-					orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_autopilot_setpoint_sub_fd, &skydog_autopilot_setpoint_raw);
-
+					orb_check(skydog_autopilot_setpoint_sub_fd, &skydog_updated);
+					if (skydog_updated)
+					{
+						orb_copy(ORB_ID(skydog_autopilot_setpoint), skydog_autopilot_setpoint_sub_fd, &skydog_autopilot_setpoint_raw);
+					}
 
 					/* get timestamp in ms */
 					timestamp = (hrt_absolute_time() - timestamp_start)/1000;
@@ -437,7 +462,8 @@ int logsd_thread_main(int argc, char *argv[])
 						m = write(log_file, buff_all, buff_size);
 					}else{
 						m = write(log_file, buff_all, n);
-						//m = fwrite(buff_all, 1, n, file);
+						//m = fwrite(buff_all, sizeof(char), n, file);
+						//m = fprintf(file, buff_all);
 					}
 					//check if write succesful
 					if (m == -1)
@@ -460,6 +486,7 @@ int logsd_thread_main(int argc, char *argv[])
 					if (i%(flush_in_seconds*logging_frequency)==0)
 					{
 						fsync(log_file);
+						fsync(file);
 						i = 0;
 
 						if (debug)
