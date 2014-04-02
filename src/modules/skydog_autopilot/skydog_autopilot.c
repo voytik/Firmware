@@ -104,7 +104,7 @@ int skydog_autopilot_main(int argc, char *argv[])
 			daemon_task = task_spawn_cmd("skydog_autopilot",
 						 SCHED_DEFAULT,
 						 SCHED_PRIORITY_MAX - 20,
-						 2048,
+						 3000,
 						 skydog_autopilot_thread_main,
 						 (const char **)argv);
 			exit(0);
