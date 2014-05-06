@@ -23,13 +23,12 @@ struct skydog_autopilot_setpoint_s
 	float Altitude_w;	// wanted altitude [m]
 	float Groundspeed_w;	// wanted speed [m/s]
 	bool Valid;			// other values valid?
-	float Current_waypoint;
-	float P[3];
-	float U[3];
-	float eta;
-	float d2;
-	short Autopilot_mode;
-
+	float Current_waypoint;	//index of current wp (for logging)
+	float P[3];	//tracking point (for logging)
+	float U[3]; //local position point (for logging)
+	float eta; //current eta (for logging)
+	float d2;	//current distance d2 (for logging)
+	short Autopilot_mode; 	//current control mode (for logging)
 
 };
 
