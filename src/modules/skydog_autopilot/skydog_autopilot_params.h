@@ -31,11 +31,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  ****************************************************************************/
-
 /*
- * @file position_estimator_inav_params.h
+ * @file skydog_autopilot_params.h
  *
- * Parameters for Position Estimator
+ * Parameters for skydog_autopilot
  */
 
 #include <systemlib/param/param.h>

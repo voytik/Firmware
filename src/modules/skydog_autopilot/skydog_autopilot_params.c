@@ -1,14 +1,15 @@
 /**
  * @file skydog_autopilot_params.c
- * Parameters for skzdog autopilot
+ * Parameters for skydog autopilot
  *
  * Author: Vojtech Kuchar
  * vojtech.kuchar@seznam.cz
  */
 
 #include "Skydog_autopilot_params.h"
-//#include <skydog_autopilot/Skydog_autopilot_ert_rtw/Skydog_autopilot.h>
 
+// define all necessary parameters
+// used INAV  parameters between due to bug in current firmware
 PARAM_DEFINE_FLOAT(INAV_W_SKDG, 50.0f);
 PARAM_DEFINE_FLOAT(SKDG_ALT_P, 0.2f);
 PARAM_DEFINE_FLOAT(INAV_W_SKDG2, 50.0f);
