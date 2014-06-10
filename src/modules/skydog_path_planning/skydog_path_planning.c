@@ -249,6 +249,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	 L_want = params.L;
 	 R_want = params.R;
 	 Trash_want = params.Trash;
+	 Alt_want = params.Alt_Trash;
 
 	 // notify user through QGC that the autopilot is initialized
 	 mavlink_log_info(mavlink_fd, "[skydog_path_planning] initialized");
@@ -285,8 +286,9 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 					parameters_update(&param_handles, &params);
 					// update simulink model parameters
 					L_want = params.L;
-					 R_want = params.R;
-					 Trash_want = params.Trash;
+					R_want = params.R;
+					Trash_want = params.Trash;
+					Alt_want = params.Alt_Trash;
 
 					//notify user
 					mavlink_log_critical(mavlink_fd, "#audio: skydog path parameters updated");
@@ -328,7 +330,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 				}
 
 				//fill in data for simulink code
-				Altitude2_r = sensors_raw.baro_alt_meter;
+				//Altitude2_r = sensors_raw.baro_alt_meter;
+				Altitude2_r = gps_raw.alt/1000.0f;
 				X_earth_r = gps_raw.lon/10000000.0f;
 				Y_earth_r = gps_raw.lat/10000000.0f;
 				Groundspeed2_r[0] = -gps_raw.vel_e_m_s;
@@ -346,6 +349,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 				}else{
 					Error = 0;
 				}
+				Error = 0;
 				//turn error off if in HIL
 				if (status.hil_state == HIL_STATE_ON)
 				{

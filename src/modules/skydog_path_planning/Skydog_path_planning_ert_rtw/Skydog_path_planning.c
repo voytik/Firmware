@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.302
+ * Model version                  : 1.318
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Tue Apr 01 19:50:56 2014
+ * C/C++ source code generated on : Tue Jun 10 20:16:37 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic
@@ -18,7 +18,10 @@
 #include "Skydog_path_planning_private.h"
 
 /* Exported block parameters */
-real_T L_want = 10.0;                  /* Variable: L_want
+real_T Alt_want = 15.0;                /* Variable: Alt_want
+                                        * Referenced by: '<S2>/A_trash_dist'
+                                        */
+real_T L_want = 2.0;                   /* Variable: L_want
                                         * Referenced by: '<S2>/L_dist_UP'
                                         */
 real_T R_want = 25.0;                  /* Variable: R_want
@@ -105,11 +108,6 @@ real_T rt_powd_snf(real_T u0, real_T u1)
 void Skydog_path_planning_step(void)
 {
   /* local block i/o variables */
-  real_T rtb_eta;
-  real_T rtb_L1a;
-  real_T rtb_eta_VE;
-  real_T rtb_eta_LE;
-  real_T rtb_phi_out[2];
   real_T rtb_d2_dist;
   real_T wp_llh[60];
   real_T i;
@@ -118,6 +116,7 @@ void Skydog_path_planning_step(void)
   real_T d2_dist;
   int32_T classic;
   real_T alt_m;
+  real_T dist;
   real_T phi_w;
   real_T Nc;
   real_T rtb_Sum;
@@ -134,8 +133,6 @@ void Skydog_path_planning_step(void)
   real_T d2_idx_1;
   real_T d2_one_idx;
   real_T d2_one_idx_0;
-  real_T CU_idx;
-  real_T phi_out_idx;
 
   /* MATLAB Function: '<S2>/recalculate_GPS_meters_U' incorporates:
    *  DataTypeConversion: '<S2>/Data Type Conversion10'
@@ -222,12 +219,12 @@ void Skydog_path_planning_step(void)
     i_0 = (int32_T)i;
     rtb_Sum_0 = (int32_T)(i - 1.0);
     dist_one_idx = wp_llh[rtb_Sum_0 + 14];
-    CU_idx = wp_llh[rtb_Sum_0 + 29];
-    dist_one_idx_0 = wp_llh[rtb_Sum_0 + 44];
+    dist_one_idx_0 = wp_llh[rtb_Sum_0 + 29];
+    dist = wp_llh[rtb_Sum_0 + 44];
     wp_llh[i_0 - 1] = wp_llh[rtb_Sum_0 - 1];
     wp_llh[i_0 + 14] = dist_one_idx;
-    wp_llh[i_0 + 29] = CU_idx;
-    wp_llh[i_0 + 44] = dist_one_idx_0;
+    wp_llh[i_0 + 29] = dist_one_idx_0;
+    wp_llh[i_0 + 44] = dist;
 
     /* '<S8>:1:28' */
   }
@@ -280,7 +277,8 @@ void Skydog_path_planning_step(void)
   /* number of active waypoints (others are zeros) */
   rtb_Sum = 1.0 + Skydog_path_planning_DWork.Memory1_PreviousInput;
 
-  /* MATLAB Function: '<S2>/P_wps_nfz' incorporates:
+  /* MATLAB Function: '<S2>/P_wps' incorporates:
+   *  Constant: '<S2>/A_trash_dist'
    *  Constant: '<S2>/L_dist_UP'
    *  Constant: '<S2>/R_radius_circle_path'
    *  Constant: '<S2>/T_trash_dist'
@@ -294,7 +292,7 @@ void Skydog_path_planning_step(void)
    */
   memcpy((void *)&wp_llh[0], (void *)&rtb_wp_ned[0], 60U * sizeof(real_T));
 
-  /* MATLAB Function 'Skydog_path_planning/P_wps_nfz': '<S3>:1' */
+  /* MATLAB Function 'Skydog_path_planning/P_wps': '<S3>:1' */
   /* START_____init values */
   /* '<S3>:1:5' */
   /* number of active waypoints in wp strukt */
@@ -383,40 +381,50 @@ void Skydog_path_planning_step(void)
 
   /* compute lateral distance (meters) */
   /* '<S3>:1:52' */
-  CU_idx = sqrt(rt_powd_snf(i, 2.0) + rt_powd_snf(j, 2.0));
+  dist = sqrt(rt_powd_snf(i, 2.0) + rt_powd_snf(j, 2.0));
 
   /* compute full distance (meters) */
   /* '<S3>:1:53' */
-  dist_one_idx = i / (CU_idx + 0.5);
-  dist_one_idx_0 = j / (CU_idx + 0.5);
+  dist_one_idx = i / dist;
+  dist_one_idx_0 = j / dist;
 
   /* normalized dist vector(0-1) */
   /* check if waypoints is in the same location: */
-  if ((i == 0.0) && (j == 0.0)) {
+  if ((rtb_Sum >= 2.0) && (i == 0.0) && (j == 0.0)) {
     /* '<S3>:1:56' */
     /* '<S3>:1:57' */
     /* '<S3>:1:58' */
-    dist_one_idx = 1.0;
-    dist_one_idx_0 = 0.0;
+    /* '<S3>:1:59' */
+    i = wp_llh[(int32_T)rtb_Sum + 14] - wp_llh[(int32_T)(rtb_Sum - 1.0) + 14];
+
+    /* '<S3>:1:60' */
+    j = wp_llh[(int32_T)rtb_Sum + 29] - wp_llh[(int32_T)(rtb_Sum - 1.0) + 29];
+
+    /* '<S3>:1:61' */
+    dist = sqrt(rt_powd_snf(i, 2.0) + rt_powd_snf(j, 2.0));
+
+    /* '<S3>:1:62' */
+    dist_one_idx = i / dist;
+    dist_one_idx_0 = j / dist;
   }
 
   /* START____vector (distance and angle) btw U and next wp: */
-  /* '<S3>:1:63' */
+  /* '<S3>:1:68' */
   d2_idx = wp_llh[(int32_T)(rtb_Sum + 1.0) - 1] - (real_T)Altitude2_r;
 
   /* alt dist (m) */
-  /* '<S3>:1:64' */
+  /* '<S3>:1:69' */
   d2_idx_0 = wp_llh[(int32_T)(rtb_Sum + 1.0) + 14] - rtb_x_ned;
 
   /* x dist(m) */
-  /* '<S3>:1:65' */
+  /* '<S3>:1:70' */
   d2_idx_1 = wp_llh[(int32_T)(rtb_Sum + 1.0) + 29] - rtb_y_ned;
 
   /* y dist (m) */
-  /* '<S3>:1:67' */
+  /* '<S3>:1:72' */
   d2_dist = sqrt(rt_powd_snf(d2_idx_0, 2.0) + rt_powd_snf(d2_idx_1, 2.0));
 
-  /* '<S3>:1:68' */
+  /* '<S3>:1:73' */
   d2_one_idx = d2_idx_0 / d2_dist;
   d2_one_idx_0 = d2_idx_1 / d2_dist;
 
@@ -430,38 +438,39 @@ void Skydog_path_planning_step(void)
   /* params: */
   /* radius of wanted circle (m) - in non classic planning */
   /* init values: */
-  /* '<S3>:1:82' */
+  /* '<S3>:1:87' */
   phi_w = d2_idx / d2_dist;
 
   /* actual wanted pitch angle btw U and wp(k+1) */
-  /* '<S3>:1:83' */
+  /* '<S3>:1:88' */
   /* max pitch angle */
-  /* '<S3>:1:84' */
+  /* '<S3>:1:89' */
   Nc = 0.0;
 
+  /* init number of circle around point */
   /* if phi_w greater then max pitch angle =>  */
-  if (alt_m / (CU_idx + 0.5) > 0.3490658503988659) {
-    /* '<S3>:1:86' */
-    /* '<S3>:1:87' */
+  if (alt_m / dist > 0.3490658503988659) {
+    /* '<S3>:1:92' */
+    /* '<S3>:1:93' */
     classic = 0;
   }
 
   /*  if phi_w lower then phi_min (-phi_max) */
-  if (alt_m / (CU_idx + 0.5) < -0.3490658503988659) {
-    /* '<S3>:1:91' */
-    /* '<S3>:1:92' */
+  if (alt_m / dist < -0.3490658503988659) {
+    /* '<S3>:1:97' */
+    /* '<S3>:1:98' */
     classic = 0;
   }
 
   while (fabs(phi_w) > 0.3490658503988659) {
-    /* '<S3>:1:95' */
-    /* '<S3>:1:96' */
+    /* '<S3>:1:101' */
+    /* '<S3>:1:102' */
     Nc++;
 
-    /* '<S3>:1:97' */
+    /* '<S3>:1:103' */
     phi_w = d2_idx / (Nc * 2.0 * 3.1415926535897931 * R_want + d2_dist);
 
-    /* '<S3>:1:98' */
+    /* '<S3>:1:104' */
     classic = 0;
   }
 
@@ -470,55 +479,53 @@ void Skydog_path_planning_step(void)
   /* params: */
   /* wanted diference btw U and P (m) */
   /* tolerante distance btw U and wp (consist for switching) */
+  /* tolerance rozdilu vysky U a wp */
   /* init values: */
   /* center of circle path (init) */
-  /* '<S3>:1:110' */
+  /* '<S3>:1:116' */
   /* vector in XY plane (from C to U) */
-  /* '<S3>:1:113' */
+  /* '<S3>:1:119' */
   i = 0.0;
 
   /* init altitude distence btw U and wp(k+1) */
-  /* '<S3>:1:116' */
-  CU_idx = 0.0;
-  phi_out_idx = 0.0;
   if (classic == 1) {
-    /* '<S3>:1:119' */
-    /* P - classic */
     /* '<S3>:1:121' */
+    /* P - classic */
+    /* '<S3>:1:123' */
     d2_idx = wp_llh[(int32_T)(rtb_Sum + 1.0) - 1];
 
-    /* '<S3>:1:122' */
+    /* '<S3>:1:124' */
     dist_one_idx_0 = d2_one_idx * L_want + rtb_x_ned;
 
-    /* '<S3>:1:123' */
+    /* '<S3>:1:125' */
     dist_one_idx = d2_one_idx_0 * L_want + rtb_y_ned;
   } else {
     /* classic = 0 -> prodlouzit trasu spiralou (reseni max pitch angle a krouzeni kolem home pos) */
-    /* '<S3>:1:127' */
-    /* '<S3>:1:128' */
+    /* '<S3>:1:129' */
+    /* '<S3>:1:130' */
     alt_m = asin(L_want / (2.0 * R_want)) * 2.0;
 
     /* angle around C from U to P (phi_CUP) */
-    /* '<S3>:1:130' */
+    /* '<S3>:1:132' */
     rtb_Sum_0 = (int32_T)(rtb_Sum + 1.0);
     d2_idx = wp_llh[rtb_Sum_0 - 1] + R_want * 0.0;
     d2_idx_0 = wp_llh[rtb_Sum_0 + 14] + R_want * -dist_one_idx_0;
     d2_idx_1 = wp_llh[rtb_Sum_0 + 29] + R_want * dist_one_idx;
 
-    /* '<S3>:1:132' */
+    /* '<S3>:1:134' */
     j = sqrt(rt_powd_snf(d2_idx_0 - rtb_x_ned, 2.0) + rt_powd_snf(d2_idx_1 -
               rtb_y_ned, 2.0));
 
-    /* '<S3>:1:134' */
+    /* '<S3>:1:136' */
     i = rtb_x_ned - d2_idx_0;
     if (i != 0.0) {
       i /= j;
     }
 
-    CU_idx = i;
+    dist = i;
 
     /* in xE dirr */
-    /* '<S3>:1:135' */
+    /* '<S3>:1:137' */
     i = rtb_y_ned - d2_idx_1;
     if (i != 0.0) {
       i /= j;
@@ -527,83 +534,78 @@ void Skydog_path_planning_step(void)
     /* in yE dirr */
     /* uhel mezi CU a CW = (dist_one(2) , -dist_one(1)): */
     /* angle - CU,xE: */
-    /* '<S3>:1:139' */
-    j = atan(i / CU_idx);
+    /* '<S3>:1:141' */
+    j = atan(i / dist);
 
     /* angle - CW,xE: */
     /*          phi_CWE = atan(-dist_one(1)/dist_one(2)); */
     /* correction: */
     /* phi_CUE: */
-    if ((i < 0.0) && (CU_idx < 0.0)) {
-      /* '<S3>:1:145' */
-      /* '<S3>:1:146' */
+    if ((i < 0.0) && (dist < 0.0)) {
+      /* '<S3>:1:147' */
+      /* '<S3>:1:148' */
       j += -3.1415926535897931;
     } else {
-      if ((i > 0.0) && (CU_idx < 0.0)) {
-        /* '<S3>:1:147' */
-        /* '<S3>:1:148' */
+      if ((i > 0.0) && (dist < 0.0)) {
+        /* '<S3>:1:149' */
+        /* '<S3>:1:150' */
         j += 3.1415926535897931;
       }
     }
 
-    /* '<S3>:1:152' */
-    CU_idx = j + alt_m;
-
     /* switch to circle planning and from circle planning: */
-    /* '<S3>:1:155' */
+    /* '<S3>:1:154' */
     i = fabs(wp_llh[(int32_T)(rtb_Sum + 1.0) - 1] - (real_T)Altitude2_r);
 
-    /* '<S3>:1:156' */
+    /* '<S3>:1:155' */
     /* Nc - number of loops (from condition phi_w) */
-    /* '<S3>:1:158' */
-    phi_out_idx = i;
     if (i_0 == 0) {
-      /* '<S3>:1:161' */
+      /* '<S3>:1:157' */
       if (i < (Nc + 0.5) * 2.0 * 3.1415926535897931 * R_want * fabs(phi_w)) {
-        /* '<S3>:1:162' */
+        /* '<S3>:1:158' */
         if (d2_dist < 2.0 * R_want + Trash_want) {
-          /* '<S3>:1:163' */
+          /* '<S3>:1:159' */
           /* circle planning with altitude increasing */
-          /* '<S3>:1:165' */
-          /* '<S3>:1:166' */
+          /* '<S3>:1:161' */
+          /* '<S3>:1:162' */
           dist_one_idx_0 = cos(j + alt_m) * R_want + d2_idx_0;
 
-          /* '<S3>:1:167' */
+          /* '<S3>:1:163' */
           dist_one_idx = sin(j + alt_m) * R_want + d2_idx_1;
         } else {
-          /* '<S3>:1:170' */
-          /* '<S3>:1:171' */
+          /* '<S3>:1:166' */
+          /* '<S3>:1:167' */
           dist_one_idx_0 = d2_one_idx * L_want + rtb_x_ned;
 
-          /* '<S3>:1:172' */
+          /* '<S3>:1:168' */
           dist_one_idx = d2_one_idx_0 * L_want + rtb_y_ned;
         }
       } else {
         /* line planning with altitude increasing    */
-        /* '<S3>:1:178' */
+        /* '<S3>:1:174' */
         /*  + phi_w * (d1_dist+L); */
-        /* '<S3>:1:179' */
+        /* '<S3>:1:175' */
         dist_one_idx_0 = d2_one_idx * L_want + rtb_x_ned;
 
-        /* '<S3>:1:180' */
+        /* '<S3>:1:176' */
         dist_one_idx = d2_one_idx_0 * L_want + rtb_y_ned;
       }
     } else {
       /* go_home = 1 */
       if (d2_dist < 3.0 * R_want) {
-        /* '<S3>:1:184' */
-        /* '<S3>:1:185' */
-        /* '<S3>:1:186' */
+        /* '<S3>:1:180' */
+        /* '<S3>:1:181' */
+        /* '<S3>:1:182' */
         dist_one_idx_0 = cos(j + alt_m) * R_want + d2_idx_0;
 
-        /* '<S3>:1:187' */
+        /* '<S3>:1:183' */
         dist_one_idx = sin(j + alt_m) * R_want + d2_idx_1;
       } else {
-        /* '<S3>:1:189' */
-        /* '<S3>:1:190' */
+        /* '<S3>:1:185' */
+        /* '<S3>:1:186' */
         dist_one_idx_0 = d2_one_idx * L_want + rtb_x_ned;
 
-        /* '<S3>:1:191' */
+        /* '<S3>:1:187' */
         dist_one_idx = d2_one_idx_0 * L_want + rtb_y_ned;
       }
     }
@@ -612,32 +614,30 @@ void Skydog_path_planning_step(void)
   /* START_______compute switching consistance: */
   /* switch z polohy wp(k+1) a U - dle podminek v "big_picture_autopilot" !!! */
   if (classic == 1) {
-    /* '<S3>:1:198' */
+    /* '<S3>:1:194' */
     if (d2_dist < Trash_want) {
-      /* '<S3>:1:199' */
-      /* '<S3>:1:200' */
+      /* '<S3>:1:195' */
+      /* '<S3>:1:196' */
       k = rtb_Sum;
     }
   } else {
-    if ((i < 5.0) && (d2_dist < Trash_want) && (i_0 == 0)) {
-      /* '<S3>:1:203' */
-      /* '<S3>:1:204' */
-      /* '<S3>:1:205' */
-      /* '<S3>:1:206' */
+    if ((i < Alt_want) && (d2_dist < Trash_want) && (i_0 == 0)) {
+      /* '<S3>:1:199' */
+      /* '<S3>:1:200' */
+      /* '<S3>:1:201' */
+      /* '<S3>:1:202' */
       k = rtb_Sum;
     }
   }
 
-  /* '<S3>:1:212' */
+  /* '<S3>:1:208' */
   /* do logovaci appky   */
-  rtb_phi_out[0] = CU_idx;
-  rtb_phi_out[1] = phi_out_idx;
   rtb_d2_dist = d2_dist;
 
   /* MATLAB Function: '<S2>/lambda_eta' incorporates:
    *  DataTypeConversion: '<S2>/Data Type Conversion8'
    *  Inport: '<Root>/Groundspeed2_r'
-   *  MATLAB Function: '<S2>/P_wps_nfz'
+   *  MATLAB Function: '<S2>/P_wps'
    *  SignalConversion: '<S7>/TmpSignal ConversionAt SFunction Inport1'
    */
   /* MATLAB Function 'Skydog_path_planning/lambda_eta': '<S7>:1' */
@@ -662,7 +662,6 @@ void Skydog_path_planning_step(void)
   /* '<S7>:1:23' */
   j = dist_one_idx - rtb_y_ned;
 
-  /* '<S7>:1:24' */
   /* uhel lambda - uhel mezi zadana trajektorie a odchylka uav od ni: */
   /*  lambda_cos = (d1^2+wd^2-d2^2)/(2*d1*wd); */
   /* uhel eta - uhel mezi L1a a vektorem rychlosti Gsp: */
@@ -673,18 +672,18 @@ void Skydog_path_planning_step(void)
   alt_m = atan((real_T)Groundspeed2_r[1] / (real_T)Groundspeed2_r[0]);
 
   /* '<S7>:1:35' */
-  CU_idx = atan(j / i);
+  dist = atan(j / i);
 
   /* osetreni max a min hodnot:  */
   if ((j < 0.0) && (i < 0.0)) {
     /* '<S7>:1:39' */
     /* '<S7>:1:40' */
-    CU_idx += -3.1415926535897931;
+    dist += -3.1415926535897931;
   } else {
     if ((j > 0.0) && (i < 0.0)) {
       /* '<S7>:1:41' */
       /* '<S7>:1:42' */
-      CU_idx += 3.1415926535897931;
+      dist += 3.1415926535897931;
     }
   }
 
@@ -702,10 +701,7 @@ void Skydog_path_planning_step(void)
 
   /* vysledny uhel eta: */
   /* '<S7>:1:52' */
-  rtb_eta = CU_idx - alt_m;
-  rtb_L1a = sqrt(rt_powd_snf(i, 2.0) + rt_powd_snf(j, 2.0));
-  rtb_eta_VE = alt_m;
-  rtb_eta_LE = CU_idx;
+  j = dist - alt_m;
 
   /* End of MATLAB Function: '<S2>/lambda_eta' */
 
@@ -720,7 +716,7 @@ void Skydog_path_planning_step(void)
   /* '<S4>:1:8' */
   /* '<S4>:1:10' */
   i = (rt_powd_snf((real_T)Groundspeed2_r[0], 2.0) + rt_powd_snf((real_T)
-        Groundspeed2_r[1], 2.0)) * 2.0 * sin(rtb_eta) / 30.0 / 9.81;
+        Groundspeed2_r[1], 2.0)) * 2.0 * sin(j) / 30.0 / 9.81;
 
   /* '<S4>:1:12' */
   /* rad - maximum roll angle */
@@ -742,7 +738,7 @@ void Skydog_path_planning_step(void)
   Roll2_w = (real32_T)i;
 
   /* MATLAB Function: '<S2>/altitude_wanted' incorporates:
-   *  MATLAB Function: '<S2>/P_wps_nfz'
+   *  MATLAB Function: '<S2>/P_wps'
    */
   /* MATLAB Function 'Skydog_path_planning/altitude_wanted': '<S5>:1' */
   /* '<S5>:1:4' */
@@ -765,7 +761,7 @@ void Skydog_path_planning_step(void)
   Speed_w = 11.0F;
 
   /* DataTypeConversion: '<S2>/Data Type Conversion3' incorporates:
-   *  MATLAB Function: '<S2>/P_wps_nfz'
+   *  MATLAB Function: '<S2>/P_wps'
    */
   P[0] = (real32_T)d2_idx;
   P[1] = (real32_T)dist_one_idx_0;
@@ -773,9 +769,6 @@ void Skydog_path_planning_step(void)
 
   /* DataTypeConversion: '<S2>/Data Type Conversion15' */
   Act_wps_index = (real32_T)rtb_Sum;
-
-  /* DataTypeConversion: '<S2>/Data Type Conversion11' */
-  d2 = (real32_T)rtb_d2_dist;
 
   /* DataTypeConversion: '<S2>/Data Type Conversion14' incorporates:
    *  DataTypeConversion: '<S2>/Data Type Conversion5'
@@ -785,8 +778,11 @@ void Skydog_path_planning_step(void)
   U[1] = (real32_T)rtb_x_ned;
   U[2] = (real32_T)rtb_y_ned;
 
+  /* DataTypeConversion: '<S2>/Data Type Conversion11' */
+  d2 = (real32_T)rtb_d2_dist;
+
   /* DataTypeConversion: '<S2>/Data Type Conversion12' */
-  eta = (real32_T)rtb_eta;
+  eta = (real32_T)j;
 
   /* MATLAB Function: '<S2>/go_zero' incorporates:
    *  Inport: '<Root>/Mode2_w'
@@ -794,7 +790,7 @@ void Skydog_path_planning_step(void)
   /* MATLAB Function 'Skydog_path_planning/go_zero': '<S6>:1' */
   if (Mode2_w == 2) {
     /* Update for Memory: '<S2>/Memory1' incorporates:
-     *  MATLAB Function: '<S2>/P_wps_nfz'
+     *  MATLAB Function: '<S2>/P_wps'
      */
     /* '<S6>:1:4' */
     /* '<S6>:1:5' */
@@ -829,10 +825,10 @@ void Skydog_path_planning_initialize(void)
   P[1] = 0.0F;
   P[2] = 0.0F;
   Act_wps_index = 0.0F;
-  d2 = 0.0F;
   U[0] = 0.0F;
   U[1] = 0.0F;
   U[2] = 0.0F;
+  d2 = 0.0F;
   eta = 0.0F;
 
   /* states (dwork) */

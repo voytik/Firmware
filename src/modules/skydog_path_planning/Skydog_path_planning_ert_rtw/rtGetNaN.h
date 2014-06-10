@@ -3,10 +3,10 @@
  *
  * Code generated for Simulink model 'Skydog_path_planning'.
  *
- * Model version                  : 1.302
+ * Model version                  : 1.318
  * Simulink Coder version         : 8.1 (R2011b) 08-Jul-2011
  * TLC version                    : 8.1 (Jul  9 2011)
- * C/C++ source code generated on : Tue Apr 01 19:50:56 2014
+ * C/C++ source code generated on : Tue Jun 10 20:16:37 2014
  *
  * Target selection: ert.tlc
  * Embedded hardware selection: 32-bit Generic

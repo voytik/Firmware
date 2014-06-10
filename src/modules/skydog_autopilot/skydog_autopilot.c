@@ -365,7 +365,8 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 					}
 
 					//fill in measured inputs for simulink code
-					Altitude_r = sensors_raw.baro_alt_meter;
+					//Altitude_r = sensors_raw.baro_alt_meter;
+					Altitude_r = gps_raw.alt/1000.0f;
 					Roll_r = attitude_raw.roll;
 					Groundspeed_r = gps_raw.vel_m_s;
 					Pitch_r = attitude_raw.pitch;

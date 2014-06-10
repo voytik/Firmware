@@ -10,12 +10,14 @@ struct skydog_path_planning_params {
 	float L;
 	float R;
 	float Trash;
+	float Alt_Trash;
 };
 
 struct skydog_path_planning_param_handles {
 	param_t L;
 	param_t R;
 	param_t Trash;
+	param_t Alt_Trash;
 
 };
 

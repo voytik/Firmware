@@ -16,6 +16,8 @@ PARAM_DEFINE_FLOAT(INAV_W_SKDG15, 50.0f);
 PARAM_DEFINE_FLOAT(SKDG_PP_R, 25.0f);
 PARAM_DEFINE_FLOAT(INAV_W_SKDG16, 50.0f);
 PARAM_DEFINE_FLOAT(SKDG_PP_TRASH, 20.0f);
+PARAM_DEFINE_FLOAT(INAV_W_SKDG17, 50.0f);
+PARAM_DEFINE_FLOAT(SKDG_ALT_TRESH, 15.0f);
 
 
 
@@ -25,6 +27,7 @@ int parameters_init(struct skydog_path_planning_param_handles *h)
 	h->L = param_find("SKDG_PP_L");
 	h->R = param_find("SKDG_PP_R");
 	h->Trash = param_find("SKDG_PP_TRASH");
+	h->Alt_Trash = param_find("SKDG_ALT_TRESH");
 
 	return OK;
 }
@@ -34,6 +37,7 @@ int parameters_update(const struct skydog_path_planning_param_handles *h, struct
 	param_get(h->L, &(p->L));
 	param_get(h->R, &(p->R));
 	param_get(h->Trash, &(p->Trash));
+	param_get(h->Alt_Trash, &(p->Alt_Trash));
 
 
 	return OK;
