@@ -53,6 +53,7 @@ struct skydog_autopilot_params {
 	float Speed_control_P;
 	float Yaw_rate_control_I;
 	float Yaw_rate_control_P;
+	float Pitch_trim;
 
 };
 
@@ -70,6 +71,7 @@ struct skydog_autopilot_param_handles {
 	param_t Speed_control_P;
 	param_t Yaw_rate_control_I;
 	param_t Yaw_rate_control_P;
+	param_t Pitch_trim;
 
 };
 

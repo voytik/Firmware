@@ -369,7 +369,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 					Altitude_r = gps_raw.alt/1000.0f;
 					Roll_r = attitude_raw.roll;
 					Groundspeed_r = gps_raw.vel_m_s;
-					Pitch_r = attitude_raw.pitch;
+					Pitch_r = attitude_raw.pitch + params.Pitch_trim * 0.0174532925f;  //add trim recalculated to radians
 					Yaw_r = attitude_raw.yaw;
 					Roll_speed_r = attitude_raw.rollspeed;
 					Pitch_speed_r = attitude_raw.pitchspeed;

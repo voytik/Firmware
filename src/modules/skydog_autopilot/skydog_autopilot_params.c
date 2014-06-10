@@ -45,6 +45,8 @@ PARAM_DEFINE_FLOAT(SKDG_YAW_RATE_I, 0.0f);
 PARAM_DEFINE_FLOAT(INAV_W_SKDG13, 50.0f);
 PARAM_DEFINE_FLOAT(SKDG_YAW_RATE_P, 0.01f);
 
+PARAM_DEFINE_FLOAT(INAV_W_SKDG27, 50.0f);
+PARAM_DEFINE_FLOAT(SKDG_PITCH_TRIM, 0.0f);
 
 
 int parameters_init(struct skydog_autopilot_param_handles *h)
@@ -63,6 +65,7 @@ int parameters_init(struct skydog_autopilot_param_handles *h)
 	h->Speed_control_P = param_find("SKDG_SPEED_P");
 	h->Yaw_rate_control_I = param_find("SKDG_YAW_RATE_I");
 	h->Yaw_rate_control_P = param_find("SKDG_YAW_RATE_P");
+	h->Pitch_trim = param_find("SKDG_PITCH_TRIM");
 
 	return OK;
 }
@@ -83,6 +86,8 @@ int parameters_update(const struct skydog_autopilot_param_handles *h, struct sky
 	param_get(h->Speed_control_P, &(p->Speed_control_P));
 	param_get(h->Yaw_rate_control_I, &(p->Yaw_rate_control_I));
 	param_get(h->Yaw_rate_control_P, &(p->Yaw_rate_control_P));
+
+	param_get(h->Pitch_trim, &(p->Pitch_trim));
 
 	return OK;
 }
