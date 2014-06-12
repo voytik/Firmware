@@ -337,10 +337,10 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 				Groundspeed2_r[0] = -gps_raw.vel_e_m_s;
 				Groundspeed2_r[1] = -gps_raw.vel_n_m_s;
 				Groundspeed2_r[2] = gps_raw.vel_d_m_s;
-				Home_position[0] = home.alt/1000.0f;
+				Home_position[0] = (home.alt/1000.0f) + params.Home_Alt_Offset;
 				Home_position[1] = home.lon/10000000.0f;
 				Home_position[2] = home.lat/10000000.0f;
-				Home_position[3] = 11;
+				Home_position[3] = params.WP_Speed;
 
 				// if rc signal/mavlink lost or low battery set error flag to true (and go HOME)
 				if (status.rc_signal_lost || status.offboard_control_signal_lost || status.battery_warning == VEHICLE_BATTERY_WARNING_LOW)
@@ -362,7 +362,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 					Waypoints_w[i] = waypoints.waypoints[i].altitude;
 					Waypoints_w[i+15] = waypoints.waypoints[i].longitude;
 					Waypoints_w[i+30] = waypoints.waypoints[i].latitude;
-					Waypoints_w[i+45] = 11; //waypoints.waypoints[i].speed;
+					Waypoints_w[i+45] = params.WP_Speed; //11; //waypoints.waypoints[i].speed;
 				}
 				//set empty waypoints to zero
 				for (uint8_t i = waypoints.wpm_count; i < 15; i++)

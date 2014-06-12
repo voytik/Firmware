@@ -11,6 +11,8 @@ struct skydog_path_planning_params {
 	float R;
 	float Trash;
 	float Alt_Trash;
+	float Home_Alt_Offset;
+	float WP_Speed;
 };
 
 struct skydog_path_planning_param_handles {
@@ -18,6 +20,8 @@ struct skydog_path_planning_param_handles {
 	param_t R;
 	param_t Trash;
 	param_t Alt_Trash;
+	param_t Home_Alt_Offset;
+	param_t WP_Speed;
 
 };
 
