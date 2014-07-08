@@ -70,31 +70,32 @@ MODULES		+= modules/gpio_led
 #
 MODULES		+= modules/attitude_estimator_ekf
 MODULES		+= modules/ekf_att_pos_estimator
-MODULES		+= modules/position_estimator_inav
+MODULES		+= modules/attitude_estimator_so3
+#MODULES		+= modules/position_estimator_inav
 
 #
 # Vehicle Control
 #
 MODULES		+= modules/fw_pos_control_l1
 MODULES		+= modules/fw_att_control
-MODULES		+= modules/mc_att_control
-MODULES		+= modules/mc_pos_control
+#MODULES		+= modules/mc_att_control
+#MODULES		+= modules/mc_pos_control
 
 #
 # Logging
 #
 MODULES		+= modules/sdlog2
-MODULES		+= modules/sdlog
+#MODULES		+= modules/sdlog
 
 #
 # Skydog
 #
 MODULES		+= modules/skydog_autopilot
 MODULES		+= modules/skydog_path_planning
-MODULES		+= modules/skydog_attitude
+#MODULES		+= modules/skydog_attitude
 MODULES		+= modules/logsd
-MODULES		+= modules/simulink_control
-MODULES		+= modules/simulink_app
+#MODULES		+= modules/simulink_control
+#MODULES		+= modules/simulink_app
 
 #
 # Unit tests

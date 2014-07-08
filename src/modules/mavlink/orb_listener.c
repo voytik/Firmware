@@ -64,6 +64,10 @@
 #include "mavlink_hil.h"
 #include "util.h"
 
+//skydog change
+#include <uORB/topics/vehicle_gps_position.h>
+struct vehicle_gps_position_s gps_raw;
+
 extern bool gcs_link;
 
 struct vehicle_global_position_s global_pos;
@@ -240,6 +244,11 @@ l_vehicle_attitude(const struct listener *l)
 					  att.rollspeed,
 					  att.pitchspeed,
 					  att.yawspeed);
+
+		struct vehicle_gps_position_s gps;
+
+		/* copy gps data into local buffer */
+		orb_copy(ORB_ID(vehicle_gps_position), mavlink_subs.gps_sub, &gps);
 					  	
 		/* limit VFR message rate to 10Hz */
 		hrt_abstime t = hrt_absolute_time();
@@ -248,7 +257,7 @@ l_vehicle_attitude(const struct listener *l)
 			float groundspeed = sqrtf(global_pos.vx * global_pos.vx + global_pos.vy * global_pos.vy);
 			uint16_t heading = _wrap_2pi(att.yaw) * M_RAD_TO_DEG_F;
 			float throttle = armed.armed ? actuators_0.control[3] * 100.0f : 0.0f;
-			mavlink_msg_vfr_hud_send(MAVLINK_COMM_0, airspeed.true_airspeed_m_s, groundspeed, heading, throttle, global_pos.alt, -global_pos.vz);
+			mavlink_msg_vfr_hud_send(MAVLINK_COMM_0, airspeed.true_airspeed_m_s, gps.vel_m_s, heading, throttle, gps.alt/1000.0f, -global_pos.vz);
 		}
 		
 		/* send quaternion values if it exists */
@@ -386,6 +395,8 @@ l_global_position(const struct listener *l)
 					     global_pos.vy * 100.0f,
 					     global_pos.vz * 100.0f,
 					     _wrap_2pi(global_pos.yaw) * M_RAD_TO_DEG_F * 100.0f);
+
+	l_debug_key_value(&listener);
 }
 
 void
@@ -641,8 +652,8 @@ l_debug_key_value(const struct listener *l)
 	debug.key2[sizeof(debug.key2) - 1] = '\0';
 	debug.key3[sizeof(debug.key3) - 1] = '\0';
 	debug.key4[sizeof(debug.key4) - 1] = '\0';
-	debug.key3[sizeof(debug.key5) - 1] = '\0';
-	debug.key4[sizeof(debug.key6) - 1] = '\0';
+	debug.key5[sizeof(debug.key5) - 1] = '\0';
+	debug.key6[sizeof(debug.key6) - 1] = '\0';
 
 	mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
 					   last_sensor_timestamp / 1000,

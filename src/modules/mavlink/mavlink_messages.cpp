@@ -1644,6 +1644,30 @@ protected:
 							   debug.timestamp_ms,
 							   debug.key,
 							   debug.value);
+
+			mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
+								debug.timestamp_ms,
+								   debug.key2,
+								   debug.value2);
+
+			mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
+								debug.timestamp_ms,
+									   debug.key3,
+									   debug.value3);
+
+			mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
+								debug.timestamp_ms,
+									   debug.key4,
+									   debug.value4);
+			mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
+								debug.timestamp_ms,
+									   debug.key5,
+									   debug.value5);
+
+			mavlink_msg_named_value_float_send(MAVLINK_COMM_0,
+								debug.timestamp_ms,
+									   debug.key6,
+									   debug.value6);
 		}
 	}
 };

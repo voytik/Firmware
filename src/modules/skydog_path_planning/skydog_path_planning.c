@@ -164,6 +164,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 	int loops_processed = 0;	// counter of loops processed (used for debug outputs)
 	bool param_updated;		// were parameters updated?
 	bool home_set = false;	// is home set?
+	bool param_notified = false;
 
 	// subscribe to sensor_combined topic
 	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -291,7 +292,11 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 					Alt_want = params.Alt_Trash;
 
 					//notify user
-					mavlink_log_critical(mavlink_fd, "#audio: skydog path parameters updated");
+					if(!param_notified)
+					{
+						mavlink_log_critical(mavlink_fd, "#audio: skydog path parameters updated");
+						param_notified = true;
+					}
 				}
 
 				// copy sensors raw data into local copy
@@ -314,18 +319,18 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 					Mode2_w = 0;
 					skydog.Valid = false;
 				}
-				if(status.main_state == MAIN_STATE_SEATBELT ||status.main_state == MAIN_STATE_EASY){
+				if(status.main_state == MAIN_STATE_ALTCTL ||status.main_state == MAIN_STATE_POSCTL){
 					Mode2_w = 1;
 					skydog.Valid = false;
 				}
-				if (status.main_state == MAIN_STATE_AUTO) {
+				if (status.main_state == MAIN_STATE_AUTO_MISSION) {
 					Mode2_w = 2;
 					skydog.Valid = true;
 				}
 
 				//check if home position is set and send to QGC once
-				if(home.alt != 0 && !home_set){
-					mavlink_log_critical(mavlink_fd, "#audio: skydog home set");
+				if(home.valid && !home_set){
+					//mavlink_log_critical(mavlink_fd, "#audio: skydog home set");
 					home_set = true;
 				}
 
@@ -433,6 +438,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 					//mavlink_log_info(mavlink_fd, "eta: %4.4f", eta);
 					//mavlink_log_info(mavlink_fd, "[gspeed] gs1:%4.4f, gs2%4.4f, gs3:%4.4f",Groundspeed2_r[0],Groundspeed2_r[1],Groundspeed2_r[2]);
 					loops_processed = 0;
+					param_notified = false;
 				}
 				loops_processed++;
 

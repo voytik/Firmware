@@ -572,6 +572,7 @@ bool handle_command(struct vehicle_status_s *status, const struct safety_s *safe
 			if (cmd_result == VEHICLE_CMD_RESULT_ACCEPTED) {
 				warnx("home: lat = %.7f, lon = %.7f, alt = %.2f ", home->lat, home->lon, (double)home->alt);
 				mavlink_log_info(mavlink_fd, "[cmd] home: %.7f, %.7f, %.2f", home->lat, home->lon, (double)home->alt);
+				mavlink_log_critical(mavlink_fd, "#audio: skydog home set");
 
 				/* announce new home position */
 				if (*home_pub > 0) {
@@ -619,6 +620,7 @@ int commander_thread_main(int argc, char *argv[])
 {
 	/* not yet initialized */
 	commander_initialized = false;
+	bool home_position_set = false;
 
 	bool arm_tune_played = false;
 	bool was_armed = false;
@@ -1071,6 +1073,7 @@ int commander_thread_main(int argc, char *argv[])
 
 			warnx("home: lat = %.7f, lon = %.7f, alt = %.2f ", home.lat, home.lon, (double)home.alt);
 			mavlink_log_info(mavlink_fd, "[cmd] home: %.7f, %.7f, %.2f", home.lat, home.lon, (double)home.alt);
+			mavlink_log_critical(mavlink_fd, "#audio: skydog home set");
 
 			/* announce new home position */
 			if (home_pub > 0) {
@@ -1258,13 +1261,15 @@ int commander_thread_main(int argc, char *argv[])
 			float hdop_threshold_m = 15.0f;
 			float vdop_threshold_m = 15.0f;
 
-		orb_check(mission_result_sub, &updated);
+			gps_position.eph = gps_position.eph * 100;
+			gps_position.epv = gps_position.epv * 100;
+			home.valid = false;
 
 			//mavlink_log_info(mavlink_fd, "[cmd] h_set:%d,gps_fix:%d",home_position_set,gps_position.fix_type);
-			//mavlink_log_info(mavlink_fd, "[cmd] gps_eph:%4.4f,gps_epv:%4.4f",gps_position.eph_m,gps_position.epv_m);
+			//mavlink_log_info(mavlink_fd, "[cmd] gps_eph:%4.4f,gps_epv:%4.4f",gps_position.eph,gps_position.epv);
 
 			if (!home_position_set && gps_position.fix_type >= 3 &&
-			    (gps_position.eph_m < hdop_threshold_m) && (gps_position.epv_m < vdop_threshold_m) &&	// XXX note that vdop is 0 for mtk
+			    (gps_position.eph < hdop_threshold_m) && (gps_position.epv < vdop_threshold_m) &&	// XXX note that vdop is 0 for mtk
 			    (hrt_absolute_time() < gps_position.timestamp_position + POSITION_TIMEOUT) && !armed.armed) {
 				/* copy position data to uORB home message, store it locally as well */
 
@@ -1272,6 +1277,34 @@ int commander_thread_main(int argc, char *argv[])
 				home.lat = gps_position.lat;
 				home.lon = gps_position.lon;
 				home.alt = gps_position.alt;
+				home.valid = true;
+
+				/*
+				home.eph = gps_position.eph;
+				home.epv = gps_position.epv;
+
+				home.s_variance_m_s = gps_position.s_variance_m_s;
+				home.p_variance_m = gps_position.p_variance_m;
+				 	*/
+				double home_lat_d = home.lat * 1e-7;
+				double home_lon_d = home.lon * 1e-7;
+				warnx("home: lat = %.7f, lon = %.7f", home_lat_d, home_lon_d);
+				mavlink_log_info(mavlink_fd, "[cmd] home: %.7f, %.7f", home_lat_d, home_lon_d);
+				mavlink_log_critical(mavlink_fd, "#audio: skydog home set");
+
+				/* announce new home position */
+				if (home_pub > 0) {
+					orb_publish(ORB_ID(home_position), home_pub, &home);
+
+				} else {
+					home_pub = orb_advertise(ORB_ID(home_position), &home);
+				}
+
+				/* mark home position as set */
+				home_position_set = true;
+				//tune_positive();
+				}
+		}
 
 		/* RC input check */
 		if (!status.rc_input_blocked && sp_man.timestamp != 0 && hrt_absolute_time() < sp_man.timestamp + RC_TIMEOUT) {

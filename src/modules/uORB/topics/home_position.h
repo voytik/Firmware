@@ -66,6 +66,8 @@ struct home_position_s
 	float x;				/**< X coordinate in meters			*/
 	float y;				/**< Y coordinate in meters			*/
 	float z;				/**< Z coordinate in meters			*/
+
+	bool valid;
 };
 
 /**

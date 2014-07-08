@@ -103,7 +103,7 @@
 
 /* Measurement rate is 100Hz */
 #define MEAS_RATE 100.0f
-#define MEAS_DRIVER_FILTER_FREQ 3.0f
+#define MEAS_DRIVER_FILTER_FREQ 2.0f
 #define CONVERSION_INTERVAL	(1000000 / 100)	/* microseconds */
 
 class MEASAirspeed : public Airspeed

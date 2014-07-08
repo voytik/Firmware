@@ -161,6 +161,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 	uint8_t current_autopilot_mode = 0; // current autopilot mode
 	int loops_processed = 0;
 	bool param_updated;
+	bool param_notified = false;
 
 	// subscribe to sensor_combined topic
 	int sensor_sub_fd = orb_subscribe(ORB_ID(sensor_combined));
@@ -312,7 +313,11 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 					Yaw_rate_control_P = params.Yaw_rate_control_P;
 
 					//mavlink_log_info(mavlink_fd, "[skdg_ap] parameters updated");
-					mavlink_log_critical(mavlink_fd, "#audio: skydog autopilot parameters updated");
+					if(!param_notified)
+					{
+						mavlink_log_critical(mavlink_fd, "#audio: skydog autopilot parameters updated");
+						param_notified = true;
+					}
 				}
 
 				// is MODE MANUAL selected
@@ -324,10 +329,10 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 					orb_copy(ORB_ID(manual_control_setpoint), rc_sub_fd, &rc_raw);
 
 					// just copy RC input directly to output
-					actuators.control[0] = rc_raw.roll;
-					actuators.control[1] = rc_raw.pitch;
-					actuators.control[2] = rc_raw.yaw;
-					actuators.control[3] = rc_raw.throttle;
+					actuators.control[0] = rc_raw.y;
+					actuators.control[1] = rc_raw.x;
+					actuators.control[2] = rc_raw.r;
+					actuators.control[3] = rc_raw.z;
 					actuators.control[4] = rc_raw.flaps;
 
 				}else{
@@ -377,14 +382,14 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 					Roll_acc_r = attitude_raw.rollacc;
 					Pitch_acc_r = attitude_raw.pitchacc;
 					Yaw_acc_r = attitude_raw.yawacc;
-					RC_aileron_r = rc_raw.roll * 0.7854f; //recalculate to radians
-					RC_elevator_r = rc_raw.pitch *  0.3491f; //recalculate to radians
-					RC_rudder_r = rc_raw.yaw; //dont need to recalculate
-					RC_throttle_r = rc_raw.throttle;
+					RC_aileron_r = rc_raw.y * 0.7854f; //recalculate to radians
+					RC_elevator_r = rc_raw.x *  0.3491f; //recalculate to radians
+					RC_rudder_r = rc_raw.r; //dont need to recalculate
+					RC_throttle_r = rc_raw.z;
 					RC_flaps_r = rc_raw.flaps;
 
 
-					if (status.main_state == MAIN_STATE_AUTO) {
+					if (status.main_state == MAIN_STATE_AUTO_MISSION) {
 						if (skydog.Valid)
 						{
 							// is MODE AUTOPILOT selected
@@ -396,7 +401,7 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 							autopilot_mode = 1;
 						}
 					}
-					if(status.main_state == MAIN_STATE_SEATBELT ||status.main_state == MAIN_STATE_EASY){
+					if(status.main_state == MAIN_STATE_ALTCTL ||status.main_state == MAIN_STATE_POSCTL){
 						// is MODE STABILIZATION selected
 						Mode_w = 1;
 						autopilot_mode = 1;
@@ -423,8 +428,10 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 					if (loops_processed>200){
 						printf("[skydog_autopilot] ailerons:%4.4f, elevator:%4.4f, rudder:%4.4f, throttle:%4.4f\n",actuators.control[0], actuators.control[1], actuators.control[2], Throttle_w);
 						printf("[skydog_autopilot] db1:%4.4f, db2:%4.4f\n", debug1, debug2);
-						//mavlink_log_info(mavlink_fd, "[skydog_autopilot] db1:%4.4f, db2:%4.4f", debug1, debug2);
+						//mavlink_log_info(mavlink_fd, "[skdg_autopilot] db1:%4.4f, db2:%4.4f", debug1, debug2);
+						mavlink_log_info(mavlink_fd, "[skdg_autopilot] groundspeed:%4.4f, db2:%4.4f", debug1, debug2);
 						loops_processed = 0;
+						param_notified = false;
 					}
 					loops_processed++;
 

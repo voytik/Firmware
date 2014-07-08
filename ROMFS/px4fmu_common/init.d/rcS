@@ -173,8 +173,8 @@ then
 	#
 	if [ $DO_AUTOCONFIG == yes ]
 	then
-		param set SYS_AUTOCONFIG 0
-		param save
+		#param set SYS_AUTOCONFIG 0
+		#param save
 	fi
 
 	set IO_PRESENT no

@@ -405,11 +405,11 @@ int logsd_thread_main(int argc, char *argv[])
 					attitude_raw.rollacc,
 					attitude_raw.pitchacc,
 					attitude_raw.yawacc,
-					rc_raw.pitch,
-					rc_raw.yaw,
-					rc_raw.throttle,
-					rc_raw.roll,
-					rc_raw.aux1,
+					rc_raw.x,
+					rc_raw.r,
+					rc_raw.z,
+					rc_raw.y,
+					rc_raw.flaps,
 					actuator_outputs_raw.output[1],		//elevator
 					actuator_outputs_raw.output[2],		//rudder
 					actuator_outputs_raw.output[3],		//throttle
