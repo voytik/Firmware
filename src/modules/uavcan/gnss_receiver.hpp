@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   Copyright (c) 2012-2014 PX4 Development Team. All rights reserved.
+ *   Copyright (C) 2014 PX4 Development Team. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,22 +32,53 @@
  ****************************************************************************/
 
 /**
- * @file util.h
- * Utility and helper functions and data.
+ * @file gnss_receiver.hpp
+ *
+ * UAVCAN --> ORB bridge for GNSS messages:
+ *     uavcan.equipment.gnss.Fix
+ *
+ * @author Pavel Kirienko <pavel.kirienko@gmail.com>
+ * @author Andrew Chambers <achamber@gmail.com>
  */
 
 #pragma once
 
-/** MAVLink communications channel */
-extern uint8_t chan;
+#include <drivers/drv_hrt.h>
 
-/** Shutdown marker */
-extern volatile bool thread_should_exit;
+#include <uORB/uORB.h>
+#include <uORB/topics/vehicle_gps_position.h>
 
-/** Waypoint storage */
-extern mavlink_wpm_storage *wpm;
+#include <uavcan/uavcan.hpp>
+#include <uavcan/equipment/gnss/Fix.hpp>
 
-/**
- * Translate the custom state into standard mavlink modes and state.
- */
-extern void get_mavlink_mode_and_state(uint8_t *mavlink_state, uint8_t *mavlink_base_mode, uint32_t *mavlink_custom_mode);
+class UavcanGnssReceiver
+{
+public:
+	UavcanGnssReceiver(uavcan::INode& node);
+
+	int init();
+
+private:
+	/**
+	 * GNSS fix message will be reported via this callback.
+	 */
+	void gnss_fix_sub_cb(const uavcan::ReceivedDataStructure<uavcan::equipment::gnss::Fix> &msg);
+
+
+	typedef uavcan::MethodBinder<UavcanGnssReceiver*,
+		void (UavcanGnssReceiver::*)(const uavcan::ReceivedDataStructure<uavcan::equipment::gnss::Fix>&)>
+		FixCbBinder;
+
+	/*
+	 * libuavcan related things
+	 */
+	uavcan::INode													&_node;
+	uavcan::Subscriber<uavcan::equipment::gnss::Fix, FixCbBinder>	_uavcan_sub_status;
+
+	/*
+	 * uORB
+	 */
+	struct vehicle_gps_position_s 	_report;					///< uORB topic for gnss position
+	orb_advert_t			_report_pub;					///< uORB pub for gnss position
+
+};
