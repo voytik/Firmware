@@ -830,7 +830,7 @@ int commander_thread_main(int argc, char *argv[])
 	safety.safety_off = false;
 
 	/* Subscribe to mission result topic */
-	int mission_result_sub = orb_subscribe(ORB_ID(mission_result));
+
 	struct mission_result_s mission_result;
 	memset(&mission_result, 0, sizeof(mission_result));
 

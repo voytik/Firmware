@@ -343,8 +343,8 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 				Groundspeed2_r[1] = -gps_raw.vel_n_m_s;
 				Groundspeed2_r[2] = gps_raw.vel_d_m_s;
 				Home_position[0] = (home.alt/1000.0f) + params.Home_Alt_Offset;
-				Home_position[1] = home.lon/10000000.0f;
-				Home_position[2] = home.lat/10000000.0f;
+				Home_position[1] = (float)home.lon/10000000.0f;
+				Home_position[2] = (float)home.lat/10000000.0f;
 				Home_position[3] = params.WP_Speed;
 
 				// if rc signal/mavlink lost or low battery set error flag to true (and go HOME)
@@ -413,7 +413,7 @@ int skydog_path_planning_thread_main(int argc, char *argv[])
 
 				// if changed, send current waypoint to QGC
 				if (current_wp != Act_wps_index && Act_wps_index <= waypoints.wpm_count){
-					mavlink_log_critical(mavlink_fd, "#audio: skydog switched to waypoint %1.0f", Act_wps_index-1.0f);
+					mavlink_log_critical(mavlink_fd, "#audio: skydog switched to waypoint %1.0f", (double)(Act_wps_index-1.0f));
 					current_wp = Act_wps_index;
 				}
 				// send flying home notification if necessary

@@ -426,10 +426,10 @@ int skydog_autopilot_thread_main(int argc, char *argv[])
 
 					// print debug outputs every x seconds
 					if (loops_processed>200){
-						printf("[skydog_autopilot] ailerons:%4.4f, elevator:%4.4f, rudder:%4.4f, throttle:%4.4f\n",actuators.control[0], actuators.control[1], actuators.control[2], Throttle_w);
-						printf("[skydog_autopilot] db1:%4.4f, db2:%4.4f\n", debug1, debug2);
+						//printf("[skydog_autopilot] ailerons:%4.4f, elevator:%4.4f, rudder:%4.4f, throttle:%4.4f\n",actuators.control[0], actuators.control[1], actuators.control[2], Throttle_w);
+						//printf("[skydog_autopilot] db1:%4.4f, db2:%4.4f\n", debug1, debug2);
 						//mavlink_log_info(mavlink_fd, "[skdg_autopilot] db1:%4.4f, db2:%4.4f", debug1, debug2);
-						mavlink_log_info(mavlink_fd, "[skdg_autopilot] groundspeed:%4.4f, db2:%4.4f", debug1, debug2);
+						mavlink_log_info(mavlink_fd, "[skdg_autopilot] groundspeed:%4.4f, db2:%4.4f", (double)debug1, (double)debug2);
 						loops_processed = 0;
 						param_notified = false;
 					}

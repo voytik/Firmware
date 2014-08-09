@@ -396,45 +396,45 @@ int logsd_thread_main(int argc, char *argv[])
 						"%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f,%4.4f\n", 	// skydog path planning debug values
 					timestamp,
 					rc_flag,
-					attitude_raw.roll,
-					attitude_raw.pitch,
-					attitude_raw.yaw,
-					attitude_raw.rollspeed,
-					attitude_raw.pitchspeed,
-					attitude_raw.yawspeed,
-					attitude_raw.rollacc,
-					attitude_raw.pitchacc,
-					attitude_raw.yawacc,
-					rc_raw.x,
-					rc_raw.r,
-					rc_raw.z,
-					rc_raw.y,
-					rc_raw.flaps,
-					actuator_outputs_raw.output[1],		//elevator
-					actuator_outputs_raw.output[2],		//rudder
-					actuator_outputs_raw.output[3],		//throttle
-					actuator_outputs_raw.output[0],		//ailerons
-					actuator_outputs_raw.output[4],		//flaps
+					(double)attitude_raw.roll,
+					(double)attitude_raw.pitch,
+					(double)attitude_raw.yaw,
+					(double)attitude_raw.rollspeed,
+					(double)attitude_raw.pitchspeed,
+					(double)attitude_raw.yawspeed,
+					(double)attitude_raw.rollacc,
+					(double)attitude_raw.pitchacc,
+					(double)attitude_raw.yawacc,
+					(double)rc_raw.x,
+					(double)rc_raw.r,
+					(double)rc_raw.z,
+					(double)rc_raw.y,
+					(double)rc_raw.flaps,
+					(double)actuator_outputs_raw.output[1],		//elevator
+					(double)actuator_outputs_raw.output[2],		//rudder
+					(double)actuator_outputs_raw.output[3],		//throttle
+					(double)actuator_outputs_raw.output[0],		//ailerons
+					(double)actuator_outputs_raw.output[4],		//flaps
 					gps_raw.lat,
 					gps_raw.lon,
 					gps_raw.alt,
-					sensors_raw.baro_alt_meter,
-					airspeed_raw.true_airspeed_m_s,
-					sensors_raw.differential_pressure_pa,
-					gps_raw.vel_m_s,
+					(double)sensors_raw.baro_alt_meter,
+					(double)airspeed_raw.true_airspeed_m_s,
+					(double)sensors_raw.differential_pressure_pa,
+					(double)gps_raw.vel_m_s,
 					skydog_autopilot_setpoint_raw.Autopilot_mode,
-					skydog_autopilot_setpoint_raw.Roll_w,
-					skydog_autopilot_setpoint_raw.Groundspeed_w,
-					skydog_autopilot_setpoint_raw.Altitude_w,
+					(double)skydog_autopilot_setpoint_raw.Roll_w,
+					(double)skydog_autopilot_setpoint_raw.Groundspeed_w,
+					(double)skydog_autopilot_setpoint_raw.Altitude_w,
 					skydog_autopilot_setpoint_raw.Valid,
-					skydog_autopilot_setpoint_raw.P[0],
-					skydog_autopilot_setpoint_raw.P[1],
-					skydog_autopilot_setpoint_raw.P[2],
-					skydog_autopilot_setpoint_raw.U[0],
-					skydog_autopilot_setpoint_raw.U[1],
-					skydog_autopilot_setpoint_raw.U[2],
-					skydog_autopilot_setpoint_raw.eta,
-					skydog_autopilot_setpoint_raw.d2);
+					(double)skydog_autopilot_setpoint_raw.P[0],
+					(double)skydog_autopilot_setpoint_raw.P[1],
+					(double)skydog_autopilot_setpoint_raw.P[2],
+					(double)skydog_autopilot_setpoint_raw.U[0],
+					(double)skydog_autopilot_setpoint_raw.U[1],
+					(double)skydog_autopilot_setpoint_raw.U[2],
+					(double)skydog_autopilot_setpoint_raw.eta,
+					(double)skydog_autopilot_setpoint_raw.d2);
 
 
 				// check if buffer not overloaded
